@@ -12,15 +12,22 @@ def write_time_and_date():
     "Date" + datetime.datetime.now().strftime("_%Y_%m_%d")
 
 
-def weight_variable(shape,stddev):
-    initial = tf.truncated_normal(shape,stddev=stddev, dtype=tf.float32)
-    return tf.Variable(initial)
+def weight_variable(shape,stddev,name='none'):
+    if name=='none':
+        initial = tf.truncated_normal(shape,stddev=stddev, dtype=tf.float32)
+        return tf.Variable(initial)
+    else: 
+        initial = tf.truncated_normal(shape,stddev=stddev, dtype=tf.float32)
+        return tf.Variable(initial, name=name)
+    
 
-def bias_variable(shape):
-    initial = tf.truncated_normal(shape,stddev=1.0, dtype=tf.float32)
-    ## Initializing as normal is dumb-sauce, don't do it bruv
-    #initial = 0.1 + tf.truncated_normal(shape, stddev=0.05, dtype=tf.float32)
-    return tf.Variable(initial)
+def bias_variable(shape,name='none'):
+    if name=='none':
+        initial = tf.truncated_normal(shape,stddev=1.0, dtype=tf.float32)
+        return tf.Variable(initial)
+    else:
+        initial = tf.truncated_normal(shape,stddev=1.0, dtype=tf.float32)
+        return tf.Variable(initial, name=name)
 
 
 
