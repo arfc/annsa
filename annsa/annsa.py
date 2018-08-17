@@ -208,6 +208,9 @@ def normalize_data(key):
     return np.array(temp_key)
 
 
+def log_normalize(data):
+    return np.log10(data+1.0)
+
 
 def minimax_data(data):    
     data_normalized = np.empty_like(data)
