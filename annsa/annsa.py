@@ -199,13 +199,13 @@ def scale_data(data, mode='zscore'):
 
 
 
-def normalize_data(data):    
-    data_normalized = np.empty_like(data)
+def normalize_data(key):    
+    temp_key = []
     
-    for i in range(data.shape[0]):
-        data_normalized[i] = data[i]/np.sum(data[i])
+    for i in range(len(key)):
+        temp_key.append(key[i]/float(np.sum(key[i])))
     
-    return data_normalized
+    return np.array(temp_key)
 
 
 
