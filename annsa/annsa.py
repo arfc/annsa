@@ -88,74 +88,100 @@ def make_ANN_structure(my_ANN_strucutre):
     spectra_length = my_ANN_strucutre.spectra_length
     num_categories = my_ANN_strucutre.num_categories    
     batch_size     = my_ANN_strucutre.batch_size
-    presoftmax_threshold = my_ANN_strucutre.softmax_gate
     
     
     
     x_spectra = tf.placeholder(tf.float32, [None,spectra_length])
     y_ = tf.placeholder(tf.float32, [None,num_categories])
     keep_prob = tf.placeholder(tf.float32)
+
+    if layer_1_nodes > 0:
+        nodes_1 = layer_1_nodes
+        W1 = weight_variable([ spectra_length, nodes_1 ], stddev = 1/np.sqrt(spectra_length), name='W1')
+        b1 = bias_variable([nodes_1], name = 'b1') 
+        W_out = weight_variable([ nodes_1, num_categories ], stddev = 1/np.sqrt(nodes_1))
+        b_out = bias_variable([num_categories])
+        N1 = tf.nn.relu( tf.matmul(x_spectra, W1) + b1 )
+        N1_drop = tf.nn.dropout(N1, keep_prob)    
+        
+        N_out = tf.nn.softmax( tf.matmul(N1_drop , W_out) + b_out )
+        L2_Reg = (scale_factor/batch_size)*\
+        ( tf.nn.l2_loss(W1) + tf.nn.l2_loss(W_out)  )
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits( logits = tf.matmul(N1_drop , W_out) + b_out  , labels = y_ ))+L2_Reg
+        
+        tf.add_to_collection('W1', W1)
+        tf.add_to_collection('b1', b1)
+        
+    if layer_2_nodes > 0:
+        nodes_2 = layer_2_nodes
+        W2 = weight_variable([ nodes_1, nodes_2 ], stddev = 1/np.sqrt(nodes_1), name='W2')
+        b2 = bias_variable([nodes_2], name='b2')
+        W_out = weight_variable([ nodes_2, num_categories ], stddev = 1/np.sqrt(nodes_2), name='W_out')
+        b_out = bias_variable([num_categories], name='b_out')
+        N2 = tf.nn.relu( tf.matmul(N1_drop, W2) + b2 )
+        N2_drop = tf.nn.dropout(N2, keep_prob)   
+        
+        N_out = tf.nn.softmax( tf.matmul(N2_drop , W_out) + b_out )
+        L2_Reg = (scale_factor/batch_size)*\
+        ( tf.nn.l2_loss(W1) + tf.nn.l2_loss(W2) + tf.nn.l2_loss(W_out)  )
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits( logits = tf.matmul(N2_drop , W_out) + b_out  , labels = y_ ))+L2_Reg
+
+        tf.add_to_collection('W2', W2)
+        tf.add_to_collection('b2', b2)
+        
+        
+    if layer_3_nodes > 0:
+        nodes_3 = layer_3_nodes
+        W3 = weight_variable([ nodes_2, nodes_3 ], stddev = 1/np.sqrt(nodes_2))
+        b3 = bias_variable([nodes_3])
+        W_out = weight_variable([ nodes_3, num_categories ], stddev = 1/np.sqrt(nodes_3), name='W_out')
+        b_out = bias_variable([num_categories], name='b_out')           
+        N3 = tf.nn.relu( tf.matmul(N2_drop, W3) + b3 )
+        N3_drop = tf.nn.dropout(N3, keep_prob)   
+        
+        N_out = tf.nn.softmax( tf.matmul(N3_drop , W_out) + b_out )
+        L2_Reg = (scale_factor/batch_size)*\
+        ( tf.nn.l2_loss(W1) + tf.nn.l2_loss(W2) + tf.nn.l2_loss(W3) +  tf.nn.l2_loss(W_out)  )
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits( logits = tf.matmul(N3_drop , W_out) + b_out  , labels = y_ ))+L2_Reg
+       
+        tf.add_to_collection('W3', W3)
+        tf.add_to_collection('b3', b3)
     
-
-    nodes_1 = layer_1_nodes
-    W1 = weight_variable([ spectra_length, nodes_1 ], stddev = 1/np.sqrt(spectra_length))
-    b1 = bias_variable([nodes_1]) 
-    W_out = weight_variable([ nodes_1, num_categories ], stddev = 1/np.sqrt(nodes_1))
-    b_out = bias_variable([num_categories])
-    N1 = tf.nn.relu( tf.matmul(x_spectra, W1) + b1 )
-    N1_drop = tf.nn.dropout(N1, keep_prob)    
-
-
-    nodes_2 = layer_2_nodes
-    W2 = weight_variable([ nodes_1, nodes_2 ], stddev = 1/np.sqrt(nodes_1))
-    b2 = bias_variable([nodes_2])
-    W_out = weight_variable([ nodes_2, num_categories ], stddev = 1/np.sqrt(nodes_2))
-    b_out = bias_variable([num_categories])
-    N2 = tf.nn.relu( tf.matmul(N1_drop, W2) + b2 )
-    N2_drop = tf.nn.dropout(N2, keep_prob)   
-
-    #################################################
-    #############  presoftmax gate   ################
-    #################################################
     
-    N_out_presoftmax=tf.matmul(N2_drop , W_out) + b_out
-    N_out_presoftmax_clipped = tf.clip_by_value(N_out_presoftmax,clip_value_min=presoftmax_threshold,clip_value_max=1e20)
+    if layer_4_nodes > 0:
+        nodes_4 = layer_4_nodes
+        W4 = weight_variable([ nodes_3, nodes_4 ], stddev = 1/np.sqrt(nodes_3))
+        b4 = bias_variable([nodes_4])
+        W_out = weight_variable([ nodes_4, num_categories ], stddev = 1/np.sqrt(nodes_4), name='W_out')
+        b_out = bias_variable([num_categories], name='b_out')     
+        N4 = tf.nn.relu( tf.matmul(N3_drop, W4) + b4 )
+        N4_drop = tf.nn.dropout(N4, keep_prob)                         
+        
+        N_out = tf.nn.softmax( tf.matmul(N4_drop , W_out) + b_out )
+        L2_Reg = (scale_factor/batch_size)*\
+        ( tf.nn.l2_loss(W1) + tf.nn.l2_loss(W2) + tf.nn.l2_loss(W3) + tf.nn.l2_loss(W4) + tf.nn.l2_loss(W_out)  )
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits( logits = tf.matmul(N4_drop , W_out) + b_out  , labels = y_ ))+L2_Reg
 
-    # Check where the min threshold was crossed. Output will be 1.0 if threshold crossed, 0.0 if value above threshold
-    N_out_presoftmax_values_to_remove = tf.equal(N_out_presoftmax_clipped,presoftmax_threshold)
-
-    # Change bool values into float 32
-    N_out_presoftmax_values_to_remove = tf.cast(N_out_presoftmax_values_to_remove,dtype=tf.float32)
-
-    # Multiply the locations where threshold crossed by -(presoftmax_threshold+1e-10)
-    N_out_presoftmax_values_to_remove = tf.mul(1-N_out_presoftmax_values_to_remove, N_out_presoftmax)
-
-    # Subtracts presoftmax_threshold+1e-10 from the indicies where presoftmax_threshold was below the threshold
-    # This makes any i in presoftmax_threshold where i<presoftmax_threshold equal 1e-10 
-    N_out_presoftmax_with_gate = tf.add(N_out_presoftmax_values_to_remove,1e-10)
+        tf.add_to_collection('W4', W4)
+        tf.add_to_collection('b4', b4)
+        
+    if optimizer == 'GradientDescent':
+        train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
+    if optimizer == 'Adam':
+        train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
     
-    ####################################
-    ####################################
-    ####################################
+    tf.add_to_collection('N_out', N_out)
+    tf.add_to_collection('cross_entropy', cross_entropy)
+    tf.add_to_collection('L2_Reg', L2_Reg)
     
-    N_out = tf.nn.softmax( N_out_presoftmax_with_gate )
-    L2_Reg = (scale_factor/batch_size)*\
-    ( tf.nn.l2_loss(W1) + tf.nn.l2_loss(W2) + tf.nn.l2_loss(W_out)  )
-    cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits( N_out_presoftmax_with_gate  , y_ ))+L2_Reg
-
-
-
-    train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
-
-
+    
+    
     def ANN_full(_spectra):
         return N_out
-    def ANN_Presoftmax_output(_spectra):
-        return N_out_presoftmax
         
         
     
-    return train_step, L2_Reg, cross_entropy, x_spectra, y_, keep_prob, ANN_full, ANN_Presoftmax_output
+    return train_step, L2_Reg, cross_entropy, x_spectra, y_, keep_prob, ANN_full
     
     
     
