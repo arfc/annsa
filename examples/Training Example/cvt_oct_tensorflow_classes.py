@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.eager as tfe
+from sklearn.model_selection import KFold
+
 
 ##################################################################################################################
 ##################################################################################################################
@@ -101,7 +103,7 @@ class fc_nn(tf.keras.Model):
                 print('Loss at epoch %d: %f' %(i+1, self.loss_fn(input_data, target, training=False).numpy()))
                 
     
-    def fit_batch(self, train_dataset,test_dataset, optimizer, num_epochs=50, verbose=50):
+    def fit_batch(self, train_dataset,test_dataset, optimizer, num_epochs=50, verbose=50, print_errors=True):
         """ Function to train the model, using the selected optimizer and
             for the desired number of epochs.
         """
@@ -113,7 +115,7 @@ class fc_nn(tf.keras.Model):
                 optimizer.apply_gradients(zip(grads, self.variables))
                 all_loss_train.append(self.loss_fn(input_data, target, training=False).numpy())
                 all_loss_test.append(self.loss_fn(test_dataset[0],test_dataset[1], training=False).numpy())
-            if (i==0) | ((i+1)%verbose==0):
+            if print_errors==True and ((i==0) | ((i+1)%verbose==0)):
                 print('Loss at epoch %d: %3.2f %3.2f' %(i+1, np.average(all_loss_train[-10:]), np.average(all_loss_test[-10:])))
         return all_loss_train, all_loss_test
     
@@ -242,7 +244,7 @@ class cnn(tf.keras.Model):
                 print('Loss at epoch %d: %f' %(i+1, self.loss_fn(input_data, target, training=False).numpy()))
                 
     
-    def fit_batch(self, train_dataset,test_dataset, optimizer, num_epochs=50, verbose=50):
+    def fit_batch(self, train_dataset,test_dataset, optimizer, num_epochs=50, verbose=50, print_errors=True):
         """ Function to train the model, using the selected optimizer and
             for the desired number of epochs.
         """
@@ -254,7 +256,7 @@ class cnn(tf.keras.Model):
                 optimizer.apply_gradients(zip(grads, self.variables))
                 all_loss_train.append(self.loss_fn(input_data, target, training=False).numpy())
                 all_loss_test.append(self.loss_fn(test_dataset[0],test_dataset[1], training=False).numpy())
-            if (i==0) | ((i+1)%verbose==0):
+            if print_errors==True and ((i==0) | ((i+1)%verbose==0)):
                 print('Loss at epoch %d: %3.2f %3.2f' %(i+1, np.average(all_loss_train[-10:]), np.average(all_loss_test[-10:])))
         return all_loss_train, all_loss_test
     
@@ -276,10 +278,57 @@ class cnn_model_features(object):
         
         
         
+##################################################################################################################
+##################################################################################################################
+#############################################  Training Wrappers  ################################################
+##################################################################################################################
+##################################################################################################################
         
         
         
+def train_kfolds(training_data,training_keys,number_folds,num_epochs,model_class,model_features,verbose=True):
+
+    kf = KFold(n_splits=number_folds,shuffle=False,random_state=1)
+    kf_split_indicies=kf.split(training_data)
+    
+    
+    
+    
+    kf_errors_train=[]
+    kf_errors_test=[]
+
+    for train_index, test_index in kf.split(training_data):
+
+        X_tensor = tf.constant(training_data[train_index])
+        y_tensor = tf.constant(training_keys[train_index])
+        train_dataset_tensor = tf.data.Dataset.from_tensor_slices((X_tensor, y_tensor))
+        # not iterating through test dataset, don't need to put in TF DataSet
+        test_dataset = (training_data[test_index], training_keys[test_index])
+
+        tf.reset_default_graph()
+        optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
+        model = model_class(model_features)
+        all_loss_train, all_loss_test = model.fit_batch(train_dataset_tensor,
+                                                        test_dataset,
+                                                        optimizer,
+                                                        num_epochs=1,
+                                                        verbose=1,
+                                                        print_errors=False)
+        if verbose==True:
+            print ("training loss: {0:.2f}  testing loss: {0:.2f}".format(all_loss_train[-1],all_loss_test[-1]))
+        kf_errors_train.append(all_loss_train)
+        kf_errors_test.append(all_loss_test)
+    if verbose==True:
+        print ("final average training loss: {0:.2f} final average testing loss: {0:.2f}".format(np.average(kf_errors_train,axis=0)[-1],
+                                                                                             np.average(kf_errors_test,axis=0)[-1]))
         
+    return np.average(kf_errors_train,axis=0)[-1],np.average(kf_errors_test,axis=0)[-1] 
+    
+def save_model(model_id,model,model_features):
+    saver = tfe.Saver(model.variables)
+    saver.save('./model_checkpoints/'+model_id)
+    with open('./model_checkpoints/'+model_id+'_features', 'w') as f:
+        pickle.dump(model_features,f)
         
 class_isotopes=['Am241',
                  'Ba133',
