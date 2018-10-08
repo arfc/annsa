@@ -1,18 +1,20 @@
+import pickle
 import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.eager as tfe
 from sklearn.model_selection import KFold
+from tensorflow.keras.initializers import lecun_normal
 
 
-##################################################################################################################
-##################################################################################################################
-#########################################  Fully Connected Archetecture  #########################################
-##################################################################################################################
-##################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#########################################  Fully Connected Archetecture  ########################################
+#################################################################################################################
+#################################################################################################################
 
-class fc_nn(tf.keras.Model):
+class dnn(tf.keras.Model):
     def __init__(self, model_features):
-        super(fc_nn, self).__init__()
+        super(dnn, self).__init__()
         """ Define here the layers used during the forward-pass 
             of the neural network.
         """
@@ -21,21 +23,19 @@ class fc_nn(tf.keras.Model):
         nodes_layer_1=model_features.nodes_layer_1
         nodes_layer_2=model_features.nodes_layer_2      
         
-        self.gaussiun_noise=tf.keras.layers.GaussianNoise(1.0)
-        
         # define l2 regularization
         self.regularizer = tf.keras.regularizers.l2(l=l2_regularization_scale)        
         # Hidden layer.
         self.dense_layer1 = tf.layers.Dense(nodes_layer_1, 
-                                            activation=tf.nn.tanh,
-                                            kernel_initializer=tf.truncated_normal_initializer(stddev = 1/np.sqrt(1024)),
-                                            #kernel_initializer=glorot_uniform_initializer(),
+                                            activation=tf.nn.relu,
+                                            #kernel_initializer=tf.truncated_normal_initializer(stddev = 1/np.sqrt(1024)),
+                                            kernel_initializer=lecun_normal(),
                                             kernel_regularizer=self.regularizer)
         self.drop1 = tf.layers.Dropout(dropout_probability)
         self.dense_layer2 = tf.layers.Dense(nodes_layer_2,
-                                            activation=None,
-                                            kernel_initializer=tf.truncated_normal_initializer(stddev = 1/np.sqrt(nodes_layer_1)),
-                                            #kernel_initializer=glorot_uniform_initializer(),
+                                            activation=tf.nn.relu,
+                                            #kernel_initializer=tf.truncated_normal_initializer(stddev = 1/np.sqrt(nodes_layer_1)),
+                                            kernel_initializer=lecun_normal(),
                                             kernel_regularizer=self.regularizer)
         self.drop2 = tf.layers.Dropout(dropout_probability)
         # Output layer. No activation.
@@ -51,8 +51,6 @@ class fc_nn(tf.keras.Model):
                 logits: unnormalized predictions.
         """
         # Reshape input data
-        if training==True:
-            x=self.gaussiun_noise(input_data)
         x=tf.reshape(input_data,[-1,1,1024])
         x=self.dense_layer1(x)
         x=self.drop1(x,training)
@@ -110,7 +108,7 @@ class fc_nn(tf.keras.Model):
         all_loss_train=[]
         all_loss_test=[0]
         for i in range(num_epochs):
-            for (input_data, target) in tfe.Iterator(train_dataset.shuffle(1e5).batch(512)):
+            for (input_data, target) in tfe.Iterator(train_dataset.shuffle(1e8).batch(512)):
                 grads = self.grads_fn(input_data, target)
                 optimizer.apply_gradients(zip(grads, self.variables))
                 all_loss_train.append(self.loss_fn(input_data, target, training=False).numpy())
@@ -121,26 +119,28 @@ class fc_nn(tf.keras.Model):
     
     
     
-class fc_nn_model_features(object):
+class dnn_model_features(object):
     
     def __init__(self,learining_rate,
                       l2_regularization_scale,
                       dropout_probability,
                       nodes_layer_1,
-                      nodes_layer_2
+                      nodes_layer_2,
+                      scaler
                 ):
         self.learining_rate=learining_rate
         self.l2_regularization_scale=l2_regularization_scale
         self.dropout_probability=dropout_probability
         self.nodes_layer_1=nodes_layer_1
         self.nodes_layer_2=nodes_layer_2
+        self.scaler=scaler
         
         
-##################################################################################################################
-##################################################################################################################
-#########################################  Convolutional Archetecture  ###########################################
-##################################################################################################################
-##################################################################################################################
+#################################################################################################################
+#################################################################################################################
+#########################################  Convolutional Archetecture  ##########################################
+#################################################################################################################
+#################################################################################################################
 class cnn(tf.keras.Model):
     def __init__(self, model_features):
         super(cnn, self).__init__()
@@ -155,8 +155,6 @@ class cnn(tf.keras.Model):
         cnn_filters=(3, 9)
         cnn_kernel=(20, 55)
         fc_units=256
-        
-        self.gaussiun_noise=tf.keras.layers.GaussianNoise(1.0)
               
         # Convolution layers.
         self.cnn_layer1=tf.layers.Conv1D(filters=cnn_filters[0],
@@ -176,9 +174,11 @@ class cnn(tf.keras.Model):
         self.flatten1=tf.layers.Flatten()
         self.dropout1=tf.layers.Dropout(dropout_probability)
         self.dense_layer1 = tf.layers.Dense(nodes_layer_1,
-                                            activation='relu')
+                                            #kernel_initializer=lecun_normal(),
+                                            activation=tf.nn.softsign)
         self.dropout2=tf.layers.Dropout(dropout_probability)
         self.output_layer = tf.layers.Dense(57,
+                                            #kernel_initializer=lecun_normal(),
                                             activation=None)
         
     def predict_logits(self, input_data, training=True):
@@ -191,8 +191,6 @@ class cnn(tf.keras.Model):
                 logits: unnormalized predictions.
         """
         # Reshape input data
-        if training==True:
-            x=self.gaussiun_noise(input_data)
         x=tf.reshape(input_data,[-1,1024,1])
         x=self.cnn_layer1(x)
         x=self.max_pool1(x)
@@ -251,7 +249,7 @@ class cnn(tf.keras.Model):
         all_loss_train=[]
         all_loss_test=[0]
         for i in range(num_epochs):
-            for (input_data, target) in tfe.Iterator(train_dataset.shuffle(1e5).batch(512)):
+            for (input_data, target) in tfe.Iterator(train_dataset.shuffle(1e8).batch(512)):
                 grads = self.grads_fn(input_data, target)
                 optimizer.apply_gradients(zip(grads, self.variables))
                 all_loss_train.append(self.loss_fn(input_data, target, training=False).numpy())
@@ -268,42 +266,49 @@ class cnn_model_features(object):
                       l2_regularization_scale,
                       dropout_probability,
                       nodes_layer_1,
-                      nodes_layer_2
+                      nodes_layer_2,
+                      scaler
                 ):
         self.learining_rate=learining_rate
         self.l2_regularization_scale=l2_regularization_scale
         self.dropout_probability=dropout_probability
         self.nodes_layer_1=nodes_layer_1
         self.nodes_layer_2=nodes_layer_2
-        
+        self.scaler=scaler
         
         
 ##################################################################################################################
 ##################################################################################################################
-#############################################  Training Wrappers  ################################################
+#############################################  Training Functions  ###############################################
 ##################################################################################################################
 ##################################################################################################################
         
         
         
-def train_kfolds(training_data,training_keys,number_folds,num_epochs,model_class,model_features,verbose=True):
+def train_kfolds(training_data,
+                 training_keys,
+                 number_folds,
+                 num_epochs,
+                 model_class,
+                 model_features,
+                 verbose=True):
 
     kf = KFold(n_splits=number_folds,shuffle=False,random_state=1)
     kf_split_indicies=kf.split(training_data)
-    
-    
-    
     
     kf_errors_train=[]
     kf_errors_test=[]
 
     for train_index, test_index in kf.split(training_data):
-
-        X_tensor = tf.constant(training_data[train_index])
+        
+        training_data_scaled=model_features.scaler.fit_transform(training_data[train_index])
+        testing_data_scaled=model_features.scaler.transform(training_data[test_index])
+        
+        X_tensor = tf.constant(training_data_scaled)
         y_tensor = tf.constant(training_keys[train_index])
         train_dataset_tensor = tf.data.Dataset.from_tensor_slices((X_tensor, y_tensor))
         # not iterating through test dataset, don't need to put in TF DataSet
-        test_dataset = (training_data[test_index], training_keys[test_index])
+        test_dataset = (testing_data_scaled, training_keys[test_index])
 
         tf.reset_default_graph()
         optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
