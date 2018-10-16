@@ -2,9 +2,9 @@ import pickle
 import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.eager as tfe
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 from tensorflow.keras.initializers import lecun_normal
-
+import time
 
 #################################################################################################################
 #################################################################################################################
@@ -88,33 +88,52 @@ class dnn(tf.keras.Model):
         with tfe.GradientTape() as tape:
             loss = self.loss_fn(input_data, target) 
         return tape.gradient(loss, self.variables)
+
     
-    def fit(self, input_data, target, optimizer, num_epochs=500, verbose=50):
-        """ Function to train the model, using the selected optimizer and
-            for the desired number of epochs.
-        """
-        for i in range(num_epochs):
-            grads = self.grads_fn(input_data, target)
-            optimizer.apply_gradients(zip(grads, self.variables))
-            if (i==0) | ((i+1)%verbose==0):
-                print('Loss at epoch %d: %f' %(i+1, self.loss_fn(input_data, target, training=False).numpy()))
-                
-    
-    def fit_batch(self, train_dataset,test_dataset, optimizer, num_epochs=50, verbose=50, print_errors=True):
+    def fit_batch(self,
+                  train_dataset,
+                  test_dataset,
+                  optimizer,
+                  num_epochs=50,
+                  verbose=50,
+                  print_errors=True,
+                  early_stopping_patience=0):
         """ Function to train the model, using the selected optimizer and
             for the desired number of epochs.
         """
         all_loss_train=[]
-        all_loss_test=[0]
-        for i in range(num_epochs):
+        all_loss_test=[]
+        time_start=time.time()
+        early_stopping_flag=False
+        for epoch in range(num_epochs):
             for (input_data, target) in tfe.Iterator(train_dataset.shuffle(1e8).batch(self.batch_size)):
                 input_data=np.random.poisson(input_data).astype(float)
                 grads=self.grads_fn(input_data, target)
                 optimizer.apply_gradients(zip(grads, self.variables))
                 all_loss_train.append(self.loss_fn(input_data, target, training=False).numpy())
+                if early_stopping_patience==0:
+                    all_loss_test.append(self.loss_fn(test_dataset[0],test_dataset[1], training=False).numpy())
+            
+            # Save error for early stopping
+            if early_stopping_patience!=0:
                 all_loss_test.append(self.loss_fn(test_dataset[0],test_dataset[1], training=False).numpy())
-            if print_errors==True and ((i==0) | ((i+1)%verbose==0)):
-                print('Loss at epoch %d: %3.2f %3.2f' %(i+1, np.average(all_loss_train[-10:]), np.average(all_loss_test[-10:])))
+                tmp_min_test_error=all_loss_test[-1]
+                if epoch==0:
+                    patience_counter=0
+                    min_test_error=tmp_min_test_error
+                elif (epoch>0) and (tmp_min_test_error<min_test_error):
+                    min_test_error=tmp_min_test_error
+                    patience_counter=0
+                else:
+                    patience_counter+=1
+                time_taken=time.time()-time_start
+                if (patience_counter>=early_stopping_patience) or (time_taken>300):
+                    early_stopping_flag=True
+                    
+            if print_errors==True and ((epoch==0) | ((epoch+1)%verbose==0)):
+                print('Loss at epoch %d: %3.2f %3.2f' %(epoch+1, all_loss_train[-1], all_loss_test[-1]))       
+            if early_stopping_flag==True:
+                break
         return all_loss_train, all_loss_test
     
     
@@ -227,12 +246,20 @@ class cnn(tf.keras.Model):
             loss = self.loss_fn(input_data, target) 
         return tape.gradient(loss, self.variables)
     
-    def fit_batch(self, train_dataset,test_dataset, optimizer, num_epochs=50, verbose=50, print_errors=True):
+    def fit_batch(self,
+                  train_dataset,
+                  test_dataset,
+                  optimizer,
+                  num_epochs=50,
+                  verbose=50,
+                  print_errors=True,
+                  early_stopping_patience=0):
         """ Function to train the model, using the selected optimizer and
             for the desired number of epochs.
         """
         all_loss_train=[]
-        all_loss_test=[0]
+        all_loss_test=[]
+        time_start=time.time()
         for i in range(num_epochs):
             for (input_data, target) in tfe.Iterator(train_dataset.shuffle(1e8).batch(self.batch_size)):
                 input_data=np.random.poisson(input_data).astype(float)
@@ -242,6 +269,22 @@ class cnn(tf.keras.Model):
                 all_loss_test.append(self.loss_fn(test_dataset[0],test_dataset[1], training=False).numpy())
             if print_errors==True and ((i==0) | ((i+1)%verbose==0)):
                 print('Loss at epoch %d: %3.2f %3.2f' %(i+1, np.average(all_loss_train[-10:]), np.average(all_loss_test[-10:])))
+            
+            # Save error for early stopping
+            if early_stopping_patience!=0:
+                tmp_min_test_error=all_loss_test[-1]
+                if i==0:
+                    patience_counter=0
+                    min_test_error=tmp_min_test_error
+                elif (i>0) and (tmp_min_test_error<min_test_error):
+                    min_test_error=tmp_min_test_error
+                    patience_counter=0
+                else:
+                    patience_counter+=1
+                time_taken=time.time()-time_start
+                if (patience_counter>early_stopping_patience) or (time_taken>300):
+                    continue
+                
         return all_loss_train, all_loss_test
     
     
@@ -285,13 +328,12 @@ def train_kfolds(training_data,
                  model_features,
                  verbose=True):
 
-    kf = KFold(n_splits=number_folds,shuffle=False,random_state=1)
-    kf_split_indicies=kf.split(training_data)
+    skf = StratifiedKFold(n_splits=number_folds,shuffle=True,random_state=1)
     
-    kf_errors_train=[]
-    kf_errors_test=[]
+    errors_train=[]
+    errors_test=[]
 
-    for train_index, test_index in kf.split(training_data):
+    for train_index, test_index in skf.split(training_data,training_keys):
         
         # only fit scaler to training data
         model_features.scaler.fit(training_data[train_index])
@@ -312,13 +354,60 @@ def train_kfolds(training_data,
                                                         print_errors=False)
         if verbose==True:
             print ("training loss: {0:.2f}  testing loss: {0:.2f}".format(all_loss_train[-1],all_loss_test[-1]))
-        kf_errors_train.append(all_loss_train)
-        kf_errors_test.append(all_loss_test)
+        errors_train.append(all_loss_train)
+        errors_test.append(all_loss_test)
     if verbose==True:
-        print ("final average training loss: {0:.2f} final average testing loss: {0:.2f}".format(np.average(kf_errors_train,axis=0)[-1],
-                                                                                             np.average(kf_errors_test,axis=0)[-1]))
+        print ("final average training loss: {0:.2f} final average testing loss: {0:.2f}".format(np.average(errors_train,axis=0)[-1],
+                                                                                             np.average(errors_test,axis=0)[-1]))
         
-    return np.average(kf_errors_train,axis=0)[-1],np.average(kf_errors_test,axis=0)[-1] 
+    return np.average(errors_train,axis=0)[-1],np.average(errors_test,axis=0)[-1] 
+    
+    
+def train_earlystopping(training_data,
+                        training_keys,
+                        testing_data,
+                        testing_keys,
+                        model_class,
+                        model_features,
+                        num_epochs,
+                        early_stopping_patience,
+                        verbose=True,
+                        fit_batch_verbose=5):
+    
+    # only fit scaler to training data
+    X_tensor = tf.constant(training_data)
+    y_tensor = tf.constant(training_keys)
+    train_dataset_tensor = tf.data.Dataset.from_tensor_slices((X_tensor, y_tensor))
+    # not iterating through test dataset, don't need to put in TF DataSet
+    test_dataset = (testing_data,testing_keys)
+
+    tf.reset_default_graph()
+    optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
+    model = model_class(model_features)
+    all_loss_train, all_loss_test = model.fit_batch(train_dataset_tensor,
+                                                    test_dataset,
+                                                    optimizer,
+                                                    num_epochs=num_epochs,
+                                                    verbose=fit_batch_verbose,
+                                                    early_stopping_patience=early_stopping_patience,
+                                                    print_errors=True)
+    if verbose==True:
+        print ("training loss: {0:.2f}  testing loss: {0:.2f}".format(all_loss_train[-1],all_loss_test[-1]))
+
+    return all_loss_test
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
 def save_model(folder_name,model_id,model,model_features):
     saver = tfe.Saver(model.variables)
