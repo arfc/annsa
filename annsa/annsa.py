@@ -5,7 +5,146 @@ from scipy import signal
 import datetime
 import os
 from scipy.ndimage.interpolation import zoom
+import tensorflow as tf
+import tensorflow.contrib.eager as tfe
 
+class spectral_autoencoder(tf.keras.Model):
+    def __init__(self, model_features):
+        super(spectral_autoencoder, self).__init__()
+        """ Define here the layers used during the forward-pass 
+            of the neural network.
+        """
+        self.nodes_encoder1=model_features.nodes_encoder1
+        self.nodes_encoder2=model_features.nodes_encoder2
+        self.batch_size=model_features.batch_size
+        dropout_keep_rate=model_features.dropout_keep_rate
+        # Encoder.
+        self.dense_encoder1 = tf.layers.Dense(self.nodes_encoder1, 
+                                            activation=tf.nn.relu,
+                                            kernel_initializer=tf.truncated_normal_initializer(stddev=1/np.sqrt(1024)))
+        self.dense_encoder1_drop = tf.layers.Dropout(dropout_keep_rate)
+        if self.nodes_encoder2>0:
+            self.dense_encoder2 = tf.layers.Dense(self.nodes_encoder2, 
+                                                activation=tf.nn.relu,
+                                                kernel_initializer=tf.truncated_normal_initializer(stddev=1/np.sqrt(self.nodes_encoder1)))
+            self.dense_encoder2_drop = tf.layers.Dropout(dropout_keep_rate)
+        # Decoder.
+        if self.nodes_encoder2>0:
+            self.dense_decoder1 = tf.layers.Dense(self.nodes_encoder1,
+                                                activation=tf.nn.relu,
+                                                kernel_initializer=tf.truncated_normal_initializer(stddev = 1/np.sqrt(self.nodes_encoder2)))
+            self.dense_decoder1_drop = tf.layers.Dropout(dropout_keep_rate)
+            
+        self.dense_decoder_out = tf.layers.Dense(1024,
+                                            activation=None,
+                                            kernel_initializer=tf.truncated_normal_initializer(stddev = 1/np.sqrt(self.nodes_encoder1)))
+        self.dense_decoder1_drop = tf.layers.Dropout(dropout_keep_rate)
+        
+    def encoder(self, input_data):
+        """ Runs a forward-pass through the network. Only outputs logits for loss function. 
+            This is because tf.nn.softmax_cross_entropy_with_logits calculates softmax internally.   
+            Note, dropout training is true here.
+            Args:
+                input_data: 2D tensor of shape (n_samples, n_features).   
+            Returns:
+                logits: unnormalized predictions.
+        """
+        # Reshape input data
+        x=tf.reshape(input_data,[-1,1,1024])
+        x=self.dense_encoder1(x)
+        x=self.dense_encoder1_drop(x)
+        encoding=self.dense_encoder1_drop(x)
+        if self.nodes_encoder2>0:
+            x=self.dense_encoder2(x)
+            encoding=self.dense_encoder2_drop(x)
+        return encoding
+    
+    def decoder(self, encoding):
+        """ Runs a forward-pass through the network and uses softmax output. Dropout training is off, this is 
+            not used for gradient calculations in loss function.
+            Args:
+                input_data: 2D tensor of shape (n_samples, n_features).   
+            Returns:
+                logits: unnormalized predictions.
+        """
+        # Reshape input data
+        
+        
+        decoded_output=self.dense_decoder_out(encoding)
+        
+        if self.nodes_encoder2>0:
+            decoded_output=self.dense_decoder1(encoding)
+            decoded_output=self.dense_decoder1_drop(decoded_output)
+            decoded_output=self.dense_decoder_out(decoded_output)
+            
+        return decoded_output
+    
+    def loss_fn(self, input_data, target):
+        """ Defines the loss function used during 
+            training.         
+        """
+        ae_inputs=input_data
+        ae_outputs=self.decoder(self.encoder(input_data))
+        loss = tf.reduce_mean(tf.square(ae_outputs - ae_inputs))
+        return loss
+    
+    def grads_fn(self, input_data, target):
+        """ Dynamically computes the gradients of the loss value
+            with respect to the parameters of the model, in each
+            forward pass.
+        """
+        with tfe.GradientTape() as tape:
+            loss = self.loss_fn(input_data, target) 
+        return tape.gradient(loss, self.variables)
+    
+    def fit(self, input_data, target, optimizer, num_epochs=500, verbose=50):
+        """ Function to train the model, using the selected optimizer and
+            for the desired number of epochs.
+        """
+        for i in range(num_epochs):
+            grads = self.grads_fn(input_data, target)
+            optimizer.apply_gradients(zip(grads, self.variables))
+            if (i==0) | ((i+1)%verbose==0):
+                print('Loss at epoch %d: %f' %(i+1, self.loss_fn(input_data, target).numpy()))
+                
+    
+    def fit_batch(self, train_dataset,test_dataset, optimizer, num_epochs=50, verbose=50):
+        """ Function to train the model, using the selected optimizer and
+            for the desired number of epochs.
+        """
+        all_loss_train=[]
+        all_loss_test=[0]
+        for i in range(num_epochs):
+            for (input_data, target) in tfe.Iterator(train_dataset.shuffle(1e5).batch(self.batch_size)):
+                grads = self.grads_fn(input_data, target)
+                optimizer.apply_gradients(zip(grads, self.variables))
+                all_loss_train.append(self.loss_fn(input_data, target).numpy())
+                all_loss_test.append(self.loss_fn(test_dataset[0],test_dataset[1]).numpy())
+            if (i==0) | ((i+1)%verbose==0):
+                print('Loss at epoch %d: %3.2f %3.2f' %(i+1, np.average(all_loss_train[-10:]), np.average(all_loss_test[-10:])))
+        return all_loss_train, all_loss_test
+    
+    
+    
+    
+class spectral_autoencoder_model_features(object):
+    
+    def __init__(self,learining_rate,
+                      nodes_encoder1,
+                      nodes_encoder2,   
+                      batch_size,
+                      dropout_keep_rate
+                ):
+        self.learining_rate=learining_rate
+        self.nodes_encoder1=nodes_encoder1
+        self.nodes_encoder2=nodes_encoder2
+        self.batch_size=batch_size
+        self.training_error=[]
+        self.testing_error=[]
+        self.dropout_keep_rate=dropout_keep_rate
+    
+    
+    
 def write_time_and_date():
     os.environ['TZ'] = 'CST6CDT'
     return "Time" + datetime.datetime.now().strftime("_%H_%M_%S_")+\
@@ -31,6 +170,78 @@ def bias_variable(shape,name='none'):
 
 
 
+    
+    
+def train_fc_ann(training_data,training_key,testing_data,testing_key,my_ANN_strucutre,train_step, L2_Reg, cross_entropy, x_spectra, y_, keep_prob, ANN_full,saved_model_name,iters=100):
+    with tf.Session() as sess:
+
+        sess.run(tf.global_variables_initializer())
+        all_vars = tf.global_variables()
+        saver = tf.train.Saver(all_vars)
+
+        def get_error_on_dataset(data,key):
+            return sess.run(cross_entropy, 
+                        feed_dict={
+                                x_spectra: data,
+                                y_:        key,
+                                keep_prob: 1.0})
+
+
+        loss_train        = np.zeros(iters)
+        loss_test         = np.zeros(iters)
+        L2_all            = np.zeros(iters)
+
+        for i in range(iters):
+
+            batch_indicies = np.random.choice(range(training_data.shape[0]), my_ANN_strucutre.batch_size, replace=False)
+            batch_indicies_for_loss_function = np.random.choice(range(training_data.shape[0]), 900, replace=False)
+
+            train_step.run( 
+                            feed_dict = {
+                                    x_spectra: training_data[batch_indicies],
+                                    y_:        training_key[batch_indicies], 
+                                               keep_prob: my_ANN_strucutre.dropout_rate} )   
+
+
+            loss_train[i] = get_error_on_dataset(training_data[batch_indicies_for_loss_function],
+                                                 training_key[batch_indicies_for_loss_function])
+
+            loss_test[i] = get_error_on_dataset(testing_data,
+                                                 testing_key)
+
+            L2_all[i] = sess.run(L2_Reg)
+
+
+            print '\1b[2k\r',    
+            print('Epoch %s of %s, train error is %s, test error is %s' %(i,iters,(loss_train-L2_all)[i], (loss_test-L2_all)[i])),
+
+        loss_train = (loss_train-L2_all)[0:i]
+        loss_test = (loss_test-L2_all)[0:i]
+
+
+        L2_all = L2_all[0:i]
+        
+        # Save model
+        saver.save(sess, saved_model_name)
+        
+    return L2_all, saver
+    
+    
+def run_fc_ann(spectrum, saved_model_name):
+
+    with tf.Session() as sess:
+        # Initialize variables
+        sess.run(tf.global_variables_initializer())
+
+        # Restore model weights from previously saved model
+        saver.restore(sess, saved_model_name)
+
+        an.results2(sess.run(ANN_full(x_spectra), feed_dict={x_spectra: spectrum.reshape(1,1024),keep_prob: 1.0 })[0],5)
+
+    
+    
+    
+    
 
 class ANN_structure_details(object):
     def __init__(self, 
@@ -183,9 +394,128 @@ def make_ANN_structure(my_ANN_strucutre):
     
     return train_step, L2_Reg, cross_entropy, x_spectra, y_, keep_prob, ANN_full
     
+
+
+def make_CNN_structure(my_CNN_strucutre):
+    '''
+    Author: Mark Kamuda (7/1/17)
+    
+    This function creates the TensorFlow code necessary to create and run a neural network.
+    
+    Function uses the my_ANN_strucutre object 
+    
+    Function can only make up to a 4 hidden-layer network. 
+    Addition of extra layers is easy to implemnt.
+    
+    '''
+    
+    layer_1_nodes  = my_ANN_strucutre.layer_1_nodes
+    layer_2_nodes  = my_ANN_strucutre.layer_2_nodes
+    layer_3_nodes  = my_ANN_strucutre.layer_3_nodes
+    layer_4_nodes  = my_ANN_strucutre.layer_4_nodes
+    learning_rate  = my_ANN_strucutre.learning_rate
+    dropout_rate   = my_ANN_strucutre.dropout_rate
+    optimizer      = my_ANN_strucutre.optimizer
+    scale_factor   = my_ANN_strucutre.scale_factor
+    L2_batch_size  = my_ANN_strucutre.L2_batch_size
+    spectra_length = my_ANN_strucutre.spectra_length
+    num_categories = my_ANN_strucutre.num_categories    
+    batch_size     = my_ANN_strucutre.batch_size
     
     
-  
+    
+    x_spectra = tf.placeholder(tf.float32, [None,spectra_length])
+    y_ = tf.placeholder(tf.float32, [None,num_categories])
+    keep_prob = tf.placeholder(tf.float32)
+
+    if layer_1_nodes > 0:
+        nodes_1 = layer_1_nodes
+        W1 = weight_variable([ spectra_length, nodes_1 ], stddev = 1/np.sqrt(spectra_length), name='W1')
+        b1 = bias_variable([nodes_1], name = 'b1') 
+        W_out = weight_variable([ nodes_1, num_categories ], stddev = 1/np.sqrt(nodes_1))
+        b_out = bias_variable([num_categories])
+        N1 = tf.nn.relu( tf.matmul(x_spectra, W1) + b1 )
+        N1_drop = tf.nn.dropout(N1, keep_prob)    
+        
+        N_out = tf.nn.softmax( tf.matmul(N1_drop , W_out) + b_out )
+        L2_Reg = (scale_factor/batch_size)*\
+        ( tf.nn.l2_loss(W1) + tf.nn.l2_loss(W_out)  )
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits( logits = tf.matmul(N1_drop , W_out) + b_out  , labels = y_ ))+L2_Reg
+        
+        tf.add_to_collection('W1', W1)
+        tf.add_to_collection('b1', b1)
+        
+    if layer_2_nodes > 0:
+        nodes_2 = layer_2_nodes
+        W2 = weight_variable([ nodes_1, nodes_2 ], stddev = 1/np.sqrt(nodes_1), name='W2')
+        b2 = bias_variable([nodes_2], name='b2')
+        W_out = weight_variable([ nodes_2, num_categories ], stddev = 1/np.sqrt(nodes_2), name='W_out')
+        b_out = bias_variable([num_categories], name='b_out')
+        N2 = tf.nn.relu( tf.matmul(N1_drop, W2) + b2 )
+        N2_drop = tf.nn.dropout(N2, keep_prob)   
+        
+        N_out = tf.nn.softmax( tf.matmul(N2_drop , W_out) + b_out )
+        L2_Reg = (scale_factor/batch_size)*\
+        ( tf.nn.l2_loss(W1) + tf.nn.l2_loss(W2) + tf.nn.l2_loss(W_out)  )
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits( logits = tf.matmul(N2_drop , W_out) + b_out  , labels = y_ ))+L2_Reg
+
+        tf.add_to_collection('W2', W2)
+        tf.add_to_collection('b2', b2)
+        
+        
+    if layer_3_nodes > 0:
+        nodes_3 = layer_3_nodes
+        W3 = weight_variable([ nodes_2, nodes_3 ], stddev = 1/np.sqrt(nodes_2))
+        b3 = bias_variable([nodes_3])
+        W_out = weight_variable([ nodes_3, num_categories ], stddev = 1/np.sqrt(nodes_3), name='W_out')
+        b_out = bias_variable([num_categories], name='b_out')           
+        N3 = tf.nn.relu( tf.matmul(N2_drop, W3) + b3 )
+        N3_drop = tf.nn.dropout(N3, keep_prob)   
+        
+        N_out = tf.nn.softmax( tf.matmul(N3_drop , W_out) + b_out )
+        L2_Reg = (scale_factor/batch_size)*\
+        ( tf.nn.l2_loss(W1) + tf.nn.l2_loss(W2) + tf.nn.l2_loss(W3) +  tf.nn.l2_loss(W_out)  )
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits( logits = tf.matmul(N3_drop , W_out) + b_out  , labels = y_ ))+L2_Reg
+       
+        tf.add_to_collection('W3', W3)
+        tf.add_to_collection('b3', b3)
+    
+    
+    if layer_4_nodes > 0:
+        nodes_4 = layer_4_nodes
+        W4 = weight_variable([ nodes_3, nodes_4 ], stddev = 1/np.sqrt(nodes_3))
+        b4 = bias_variable([nodes_4])
+        W_out = weight_variable([ nodes_4, num_categories ], stddev = 1/np.sqrt(nodes_4), name='W_out')
+        b_out = bias_variable([num_categories], name='b_out')     
+        N4 = tf.nn.relu( tf.matmul(N3_drop, W4) + b4 )
+        N4_drop = tf.nn.dropout(N4, keep_prob)                         
+        
+        N_out = tf.nn.softmax( tf.matmul(N4_drop , W_out) + b_out )
+        L2_Reg = (scale_factor/batch_size)*\
+        ( tf.nn.l2_loss(W1) + tf.nn.l2_loss(W2) + tf.nn.l2_loss(W3) + tf.nn.l2_loss(W4) + tf.nn.l2_loss(W_out)  )
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits( logits = tf.matmul(N4_drop , W_out) + b_out  , labels = y_ ))+L2_Reg
+
+        tf.add_to_collection('W4', W4)
+        tf.add_to_collection('b4', b4)
+        
+    if optimizer == 'GradientDescent':
+        train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(cross_entropy)
+    if optimizer == 'Adam':
+        train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
+    
+    tf.add_to_collection('N_out', N_out)
+    tf.add_to_collection('cross_entropy', cross_entropy)
+    tf.add_to_collection('L2_Reg', L2_Reg)
+    
+    
+    
+    def CNN_full(_spectra):
+        return N_out
+        
+        
+    
+    return train_step, L2_Reg, cross_entropy, x_spectra, y_, keep_prob, CNN_full
+
     
 def scale_data(data, mode='zscore'):
     '''
@@ -223,7 +553,7 @@ def scale_data(data, mode='zscore'):
         
         
     else:
-        print 'do better at spelling'
+        print('do better at spelling')
 
         
         
@@ -337,7 +667,7 @@ def results2(res,number_isotopes_displayed):
     index = [i[0] for i in sorted(enumerate(res), key=lambda x:x[1])]
     index = list(reversed(index))
     for i in range(number_isotopes_displayed):
-        print isotopes[index[i]], round(res[index[i]],3)
+        print (isotopes[index[i]], round(res[index[i]],3))
 
     
 def load_template_spectra_from_folder(parent_folder,spectrum_identifier, LLD=10):
@@ -387,8 +717,8 @@ def results2(res,number_isotopes_displayed):
     index = [i[0] for i in sorted(enumerate(res), key=lambda x:x[1])]
     index = list(reversed(index))
     for i in range(number_isotopes_displayed):
-        print isotopes[index[i]], res[index[i]]
-        
+        print (isotopes[index[i]], res[index[i]])
+               
 def zoom_spectrum(spectrum,zoom_strength):
     spectrum= np.abs(zoom( spectrum , zoom_strength))
     if zoom_strength < 1.0:
@@ -643,7 +973,7 @@ def fun_generate_isotope_dataset(N_samples):
         Train_spectra[j]     = computed_spectrum
         Train_spectra_key[j] = temp_key
     
-        print '\1b[2k\r',    
+        print ('\1b[2k\r'),    
         print('Epoch %s of %s' %(j ,N_samples)),
 
         # Train_spectra, Train_spectra_key, counts
@@ -735,6 +1065,40 @@ isotopes_GADRAS_ID = [
     , 'ThoriumInSoil.spe' #29
     , 'UraniumInSoil.spe'  #30
     , 'PotassiumInSoil.spe'  #31
+                 ]
+
+isotopes_sources_GADRAS_ID = [
+      '241AM'   #00
+    , '133BA'
+    , '57CO'
+    , '60CO'
+    , '137CS'
+    , '51CR'
+    , '152EU'
+    , '67GA'
+    , '123I'
+    , '125I'   #09
+    
+    , '131I'   #10
+    , '111IN'
+    , '192IR'
+    , '238U'
+    , '177MLU' 
+    , '99MO'
+    , '237NP'
+    , '103PD'
+    , '239PU'
+    , '240PU'  #19
+    
+    , '226RA'   #20
+    , '75SE'
+    , '153SM'
+    , '99TCM'
+    , '133XE'
+    , '201TL'
+    , '204TL'
+    , '233U'
+    , '235U'   #28
                  ]
 
 

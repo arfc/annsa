@@ -97,7 +97,8 @@ class dnn(tf.keras.Model):
                   num_epochs=50,
                   verbose=50,
                   print_errors=True,
-                  early_stopping_patience=0):
+                  early_stopping_patience=0,
+                  max_time=300):
         """ Function to train the model, using the selected optimizer and
             for the desired number of epochs.
         """
@@ -127,7 +128,7 @@ class dnn(tf.keras.Model):
                 else:
                     patience_counter+=1
                 time_taken=time.time()-time_start
-                if (patience_counter>=early_stopping_patience) or (time_taken>300):
+                if (patience_counter>=early_stopping_patience) or (time_taken>max_time):
                     early_stopping_flag=True
                     
             if print_errors==True and ((epoch==0) | ((epoch+1)%verbose==0)):
@@ -253,38 +254,44 @@ class cnn(tf.keras.Model):
                   num_epochs=50,
                   verbose=50,
                   print_errors=True,
-                  early_stopping_patience=0):
+                  early_stopping_patience=0,
+                  max_time=300):
         """ Function to train the model, using the selected optimizer and
             for the desired number of epochs.
         """
         all_loss_train=[]
         all_loss_test=[]
         time_start=time.time()
-        for i in range(num_epochs):
+        early_stopping_flag=False
+        for epoch in range(num_epochs):
             for (input_data, target) in tfe.Iterator(train_dataset.shuffle(1e8).batch(self.batch_size)):
                 input_data=np.random.poisson(input_data).astype(float)
                 grads=self.grads_fn(input_data, target)
                 optimizer.apply_gradients(zip(grads, self.variables))
                 all_loss_train.append(self.loss_fn(input_data, target, training=False).numpy())
-                all_loss_test.append(self.loss_fn(test_dataset[0],test_dataset[1], training=False).numpy())
-            if print_errors==True and ((i==0) | ((i+1)%verbose==0)):
-                print('Loss at epoch %d: %3.2f %3.2f' %(i+1, np.average(all_loss_train[-10:]), np.average(all_loss_test[-10:])))
+                if early_stopping_patience==0:
+                    all_loss_test.append(self.loss_fn(test_dataset[0],test_dataset[1], training=False).numpy())
             
             # Save error for early stopping
             if early_stopping_patience!=0:
+                all_loss_test.append(self.loss_fn(test_dataset[0],test_dataset[1], training=False).numpy())
                 tmp_min_test_error=all_loss_test[-1]
-                if i==0:
+                if epoch==0:
                     patience_counter=0
                     min_test_error=tmp_min_test_error
-                elif (i>0) and (tmp_min_test_error<min_test_error):
+                elif (epoch>0) and (tmp_min_test_error<min_test_error):
                     min_test_error=tmp_min_test_error
                     patience_counter=0
                 else:
                     patience_counter+=1
                 time_taken=time.time()-time_start
-                if (patience_counter>early_stopping_patience) or (time_taken>300):
-                    continue
-                
+                if (patience_counter>=early_stopping_patience) or (time_taken>max_time):
+                    early_stopping_flag=True
+                    
+            if print_errors==True and ((epoch==0) | ((epoch+1)%verbose==0)):
+                print('Loss at epoch %d: %3.2f %3.2f' %(epoch+1, all_loss_train[-1], all_loss_test[-1]))       
+            if early_stopping_flag==True:
+                break
         return all_loss_train, all_loss_test
     
     
@@ -426,13 +433,12 @@ def load_model(model_folder,model_id,model_class,training_data_length=1024,train
     optimizer = tf.train.AdamOptimizer(new_model_features.learining_rate)
     model = model_class(new_model_features)
     
-    dummy_data=new_model_features.scaler.transform(np.ones([2,training_data_length]))
-    
+    dummy_data=np.ones([10,training_data_length])
     
     X_tensor = tf.constant(dummy_data)
-    y_tensor = tf.constant(np.ones([2,training_key_length]))
+    y_tensor = tf.constant(np.ones([10,training_key_length]))
     dummy_train_dataset = tf.data.Dataset.from_tensor_slices((X_tensor, y_tensor))
-    dummy_test_dataset = (dummy_data, np.ones([2,training_key_length]))
+    dummy_test_dataset = (dummy_data, np.ones([10,training_key_length]))
     
     _, _ = model.fit_batch(dummy_train_dataset,
                            dummy_test_dataset,
