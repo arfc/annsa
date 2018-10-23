@@ -1,6 +1,6 @@
-Model fitting examples
-----------------------
+Dataset Creation example
+------------------------
 
-These are a collection of examples demonstrating the model fitting
-functionality of shablona, as well as how examples can be compiled into
-a gallery with `sphinx-gallery`.
+This a Jupyter notebook that demonstrates how to simulate a dataset of gamma-ray template spectra.
+
+
