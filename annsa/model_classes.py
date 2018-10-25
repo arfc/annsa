@@ -13,7 +13,22 @@ import time
 #################################################################################################################
 
 class dnn(tf.keras.Model):
+    """Defines dnn structure and training functions.
+
+    Attributes:
+        attr1 (): Description of `attr1`.
+        attr2 (): Description of `attr2`.
+
+    """
     def __init__(self, model_features):
+        """Initializes dnn structure with model features.
+
+        Args:
+            param1 (): Description of `param1`.
+            param2 (): Description of `param2`.
+            param3 (): Description of `param3`.
+
+        """
         super(dnn, self).__init__()
         """ Define here the layers used during the forward-pass 
             of the neural network.
