@@ -418,7 +418,7 @@ def train_kfolds(training_data,
         errors_test.append(all_loss_test)
     if verbose is True:
         print(("final average training loss: {0:.2f} "
-                "final average testing loss: {0:.2f}").format(
+               "final average testing loss: {0:.2f}").format(
                     np.average(errors_train, axis=0)[-1],
                     np.average(errors_test, axis=0)[-1]))
 
