@@ -412,12 +412,12 @@ def train_kfolds(training_data,
                                                         verbose=1,
                                                         print_errors=False)
         if verbose is True:
-            print ("training loss: {0:.2f}  testing loss: {0:.2f}".format(
+            print("training loss: {0:.2f}  testing loss: {0:.2f}".format(
                 all_loss_train[-1], all_loss_test[-1]))
         errors_train.append(all_loss_train)
         errors_test.append(all_loss_test)
     if verbose is True:
-        print (("final average training loss: {0:.2f} "
+        print(("final average training loss: {0:.2f} "
                 "final average testing loss: {0:.2f}").format(
                     np.average(errors_train, axis=0)[-1],
                     np.average(errors_test, axis=0)[-1]))
@@ -457,7 +457,7 @@ def train_earlystopping(training_data,
         early_stopping_patience=early_stopping_patience,
         print_errors=True)
     if verbose is True:
-        print ("training loss: {0:.2f}  testing loss: {0:.2f}".format(
+        print("training loss: {0:.2f}  testing loss: {0:.2f}".format(
             all_loss_train[-1], all_loss_test[-1]))
 
     return all_loss_test
@@ -505,6 +505,7 @@ def load_model(model_folder,
     saver.restore('./'+model_folder+'/'+model_id)
 
     return model, new_model_features.scaler
+
 
 class_isotopes = ['Am241',
                   'Ba133',
