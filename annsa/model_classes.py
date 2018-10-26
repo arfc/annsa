@@ -42,7 +42,7 @@ class dnn(tf.keras.Model):
         self.batch_size = model_features.batch_size
         self.scaler = model_features.scaler
         # define l2 regularization
-        self.regularizer = tf.keras.regularizers.l2(l=l2_regularization_scale)
+        self.regularizer = tf.keras.regularizers.l2(l2_regularization_scale)
         # Hidden layer.
         self.dense_layer1 = tf.layers.Dense(
             nodes_layer_1,
@@ -418,7 +418,7 @@ def train_kfolds(training_data,
         errors_test.append(all_loss_test)
     if verbose is True:
         print(("final average training loss: {0:.2f} "
-               "final average testing loss: {0:.2f}").format(
+              "final average testing loss: {0:.2f}").format(
                     np.average(errors_train, axis=0)[-1],
                     np.average(errors_test, axis=0)[-1]))
 
