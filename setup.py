@@ -16,7 +16,7 @@ opts = dict(name='annsa',
             author_email='kamuda1@illinois.edu',
             version='0.1dev',
             packages=find_packages(),
-            install_requires=['tensorflow','numpy','scipy'])
+            install_requires=['tensorflow', 'numpy', 'scipy'])
 
 
 if __name__ == '__main__':
