@@ -2,28 +2,21 @@ import os
 from setuptools import setup, find_packages
 PACKAGES = find_packages()
 
-# Get version and release info, which is all stored in shablona/version.py
-ver_file = os.path.join('shablona', 'version.py')
-with open(ver_file) as f:
-    exec(f.read())
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
-opts = dict(name=NAME,
-            maintainer=MAINTAINER,
-            maintainer_email=MAINTAINER_EMAIL,
-            description=DESCRIPTION,
-            long_description=LONG_DESCRIPTION,
-            url=URL,
-            download_url=DOWNLOAD_URL,
-            license=LICENSE,
-            classifiers=CLASSIFIERS,
-            author=AUTHOR,
-            author_email=AUTHOR_EMAIL,
-            platforms=PLATFORMS,
-            version=VERSION,
-            packages=PACKAGES,
-            package_data=PACKAGE_DATA,
-            install_requires=REQUIRES,
-            requires=REQUIRES)
+opts = dict(name='annsa',
+            maintainer='Mark Kamuda',
+            maintainer_email='kamuda1@illinois.edu',
+            description='Neural networks applied to gamma-ray spectroscopy',
+            long_description=long_description,
+            url='https://github.com/arfc/annsa',
+            license='BSD 3',
+            author='Mark Kamuda',
+            author_email='kamuda1@illinois.edu',
+            version='0.1dev',
+            packages=find_packages(),
+            install_requires=['tensorflow','numpy','scipy'])
 
 
 if __name__ == '__main__':
