@@ -370,6 +370,233 @@ class cnn_model_features(object):
         self.kernel_size = kernel_size
         self.scaler = scaler
 
+        
+        
+class filter_concat_cnn(tf.keras.Model):
+    def __init__(self, model_features):
+        super(cnn, self).__init__()
+        """ Define here the layers used during the forward-pass 
+            of the neural network.
+        """
+        self.l2_regularization_scale=model_features.l2_regularization_scale
+        dropout_probability=model_features.dropout_probability
+        self.batch_size=model_features.batch_size
+        self.dense_nodes=model_features.dense_nodes
+        regularizer=tf.contrib.layers.l2_regularizer(scale=self.l2_regularization_scale)
+        number_filters=model_features.number_filters
+        kernel_length=model_features.kernel_length
+        kernel_strides=model_features.kernel_strides
+        pool_size=model_features.pool_size
+        pool_strides=model_features.pool_strides
+        self.scaler=model_features.scaler
+        cnn_activation_function=model_features.cnn_activation_function
+        dnn_activation_function=model_features.dnn_activation_function
+        output_size=model_features.output_size
+        cnn_trainable=model_features.cnn_trainable
+        
+        
+        # ###################
+        # ##### 1D Conv #####
+        # ###################
+        self.cnn_1d = {}
+        for filter_index in range(len(kernel_length[0])):
+            self.cnn_1d[str(filter_index)] = tf.layers.Conv1D(
+                filters=number_filters[0],
+                kernel_size=kernel_length[0][filter_index],
+                strides=kernel_strides[0][filter_index],
+                padding='same',
+                activation=cnn_activation_function,
+                kernel_initializer=tf.initializers.he_normal(),
+                trainable=cnn_trainable)
+
+        # ###################
+        # ##### 2D Conv #####
+        # ###################
+        self.cnn_2d = {}
+        self.cnn_2d['0'] = tf.layers.Conv2D(
+            filters=number_filters[1],
+            kernel_size=(kernel_length[1], number_filters[0]*len(kernel_length[0])),
+            strides=kernel_strides[1],
+            padding='valid',
+            activation=cnn_activation_function,
+            kernel_initializer=tf.initializers.he_normal(),
+            trainable=cnn_trainable)
+
+        self.max_pooling2d = {}
+        self.max_pooling2d['0'] = tf.layers.MaxPooling2D(
+            pool_size=pool_size[1],
+            strides=pool_strides[1],
+            padding='same')      
+
+        # #################
+        # ##### Dense #####
+        # #################
+
+        self.flatten = tf.layers.Flatten()
+
+        self.dense_layers = {}
+        self.dropout_layers = {}
+        for layer,nodes in enumerate(self.dense_nodes):
+            self.dense_layers[str(layer)]=tf.layers.Dense(nodes,
+                                                          activation=dnn_activation_function,
+                                                          kernel_initializer=lecun_normal(),
+                                                          kernel_regularizer=regularizer)
+            self.dropout_layers[str(layer)]=tf.layers.Dropout(dropout_probability)
+
+
+        self.output_layer = tf.layers.Dense(output_size, activation=None)
+
+
+    def predict_logits(self, input_data, training=True):
+        """ Runs a forward-pass through the network. Only outputs logits for loss function. 
+            This is because tf.nn.softmax_cross_entropy_with_logits calculates softmax internally.   
+            Note, dropout training is true here.
+            Args:
+                input_data: 2D tensor of shape (n_samples, n_features).   
+            Returns:
+                logits: unnormalized predictions.
+        """
+        # Reshape input data
+        x = self.scaler.transform(input_data)
+        x = tf.reshape(x, [-1, x.shape[1], 1])
+        # 1d convolutions
+        x_0 = self.cnn_1d['0'](x)
+        x_1 = self.cnn_1d['1'](x)
+        x_2 = self.cnn_1d['2'](x)
+
+        x = tf.concat([x_0, x_1, x_2], axis=2)
+        x = tf.reshape(x, [-1,
+                           x.shape[1],
+                           x.shape[2],
+                           1])
+        # 2d convolutions
+        x = self.cnn_2d['0'](x)
+        x = self.max_pooling2d['0'](x)
+        
+        # dense
+        x = self.flatten(x)
+        
+        for layer,nodes in enumerate(self.dense_nodes):
+            x = self.dense_layers[str(layer)](x)
+            x = self.dropout_layers[str(layer)](x,training)
+        
+        
+        logits=self.output_layer(x)        
+        return logits
+    
+    def loss_fn(self, input_data, target, training=True):
+        """ Defines the loss function used during 
+            training.         
+        """
+        logits=self.predict_logits(input_data, training)
+        cross_entropy_loss=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=target, logits=logits))
+        loss=cross_entropy_loss
+        if self.l2_regularization_scale > 0:
+            for index,layer in enumerate(self.dense_layers):
+                loss += self.dense_layers[str(index)].losses
+        return loss
+    
+    def grads_fn(self, input_data, target):
+        """ Dynamically computes the gradients of the loss value
+            with respect to the parameters of the model, in each
+            forward pass.
+        """
+        with tfe.GradientTape() as tape:
+            loss = self.loss_fn(input_data, target) 
+        return tape.gradient(loss, self.variables)
+    
+    def fit_batch(self,
+                  train_dataset,
+                  test_dataset,
+                  optimizer,
+                  num_epochs=50,
+                  verbose=50,
+                  print_errors=True,
+                  early_stopping_patience=0,
+                  max_time=300):
+        """ Function to train the model, using the selected optimizer and
+            for the desired number of epochs.
+        """
+        all_loss_train=[]
+        all_loss_test=[]
+        time_start=time.time()
+        early_stopping_flag=False
+        for epoch in range(num_epochs):
+            for (input_data, target) in tfe.Iterator(train_dataset.shuffle(1e8).batch(self.batch_size)):
+                input_data=np.random.poisson(input_data).astype(float)
+                grads=self.grads_fn(input_data, target)
+                optimizer.apply_gradients(zip(grads, self.variables))
+                all_loss_train.append(self.loss_fn(input_data, target, training=False).numpy())
+                if early_stopping_patience==0:
+                    all_loss_test.append(self.loss_fn(test_dataset[0],test_dataset[1], training=False).numpy())
+            
+            # Save error for early stopping
+            if early_stopping_patience!=0:
+                all_loss_test.append(self.loss_fn(test_dataset[0],test_dataset[1], training=False).numpy())
+                tmp_min_test_error=all_loss_test[-1]
+                if epoch==0:
+                    patience_counter=0
+                    min_test_error=tmp_min_test_error
+                elif (epoch>0) and (tmp_min_test_error<min_test_error):
+                    min_test_error=tmp_min_test_error
+                    patience_counter=0
+                else:
+                    patience_counter+=1
+                time_taken=time.time()-time_start
+                if (patience_counter>=early_stopping_patience) or (time_taken>max_time):
+                    early_stopping_flag=True
+                    
+            if print_errors==True and ((epoch==0) | ((epoch+1)%verbose==0)):
+                print('Loss at epoch %d: %3.2f %3.2f' %(epoch+1, all_loss_train[-1], all_loss_test[-1]))       
+            if early_stopping_flag==True:
+                break
+        return all_loss_train, all_loss_test
+    
+    
+    
+class filter_concat_cnn_model_features(object):
+    
+    def __init__(self,learining_rate,
+                      l2_regularization_scale,
+                      dropout_probability,
+                      batch_size,
+                      output_size,
+                      dense_nodes,
+                      number_filters,
+                      kernel_length,
+                      kernel_strides,
+                      pool_size,
+                      pool_strides,
+                      cnn_activation_function,
+                      dnn_activation_function,
+                      scaler,
+                      cnn_trainable
+                ):
+        self.learining_rate=learining_rate
+        self.l2_regularization_scale=l2_regularization_scale
+        self.dropout_probability=dropout_probability
+        self.batch_size=batch_size
+        self.output_size=output_size
+        self.dense_nodes=dense_nodes
+        self.number_filters=number_filters
+        self.kernel_length=kernel_length
+        self.kernel_strides=kernel_strides
+        self.pool_size=pool_size
+        self.pool_strides=pool_strides
+        self.dense_nodes=dense_nodes
+        self.cnn_activation_function=cnn_activation_function
+        self.dnn_activation_function=dnn_activation_function
+        self.scaler=scaler
+        self.cnn_trainable=cnn_trainable
+        
+        
+        
+        
+        
+        
+        
+        
+        
 # ##############################################################
 # ##############################################################
 # #################### Training Functions ######################
