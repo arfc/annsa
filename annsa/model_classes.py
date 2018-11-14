@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.eager as tfe
 from sklearn.model_selection import StratifiedKFold
-from tensorflow.keras.initializers import lecun_normal
+from tensorflow.keras.initializers import lecun_normal, he_normal
 import time
 
 # ##############################################################
@@ -17,47 +17,41 @@ import time
 class dnn(tf.keras.Model):
     """Defines dense NN structure and training functions.
 
-    Attributes:
-        attr1 (): Description of `attr1`.
-        attr2 (): Description of `attr2`.
-
     """
     def __init__(self, model_features):
         """Initializes dnn structure with model features.
 
         Args:
-            param1 (): Description of `param1`.
-            param2 (): Description of `param2`.
-            param3 (): Description of `param3`.
+            model_features: Class that contains variables
+            to construct the dense neural network.
 
         """
         super(dnn, self).__init__()
         """ Define here the layers used during the forward-pass
             of the neural network.
         """
-        l2_regularization_scale = model_features.l2_regularization_scale
+
+        self.l2_regularization_scale = model_features.l2_regularization_scale
         dropout_probability = model_features.dropout_probability
-        nodes_layer_1 = model_features.nodes_layer_1
-        nodes_layer_2 = model_features.nodes_layer_2
+        self.dense_nodes = model_features.dense_nodes
         self.batch_size = model_features.batch_size
         self.scaler = model_features.scaler
-        # define l2 regularization
-        self.regularizer = tf.keras.regularizers.l2(l2_regularization_scale)
-        # Hidden layer.
-        self.dense_layer1 = tf.layers.Dense(
-            nodes_layer_1,
-            activation=tf.nn.relu,
-            kernel_initializer=lecun_normal(),
-            kernel_regularizer=self.regularizer)
-        self.drop1 = tf.layers.Dropout(dropout_probability)
-        self.dense_layer2 = tf.layers.Dense(
-            nodes_layer_2,
-            activation=tf.nn.relu,
-            kernel_initializer=lecun_normal(),
-            kernel_regularizer=self.regularizer)
-        self.drop2 = tf.layers.Dropout(dropout_probability)
-        # Output layer. No activation.
-        self.output_layer = tf.layers.Dense(57, activation=None)
+        output_size = model_features.output_size
+        regularizer = tf.contrib.layers.l2_regularizer(
+            scale=self.l2_regularization_scale)
+
+        # Define hidden layers.
+        self.dense_layers = {}
+        self.drop_layers = {}
+        for layer, nodes in enumerate(self.dense_nodes):
+
+            self.dense_layers[layer] = tf.layers.Dense(
+                nodes,
+                activation=tf.nn.relu,
+                kernel_initializer=he_normal(),
+                kernel_regularizer=regularizer)
+            self.drop_layers[layer] = tf.layers.Dropout(dropout_probability)
+        self.output_layer = tf.layers.Dense(output_size, activation=None)
 
     def predict_logits(self, input_data, training=True):
         """ Runs a forward-pass through the network. Only outputs logits for
@@ -71,10 +65,9 @@ class dnn(tf.keras.Model):
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, 1, x.shape[1]])
-        x = self.dense_layer1(x)
-        x = self.drop1(x, training)
-        x = self.dense_layer2(x)
-        x = self.drop2(x, training)
+        for layer, nodes in enumerate(self.dense_nodes):
+            x = self.dense_layers[layer](x)
+            x = self.drop_layers[layer](x, training)
         logits = self.output_layer(x)
 
         return logits
@@ -99,11 +92,11 @@ class dnn(tf.keras.Model):
             tf.nn.softmax_cross_entropy_with_logits(
                 labels=target,
                 logits=logits))
-        l2_weights =\
-            [self.weights[i] for i in range(len(self.weights)) if i % 2 == 0]
-        l2_loss = tf.contrib.layers.apply_regularization(self.regularizer,
-                                                         l2_weights)
-        loss = cross_entropy_loss+l2_loss
+        loss = cross_entropy_loss
+        if self.l2_regularization_scale > 0:
+            for layer, nodes in enumerate(self.dense_layers):
+                loss += self.dense_layers[layer].losses
+
         return loss
 
     def grads_fn(self, input_data, target):
@@ -179,16 +172,16 @@ class dnn_model_features(object):
                  l2_regularization_scale,
                  dropout_probability,
                  batch_size,
-                 nodes_layer_1,
-                 nodes_layer_2,
+                 output_size,
+                 dense_nodes,
                  scaler
                  ):
         self.learining_rate = learining_rate
         self.l2_regularization_scale = l2_regularization_scale
         self.dropout_probability = dropout_probability
         self.batch_size = batch_size
-        self.nodes_layer_1 = nodes_layer_1
-        self.nodes_layer_2 = nodes_layer_2
+        self.output_size = output_size
+        self.dense_nodes = dense_nodes
         self.scaler = scaler
 
 # ##############################################################
@@ -369,6 +362,7 @@ class cnn_model_features(object):
         self.number_filters = number_filters
         self.kernel_size = kernel_size
         self.scaler = scaler
+
 
 class filter_concat_cnn(tf.keras.Model):
     def __init__(self, model_features):
