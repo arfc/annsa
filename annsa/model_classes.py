@@ -41,9 +41,9 @@ class dnn(tf.keras.Model):
             scale=self.l2_regularization_scale)
 
         # Define hidden layers.
-        self.dense_layers={}
-        self.drop_layers={}
-        for layer,nodes in enumerate(self.dense_nodes):
+        self.dense_layers = {}
+        self.drop_layers = {}
+        for layer, nodes in enumerate(self.dense_nodes):
 
             self.dense_layers[layer] = tf.layers.Dense(
                 nodes,
@@ -65,7 +65,7 @@ class dnn(tf.keras.Model):
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, 1, x.shape[1]])
-        for layer,nodes in enumerate(self.dense_nodes):
+        for layer, nodes in enumerate(self.dense_nodes):
             x = self.dense_layers[layer](x)
             x = self.drop_layers[layer](x, training)
         logits = self.output_layer(x)
@@ -94,7 +94,7 @@ class dnn(tf.keras.Model):
                 logits=logits))
         loss = cross_entropy_loss
         if self.l2_regularization_scale > 0:
-            for layer,layer in enumerate(self.dense_layers):
+            for layer, nodes in enumerate(self.dense_layers):
                 loss += self.dense_layers[layer].losses
 
         return loss
@@ -362,6 +362,7 @@ class cnn_model_features(object):
         self.number_filters = number_filters
         self.kernel_size = kernel_size
         self.scaler = scaler
+
 
 class filter_concat_cnn(tf.keras.Model):
     def __init__(self, model_features):
