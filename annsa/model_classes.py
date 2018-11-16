@@ -186,6 +186,200 @@ class dnn_model_features(object):
 
 # ##############################################################
 # ##############################################################
+# ##################### Dense Autoencoder ######################
+# ##############################################################
+# ##############################################################
+# ##############################################################
+
+
+class dae(tf.keras.Model):
+    def __init__(self, model_features):
+        super(dae, self).__init__()
+        """ Define here the layers used during the forward-pass
+            of the neural network.
+        """
+        self.batch_size = model_features.batch_size
+        self.scaler = model_features.scaler
+        dropout_probability = model_features.dropout_probability
+        activation_function = model_features.activation_function
+        output_function = model_features.output_function
+
+        self.l1_regularization_scale = model_features.l1_regularization_scale
+        self.regularizer = tf.contrib.layers.l1_regularizer(
+            scale=self.l1_regularization_scale)
+        self.dense_nodes_encoder = model_features.dense_nodes_encoder
+        self.dense_nodes_decoder = model_features.dense_nodes_decoder
+
+        # Define Hidden layers for encoder
+        self.dense_layers_encoder = {}
+        self.dropout_layers_encoder = {}
+        for layer, nodes in enumerate(self.dense_nodes_encoder):
+            self.dense_layers_encoder[str(layer)] = tf.layers.Dense(
+                nodes,
+                activation=activation_function,
+                kernel_initializer=he_normal())
+            self.dropout_layers_encoder[str(layer)] = tf.layers.Dropout(
+                dropout_probability)
+
+        # Define Hidden layers for decoder
+        self.dense_layers_decoder = {}
+        self.dropout_layers_decoder = {}
+        for layer, nodes in enumerate(self.dense_nodes_decoder):
+            self.dense_layers_decoder[str(layer)] = tf.layers.Dense(
+                nodes,
+                activation=activation_function,
+                kernel_initializer=he_normal())
+            self.dropout_layers_decoder[str(layer)] = tf.layers.Dropout(
+                dropout_probability)
+
+        # Output layer. No activation.
+        self.output_layer = tf.layers.Dense(1024, activation=output_function)
+
+    def encoder(self, input_data, training=True):
+        """ Runs the encoder.
+            Args:
+                input_data: 2D tensor of shape (n_samples, n_features). Inputs
+                    are unscaled, raw spectra.
+               training (bool): Turns dropout on/off if TRUE/FALSE.
+            Returns:
+                encoding: The autoencoder encoding.
+        """
+        # manually add activity regularization
+        self.output_activity = 0
+        x = self.scaler.transform(input_data)
+        x = tf.reshape(x, [-1, x.shape[1]])
+        for layer, nodes in enumerate(self.dense_nodes_encoder):
+            x = self.dense_layers_encoder[str(layer)](x)
+            x = self.dropout_layers_encoder[str(layer)](x, training)
+            if training:
+                # add activity from dropout layer
+                self.output_activity += np.sum(x.numpy())/x.numpy().shape[0]
+        encoding = x
+        return encoding
+
+    def decoder(self, encoding, training=True):
+        """ Runs the decoder.
+            Args:
+                encoding: the encoding layer.
+                training (bool): Turns dropout on/off if TRUE/FALSE.
+            Returns:
+                decoding: The autoencoder decoding.
+        """
+        x = encoding
+        for layer, nodes in enumerate(self.dense_nodes_decoder):
+            x = self.dense_layers_decoder[str(layer)](x)
+            x = self.dropout_layers_decoder[str(layer)](x, training)
+            if training:
+                # add activity from dropout layer
+                self.output_activity += np.sum(x.numpy())/x.numpy().shape[0]
+        decoding = self.output_layer(x)
+        return decoding
+
+    def loss_fn(self, input_data, target, training=True):
+        """ Defines the loss function used during training.
+        """
+        encoding = self.encoder(input_data, training)
+        decoding = self.decoder(encoding, training)
+        loss = tf.losses.mean_squared_error(
+            labels=self.scaler.transform(target), predictions=decoding)
+        loss += (self.output_activity * self.l1_regularization_scale)
+        return loss
+
+    def grads_fn(self, input_data, target):
+        """ Dynamically computes the gradients of the loss value
+            with respect to the parameters of the model, in each
+            forward pass.
+        """
+        with tfe.GradientTape() as tape:
+            loss = self.loss_fn(input_data, target)
+        return tape.gradient(loss, self.variables)
+
+    def fit_batch(self,
+                  train_dataset,
+                  test_dataset,
+                  optimizer,
+                  num_epochs=50,
+                  verbose=50,
+                  print_errors=True,
+                  early_stopping_patience=0,
+                  max_time=300):
+        """ Function to train the model, using the selected optimizer and
+            for the desired number of epochs. Uses early stopping with
+            patience.
+        """
+        all_loss_train = []
+        all_loss_test = []
+        time_start = time.time()
+        early_stopping_flag = False
+        for epoch in range(num_epochs):
+            for (input_data, target) in tfe.Iterator(
+                            train_dataset.shuffle(1e8).batch(self.batch_size)):
+                input_data = np.random.poisson(input_data).astype(float)
+                grads = self.grads_fn(input_data, target)
+                optimizer.apply_gradients(zip(grads, self.variables))
+                all_loss_train.append(
+                    self.loss_fn(input_data, target, training=False).numpy())
+                test_dataset_sampled = np.random.poisson(
+                    test_dataset[0]).astype(float)
+                if early_stopping_patience == 0:
+                    all_loss_test.append(self.loss_fn(test_dataset_sampled,
+                                                      test_dataset[1],
+                                                      training=False).numpy())
+
+            # Save error for early stopping
+            if early_stopping_patience != 0:
+                all_loss_test.append(self.loss_fn(test_dataset_sampled,
+                                                  test_dataset[1],
+                                                  training=False).numpy())
+                tmp_min_test_error = all_loss_test[-1]
+                if epoch == 0:
+                    patience_counter = 0
+                    min_test_error = tmp_min_test_error
+                elif (epoch > 0) and (tmp_min_test_error < min_test_error):
+                    min_test_error = tmp_min_test_error
+                    patience_counter = 0
+                else:
+                    patience_counter += 1
+                time_taken = time.time()-time_start
+                if ((patience_counter >= early_stopping_patience) or
+                        (time_taken > max_time)):
+                    early_stopping_flag = True
+
+            if (print_errors and
+                    ((epoch == 0) | ((epoch+1) % verbose == 0))) is True:
+                print('Loss at epoch %d: %3.2f %3.2f' % (epoch+1,
+                                                         all_loss_train[-1],
+                                                         all_loss_test[-1]))
+            if early_stopping_flag is True:
+                break
+        return all_loss_train, all_loss_test
+
+
+class dae_model_features(object):
+
+    def __init__(self,
+                 learining_rate,
+                 l1_regularization_scale,
+                 dropout_probability,
+                 batch_size,
+                 dense_nodes_encoder,
+                 dense_nodes_decoder,
+                 scaler,
+                 activation_function,
+                 output_function,
+                 ):
+        self.learining_rate = learining_rate
+        self.l1_regularization_scale = l1_regularization_scale
+        self.dropout_probability = dropout_probability
+        self.batch_size = batch_size
+        self.dense_nodes_encoder = dense_nodes_encoder
+        self.dense_nodes_decoder = dense_nodes_decoder
+        self.scaler = scaler
+        self.activation_function = activation_function
+        self.output_function = output_function
+
+# ##############################################################
+# ##############################################################
 # ################# Convolutional Archetecture #################
 # ##############################################################
 # ##############################################################
