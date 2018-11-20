@@ -5,14 +5,15 @@ import pandas as pd
 import numpy.testing as npt
 import annsa as an
 
+
 def test_generate_single_source_key():
     """
-    Testing to see if the generate_single_source_key function doesn't give infinite or negative values.
+    Testing to see if the generate_single_source_key function doesn't give
+    infinite or negative values.
 
     """
-    # Make a blank source key 
+    # Make a blank source key
     blank_source_key = an.generate_single_source_key()
     # Check if key is blank
     inf_check = np.any(np.isinf(blank_source_key))
     npt.assert_equal(inf_check, False)
-    
