@@ -3,3 +3,6 @@ scipy
 matplotlib
 pandas
 pytest
+tensorflow
+sklearn
+pandas

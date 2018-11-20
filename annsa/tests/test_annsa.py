@@ -5,9 +5,6 @@ import pandas as pd
 import numpy.testing as npt
 import annsa as an
 
-data_path = op.join(sb.__path__[0], 'data')
-
-
 def test_generate_single_source_key():
     """
     Testing to see if the generate_single_source_key function doesn't give infinite or negative values.
