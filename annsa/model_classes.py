@@ -3,9 +3,11 @@ import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.eager as tfe
 from sklearn.model_selection import StratifiedKFold
-from tensorflow.keras.initializers import lecun_normal, he_normal
+from tensorflow.image import resize_images
+from tensorflow.keras.initializers import he_normal
 import time
 
+# ##############################################################
 # ##############################################################
 # ##############################################################
 # ##################### Dense Archetecture #####################
@@ -56,7 +58,7 @@ class dnn(tf.keras.Model):
     def predict_logits(self, input_data, training=True):
         """ Runs a forward-pass through the network. Only outputs logits for
             loss function. This is because
-            tf.nn.softmax_cross_entropy_with_logits calculates softmax
+            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
             internally. Note, training is true here to turn dropout on.
             Args:
                 input_data: 2D tensor of shape (n_samples, n_features).
@@ -89,7 +91,7 @@ class dnn(tf.keras.Model):
         """
         logits = self.predict_logits(input_data, training)
         cross_entropy_loss = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits(
+            tf.nn.softmax_cross_entropy_with_logits_v2(
                 labels=target,
                 logits=logits))
         loss = cross_entropy_loss
@@ -106,6 +108,7 @@ class dnn(tf.keras.Model):
         """
         with tfe.GradientTape() as tape:
             loss = self.loss_fn(input_data, target)
+
         return tape.gradient(loss, self.variables)
 
     def fit_batch(self,
@@ -186,6 +189,297 @@ class dnn_model_features(object):
 
 # ##############################################################
 # ##############################################################
+# ##############################################################
+# ################# Convolutional Archetecture #################
+# ##############################################################
+# ##############################################################
+# ##############################################################
+
+
+class cnn1d(tf.keras.Model):
+    def __init__(self, model_features):
+        super(cnn1d, self).__init__()
+        """ Define here the layers used during the forward-pass
+            of the neural network.
+        """
+        self.batch_size = model_features.batch_size
+        output_size = model_features.output_size
+        self.scaler = model_features.scaler
+        trainable = model_features.trainable
+        activation_function = model_features.activation_function
+        output_function = model_features.output_function
+        cnn_filters = model_features.cnn_filters
+        cnn_kernel = model_features.cnn_kernel
+        cnn_strides = model_features.cnn_strides
+        pool_size = model_features.pool_size
+        pool_strides = model_features.pool_strides
+        Pooling = model_features.Pooling
+        output_size = model_features.output_size
+        dense_nodes = model_features.dense_nodes
+        self.l2_regularization_scale = model_features.l2_regularization_scale
+        dropout_probability = model_features.dropout_probability
+
+        regularizer = tf.contrib.layers.l2_regularizer(
+            scale=self.l2_regularization_scale)
+
+        # Define hidden layers for encoder
+        self.conv_layers = {}
+        self.pool_layers = {}
+        for layer in range(len(cnn_filters)):
+            self.conv_layers[str(layer)] = tf.layers.Conv1D(
+                filters=cnn_filters[layer],
+                kernel_size=cnn_kernel[layer],
+                strides=1,
+                padding='same',
+                kernel_initializer=he_normal(),
+                activation=activation_function,
+                trainable=trainable)
+            self.pool_layers[str(layer)] = Pooling(
+                pool_size=pool_size[layer],
+                strides=pool_strides[layer],
+                padding='same')
+
+        self.dense_layers = {}
+        self.drop_layers = {}
+        for layer in range(len(dense_nodes)):
+            self.dense_layers[str(layer)] = tf.layers.Dense(
+                dense_nodes[layer],
+                activation=tf.nn.relu,
+                kernel_initializer=he_normal(),
+                kernel_regularizer=regularizer)
+            self.drop_layers[str(layer)] = tf.layers.Dropout(
+                dropout_probability)
+        self.output_layer = tf.layers.Dense(output_size,
+                                            activation=output_function)
+
+    def predict_logits(self, input_data, training=True):
+        """ Runs a forward-pass through the network. Only outputs logits for
+            loss function. This is because
+            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
+            internally. Note, training is true here to turn dropout on.
+            Args:
+                input_data: 2D tensor of shape (n_samples, n_features).
+            Returns:
+                logits: unnormalized predictions.
+        """
+        x = self.scaler.transform(input_data)
+        x = tf.reshape(x, [-1, x.shape[1], 1])
+        for layer in self.conv_layers.keys():
+            x = self.conv_layers[str(layer)](x)
+            x = self.pool_layers[str(layer)](x)
+        x = tf.layers.flatten(x)
+        for layer in self.dense_layers.keys():
+            x = self.dense_layers[str(layer)](x)
+            x = self.drop_layers[str(layer)](x, training)
+        logits = self.output_layer(x)
+        return logits
+
+    def predict(self, input_data, training=False):
+        """ Runs a forward-pass through the network and uses softmax output.
+            Dropout training is off, this is not used for gradient calculations
+            in loss function.
+            Args:
+                input_data: 2D tensor of shape (n_samples, n_features).
+            Returns:
+                logits: unnormalized predictions.
+        """
+        return tf.nn.softmax(self.predict_logits(self, input_data, training))
+
+    def loss_fn(self, input_data, target, training=True):
+        """ Defines the loss function used during
+            training.
+        """
+        logits = self.predict_logits(input_data, training)
+        cross_entropy_loss = tf.reduce_mean(
+            tf.nn.softmax_cross_entropy_with_logits_v2(
+                labels=target,
+                logits=logits))
+        loss = cross_entropy_loss
+
+        if self.l2_regularization_scale > 0:
+            for layer in self.dense_layers.keys():
+                loss += self.dense_layers[layer].losses
+        return loss
+
+    def grads_fn(self, input_data, target):
+        """ Dynamically computes the gradients of the loss value
+            with respect to the parameters of the model, in each
+            forward pass.
+        """
+        with tfe.GradientTape() as tape:
+            loss = self.loss_fn(input_data, target)
+
+        return tape.gradient(loss, self.variables)
+
+    def fit_batch(self,
+                  train_dataset,
+                  test_dataset,
+                  optimizer,
+                  num_epochs=50,
+                  verbose=50,
+                  print_errors=True,
+                  early_stopping_patience=0,
+                  max_time=300):
+        """ Function to train the model, using the selected optimizer and
+            for the desired number of epochs. Uses early stopping with
+            patience.
+        """
+        all_loss_train = []
+        all_loss_test = []
+        time_start = time.time()
+        early_stopping_flag = False
+        for epoch in range(num_epochs):
+            for (input_data, target) in tfe.Iterator(
+                            train_dataset.shuffle(1e8).batch(self.batch_size)):
+                input_data = np.random.poisson(input_data).astype(float)
+                grads = self.grads_fn(input_data, target)
+                optimizer.apply_gradients(zip(grads, self.variables))
+                all_loss_train.append(
+                    self.loss_fn(input_data, target, training=False).numpy())
+                if early_stopping_patience == 0:
+                    all_loss_test.append(self.loss_fn(test_dataset[0],
+                                                      test_dataset[1],
+                                                      training=False).numpy())
+
+            # Save error for early stopping
+            if early_stopping_patience != 0:
+                all_loss_test.append(self.loss_fn(test_dataset[0],
+                                                  test_dataset[1],
+                                                  training=False).numpy())
+                tmp_min_test_error = all_loss_test[-1]
+                if epoch == 0:
+                    patience_counter = 0
+                    min_test_error = tmp_min_test_error
+                elif (epoch > 0) and (tmp_min_test_error < min_test_error):
+                    min_test_error = tmp_min_test_error
+                    patience_counter = 0
+                else:
+                    patience_counter += 1
+                time_taken = time.time()-time_start
+                if ((patience_counter >= early_stopping_patience) or
+                        (time_taken > max_time)):
+                    early_stopping_flag = True
+
+            if (print_errors and
+                    ((epoch == 0) | ((epoch+1) % verbose == 0))) is True:
+                print('Loss at epoch %d: %3.2f %3.2f' % (epoch+1,
+                                                         all_loss_train[-1],
+                                                         all_loss_test[-1]))
+            if early_stopping_flag is True:
+                break
+        return all_loss_train, all_loss_test
+
+
+class cnn1d_model_features(object):
+
+    def __init__(self,
+                 learining_rate,
+                 trainable,
+                 batch_size,
+                 output_size,
+                 output_function,
+                 l2_regularization_scale,
+                 dropout_probability,
+                 scaler,
+                 Pooling,
+                 cnn_filters,
+                 cnn_kernel,
+                 cnn_strides,
+                 pool_size,
+                 pool_strides,
+                 dense_nodes,
+                 activation_function,
+                 ):
+        self.learining_rate = learining_rate
+        self.trainable = trainable
+        self.batch_size = batch_size
+        self.output_size = output_size
+        self.output_function = output_function
+        self.l2_regularization_scale = l2_regularization_scale
+        self.dropout_probability = dropout_probability
+        self.scaler = scaler
+        self.Pooling = Pooling
+        self.cnn_filters = cnn_filters
+        self.cnn_kernel = cnn_kernel
+        self.cnn_strides = cnn_strides
+        self.pool_size = pool_size
+        self.pool_strides = pool_strides
+        self.dense_nodes = dense_nodes
+        self.activation_function = activation_function
+
+
+def generate_random_cnn1d_architecture():
+    """ Generates a random 1d convolutional neural network based on a set of
+        predefined architectures.
+
+        inputs: None
+
+        outputs: cae_model_features class
+    """
+    cnn_filters_choices = ((4, 8, 1),
+                           (4, 8, 16, 1),
+                           (4, 8, 16, 32, 1),
+                           (8, 16, 1),
+                           (8, 16, 32, 1),
+                           (8, 16, 32, 64, 1),
+                           (16, 32, 1),
+                           (16, 32, 64, 1),
+                           (16, 32, 64, 128, 1))
+    # cnn_filters_choices = ((4, 1),
+    #                        (8, 1),
+    #                        (16, 1),
+    #                        (32, 1))
+    cnn_kernel_choices = ((2,), (4,), (8,), (16,))
+    pool_size_choices = ((2,), (4,), (8,), (16,))
+    cnn_filters_choice = np.random.randint(
+        len(cnn_filters_choices))
+    cnn_kernel_choice = np.random.randint(
+        len(cnn_kernel_choices))
+    pool_size_choice = np.random.randint(
+        len(pool_size_choices))
+
+    cnn_filters = cnn_filters_choices[
+        cnn_filters_choice]
+    cnn_kernel = cnn_kernel_choices[
+        cnn_kernel_choice]*(len(cnn_filters_choices))
+    cnn_strides = (1,)*(len(cnn_filters_choices))
+    pool_size = pool_size_choices[pool_size_choice]*(
+        len(cnn_filters_choices))
+    pool_strides = (2,)*(len(cnn_filters_choices))
+
+    number_layers = np.random.randint(1, 4)
+    dense_nodes = (10**np.random.uniform(1,
+                                         np.log10(1024/len(
+                                             cnn_filters_choices)),
+                                         number_layers)).astype('int')
+    dense_nodes = np.sort(dense_nodes)
+    dense_nodes = np.flipud(dense_nodes)
+
+    model_features = cnn1d_model_features(
+            trainable=None,
+            learining_rate=None,
+            batch_size=None,
+            output_size=None,
+            scaler=None,
+            activation_function=None,
+            output_function=None,
+            Pooling=None,
+            l2_regularization_scale=None,
+            dropout_probability=None,
+            cnn_filters=cnn_filters,
+            cnn_kernel=cnn_kernel,
+            cnn_strides=cnn_strides,
+            pool_size=pool_size,
+            pool_strides=pool_strides,
+            dense_nodes=dense_nodes
+            )
+
+    return model_features
+
+
+# ##############################################################
+# ##############################################################
+# ##############################################################
 # ##################### Dense Autoencoder ######################
 # ##############################################################
 # ##############################################################
@@ -217,7 +511,8 @@ class dae(tf.keras.Model):
             self.dense_layers_encoder[str(layer)] = tf.layers.Dense(
                 nodes,
                 activation=activation_function,
-                kernel_initializer=he_normal())
+                kernel_initializer=he_normal(),
+                kernel_regularizer=self.regularizer)
             self.dropout_layers_encoder[str(layer)] = tf.layers.Dropout(
                 dropout_probability)
 
@@ -228,7 +523,8 @@ class dae(tf.keras.Model):
             self.dense_layers_decoder[str(layer)] = tf.layers.Dense(
                 nodes,
                 activation=activation_function,
-                kernel_initializer=he_normal())
+                kernel_initializer=he_normal(),
+                kernel_regularizer=self.regularizer)
             self.dropout_layers_decoder[str(layer)] = tf.layers.Dropout(
                 dropout_probability)
 
@@ -236,53 +532,53 @@ class dae(tf.keras.Model):
         self.output_layer = tf.layers.Dense(1024, activation=output_function)
 
     def encoder(self, input_data, training=True):
-        """ Runs the encoder.
+        """ Runs a forward-pass through the network. Only outputs logits for
+            loss function. This is because
+            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
+            internally.
+            Note, training is true here to turn dropout on.
             Args:
-                input_data: 2D tensor of shape (n_samples, n_features). Inputs
-                    are unscaled, raw spectra.
-               training (bool): Turns dropout on/off if TRUE/FALSE.
+                input_data: 2D tensor of shape (n_samples, n_features).
             Returns:
-                encoding: The autoencoder encoding.
+                logits: unnormalized predictions.
         """
-        # manually add activity regularization
-        self.output_activity = 0
+        if training:
+            x = np.random.poisson(input_data).astype(float)
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1]])
         for layer, nodes in enumerate(self.dense_nodes_encoder):
             x = self.dense_layers_encoder[str(layer)](x)
             x = self.dropout_layers_encoder[str(layer)](x, training)
-            if training:
-                # add activity from dropout layer
-                self.output_activity += np.sum(x.numpy())/x.numpy().shape[0]
         encoding = x
         return encoding
 
     def decoder(self, encoding, training=True):
-        """ Runs the decoder.
+        """ Runs a forward-pass through the network. Only outputs logits for
+            loss function. This is because
+            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
+            internally.
+            Note, training is true here to turn dropout on.
             Args:
-                encoding: the encoding layer.
-                training (bool): Turns dropout on/off if TRUE/FALSE.
+                input_data: 2D tensor of shape (n_samples, n_features).
             Returns:
-                decoding: The autoencoder decoding.
+                logits: unnormalized predictions.
         """
         x = encoding
         for layer, nodes in enumerate(self.dense_nodes_decoder):
             x = self.dense_layers_decoder[str(layer)](x)
             x = self.dropout_layers_decoder[str(layer)](x, training)
-            if training:
-                # add activity from dropout layer
-                self.output_activity += np.sum(x.numpy())/x.numpy().shape[0]
         decoding = self.output_layer(x)
         return decoding
 
     def loss_fn(self, input_data, target, training=True):
-        """ Defines the loss function used during training.
+        """ Defines the loss function used during
+            training.
         """
         encoding = self.encoder(input_data, training)
         decoding = self.decoder(encoding, training)
         loss = tf.losses.mean_squared_error(
-            labels=self.scaler.transform(target), predictions=decoding)
-        loss += (self.output_activity * self.l1_regularization_scale)
+            labels=self.scaler.transform(target),
+            predictions=decoding)
         return loss
 
     def grads_fn(self, input_data, target):
@@ -319,16 +615,14 @@ class dae(tf.keras.Model):
                 optimizer.apply_gradients(zip(grads, self.variables))
                 all_loss_train.append(
                     self.loss_fn(input_data, target, training=False).numpy())
-                test_dataset_sampled = np.random.poisson(
-                    test_dataset[0]).astype(float)
                 if early_stopping_patience == 0:
-                    all_loss_test.append(self.loss_fn(test_dataset_sampled,
+                    all_loss_test.append(self.loss_fn(test_dataset[0],
                                                       test_dataset[1],
                                                       training=False).numpy())
 
             # Save error for early stopping
             if early_stopping_patience != 0:
-                all_loss_test.append(self.loss_fn(test_dataset_sampled,
+                all_loss_test.append(self.loss_fn(test_dataset[0],
                                                   test_dataset[1],
                                                   training=False).numpy())
                 tmp_min_test_error = all_loss_test[-1]
@@ -378,309 +672,136 @@ class dae_model_features(object):
         self.activation_function = activation_function
         self.output_function = output_function
 
+
 # ##############################################################
 # ##############################################################
-# ################# Convolutional Archetecture #################
+# ##############################################################
+# ################## Convolution Autoencoder ###################
 # ##############################################################
 # ##############################################################
 # ##############################################################
 
-
-class cnn(tf.keras.Model):
+class cae(tf.keras.Model):
     def __init__(self, model_features):
-        super(cnn, self).__init__()
+        super(cae, self).__init__()
         """ Define here the layers used during the forward-pass
             of the neural network.
         """
-        l2_regularization_scale = model_features.l2_regularization_scale
-        dropout_probability = model_features.dropout_probability
-        nodes_layer_1 = model_features.nodes_layer_1
-        nodes_layer_2 = model_features.nodes_layer_2
-        input_shape = (-1, 1024, 1)
-        number_filters = model_features.number_filters
-        kernel_size = model_features.kernel_size
         self.batch_size = model_features.batch_size
         self.scaler = model_features.scaler
-        # Convolution layers.
-        self.cnn_layer1 = tf.layers.Conv1D(filters=number_filters[0],
-                                           kernel_size=kernel_size[0],
-                                           strides=1,
-                                           padding='valid',
-                                           activation='relu')
-        self.max_pool1 = tf.layers.MaxPooling1D(pool_size=2,
-                                                strides=2,
-                                                padding='valid')
-        self.cnn_layer2 = tf.layers.Conv1D(filters=number_filters[1],
-                                           kernel_size=kernel_size[1],
-                                           strides=1,
-                                           padding='valid',
-                                           activation='relu')
-        self.max_pool2 = tf.layers.MaxPooling1D(pool_size=2,
-                                                strides=2,
-                                                padding='valid')
+        encoder_trainable = model_features.encoder_trainable
+        activation_function = model_features.activation_function
+        output_function = model_features.output_function
+        cnn_filters_encoder = model_features.cnn_filters_encoder
+        cnn_kernel_encoder = model_features.cnn_kernel_encoder
+        cnn_strides_encoder = model_features.cnn_strides_encoder
+        pool_size_encoder = model_features.pool_size_encoder
+        pool_strides_encoder = model_features.pool_strides_encoder
+        cnn_filters_decoder = model_features.cnn_filters_decoder
+        cnn_kernel_decoder = model_features.cnn_kernel_decoder
+        cnn_strides_decoder = model_features.cnn_strides_decoder
+        Pooling = model_features.Pooling
 
-        # Fully connected layers.
-        self.flatten1 = tf.layers.Flatten()
-        self.dropout1 = tf.layers.Dropout(dropout_probability)
-        self.dense_layer1 = tf.layers.Dense(nodes_layer_1,
-                                            kernel_initializer=lecun_normal(),
-                                            activation=tf.nn.relu)
-        self.dropout2 = tf.layers.Dropout(dropout_probability)
-        self.output_layer = tf.layers.Dense(57,
-                                            kernel_initializer=lecun_normal(),
-                                            activation=None)
-
-    def predict_logits(self, input_data, training=True):
-        """ Runs a forward-pass through the network. Only outputs logits for
-            loss function. This is because
-            tf.nn.softmax_cross_entropy_with_logits calculates softmax
-            internally. Note, dropout training is true here.
-            Args:
-                input_data: 2D tensor of shape (n_samples, n_features).
-            Returns:
-                logits: unnormalized predictions.
-        """
-        # Reshape input data
-        x = self.scaler.transform(input_data)
-        x = tf.reshape(x, [-1, x.shape[1], 1])
-        x = self.cnn_layer1(x)
-        x = self.max_pool1(x)
-        x = self.cnn_layer2(x)
-        x = self.max_pool2(x)
-        x = self.flatten1(x)
-        x = self.dropout1(x)
-        x = self.dense_layer1(x)
-        x = self.dropout2(x)
-        logits = self.output_layer(x)
-        return logits
-
-    def loss_fn(self, input_data, target, training=True):
-        """ Defines the loss function used during
-            training.
-        """
-        logits = self.predict_logits(input_data, training)
-        cross_entropy_loss = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits(
-                labels=target,
-                logits=logits))
-        loss = cross_entropy_loss
-        return loss
-
-    def grads_fn(self, input_data, target):
-        """ Dynamically computes the gradients of the loss value
-            with respect to the parameters of the model, in each
-            forward pass.
-        """
-        with tfe.GradientTape() as tape:
-            loss = self.loss_fn(input_data, target)
-        return tape.gradient(loss, self.variables)
-
-    def fit_batch(self,
-                  train_dataset,
-                  test_dataset,
-                  optimizer,
-                  num_epochs=50,
-                  verbose=50,
-                  print_errors=True,
-                  early_stopping_patience=0,
-                  max_time=300):
-        """ Function to train the model, using the selected optimizer and
-            for the desired number of epochs. Uses early stopping with
-            patience.
-        """
-        all_loss_train = []
-        all_loss_test = []
-        time_start = time.time()
-        early_stopping_flag = False
-        for epoch in range(num_epochs):
-            for (input_data, target) in tfe.Iterator(
-                            train_dataset.shuffle(1e8).batch(self.batch_size)):
-                input_data = np.random.poisson(input_data).astype(float)
-                grads = self.grads_fn(input_data, target)
-                optimizer.apply_gradients(zip(grads, self.variables))
-                all_loss_train.append(
-                    self.loss_fn(input_data, target, training=False).numpy())
-                if early_stopping_patience == 0:
-                    all_loss_test.append(self.loss_fn(test_dataset[0],
-                                                      test_dataset[1],
-                                                      training=False).numpy())
-
-            # Save error for early stopping
-            if early_stopping_patience != 0:
-                all_loss_test.append(self.loss_fn(test_dataset[0],
-                                                  test_dataset[1],
-                                                  training=False).numpy())
-                tmp_min_test_error = all_loss_test[-1]
-                if epoch == 0:
-                    patience_counter = 0
-                    min_test_error = tmp_min_test_error
-                elif (epoch > 0) and (tmp_min_test_error < min_test_error):
-                    min_test_error = tmp_min_test_error
-                    patience_counter = 0
-                else:
-                    patience_counter += 1
-                time_taken = time.time()-time_start
-                if ((patience_counter >= early_stopping_patience) or
-                        (time_taken > max_time)):
-                    early_stopping_flag = True
-
-            if (print_errors and
-                    ((epoch == 0) | ((epoch+1) % verbose == 0))) is True:
-                print('Loss at epoch %d: %3.2f %3.2f' % (epoch+1,
-                                                         all_loss_train[-1],
-                                                         all_loss_test[-1]))
-            if early_stopping_flag is True:
-                break
-        return all_loss_train, all_loss_test
-
-
-class cnn_model_features(object):
-
-    def __init__(self,
-                 learining_rate,
-                 l2_regularization_scale,
-                 dropout_probability,
-                 batch_size,
-                 number_filters,
-                 kernel_size,
-                 nodes_layer_1,
-                 nodes_layer_2,
-                 scaler
-                 ):
-        self.learining_rate = learining_rate
-        self.l2_regularization_scale = l2_regularization_scale
-        self.dropout_probability = dropout_probability
-        self.batch_size = batch_size
-        self.nodes_layer_1 = nodes_layer_1
-        self.nodes_layer_2 = nodes_layer_2
-        self.number_filters = number_filters
-        self.kernel_size = kernel_size
-        self.scaler = scaler
-
-
-class filter_concat_cnn(tf.keras.Model):
-    def __init__(self, model_features):
-        super(cnn, self).__init__()
-        """ Define here the layers used during the forward-pass
-            of the neural network.
-        """
-        self.l2_regularization_scale = model_features.l2_regularization_scale
-        dropout_probability = model_features.dropout_probability
-        self.batch_size = model_features.batch_size
-        self.dense_nodes = model_features.dense_nodes
-        regularizer = tf.contrib.layers.l2_regularizer(
-            scale=self.l2_regularization_scale)
-        number_filters = model_features.number_filters
-        kernel_length = model_features.kernel_length
-        kernel_strides = model_features.kernel_strides
-        pool_size = model_features.pool_size
-        pool_strides = model_features.pool_strides
-        self.scaler = model_features.scaler
-        cnn_activation_function = model_features.cnn_activation_function
-        dnn_activation_function = model_features.dnn_activation_function
-        output_size = model_features.output_size
-        cnn_trainable = model_features.cnn_trainable
-
-        # ###################
-        # ##### 1D Conv #####
-        # ###################
-        self.cnn_1d = {}
-        for filter_index in range(len(kernel_length[0])):
-            self.cnn_1d[str(filter_index)] = tf.layers.Conv1D(
-                filters=number_filters[0],
-                kernel_size=kernel_length[0][filter_index],
-                strides=kernel_strides[0][filter_index],
+        # Define hidden layers for encoder
+        self.conv_layers_encoder = {}
+        self.pool_layers_encoder = {}
+        for layer in range(len(cnn_filters_encoder)):
+            self.conv_layers_encoder[str(layer)] = tf.layers.Conv1D(
+                filters=cnn_filters_encoder[layer],
+                kernel_size=cnn_kernel_encoder[layer],
+                strides=1,
                 padding='same',
-                activation=cnn_activation_function,
-                kernel_initializer=tf.initializers.he_normal(),
-                trainable=cnn_trainable)
+                kernel_initializer=he_normal(),
+                activation=activation_function,
+                trainable=encoder_trainable)
+            self.pool_layers_encoder[str(layer)] = Pooling(
+                pool_size=pool_size_encoder[layer],
+                strides=pool_strides_encoder[layer],
+                padding='same')
 
-        # ###################
-        # ##### 2D Conv #####
-        # ###################
-        self.cnn_2d = {}
-        self.cnn_2d['0'] = tf.layers.Conv2D(
-            filters=number_filters[1],
-            kernel_size=(kernel_length[1],
-                         number_filters[0]*len(kernel_length[0])),
-            strides=kernel_strides[1],
-            padding='valid',
-            activation=cnn_activation_function,
-            kernel_initializer=tf.initializers.he_normal(),
-            trainable=cnn_trainable
-            )
+        # self.conv_layers_encoder[str(layer+1)] = tf.layers.Conv1D(
+        #     filters=cnn_filters_encoder[-1],
+        #     kernel_size=cnn_kernel_encoder[-1],
+        #     strides=cnn_strides_encoder[-1],
+        #     padding='same',
+        #     kernel_initializer=he_normal(),
+        #     activation=activation_function,
+        #     trainable=encoder_trainable)
 
-        self.max_pooling2d = {}
-        self.max_pooling2d['0'] = tf.layers.MaxPooling2D(
-            pool_size=pool_size[1],
-            strides=pool_strides[1],
-            padding='same')
+        # Define hidden layers for encoder
+        self.conv_layers_decoder = {}
+        for layer in range(len(cnn_filters_decoder)-1):
+            self.conv_layers_decoder[str(layer)] = tf.layers.Conv1D(
+                filters=cnn_filters_decoder[layer],
+                kernel_size=cnn_kernel_decoder[layer],
+                strides=cnn_strides_decoder[layer],
+                padding='same',
+                kernel_initializer=he_normal(),
+                activation=activation_function)
+        self.conv_layers_decoder[str(layer+1)] = tf.layers.Conv1D(
+            filters=cnn_filters_decoder[-1],
+            kernel_size=cnn_kernel_decoder[-1],
+            strides=cnn_strides_decoder[-1],
+            padding='same',
+            kernel_initializer=he_normal(),
+            activation=output_function)
 
-        # #################
-        # ##### Dense #####
-        # #################
-
-        self.flatten = tf.layers.Flatten()
-
-        self.dense_layers = {}
-        self.dropout_layers = {}
-        for layer, nodes in enumerate(self.dense_nodes):
-            self.dense_layers[str(layer)] = tf.layers.Dense(
-                nodes,
-                activation=dnn_activation_function,
-                kernel_initializer=lecun_normal(),
-                kernel_regularizer=regularizer)
-            self.dropout_layers[str(layer)] = tf.layers.Dropout(
-                dropout_probability)
-        self.output_layer = tf.layers.Dense(output_size, activation=None)
-
-    def predict_logits(self, input_data, training=True):
+    def encoder(self, input_data, training=True):
         """ Runs a forward-pass through the network. Only outputs logits for
             loss function. This is because
-            tf.nn.softmax_cross_entropy_with_logits calculates softmax
-            internally. Note, dropout training is true here.
+            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
+            internally.
+            Note, training is true here to turn dropout on.
             Args:
                 input_data: 2D tensor of shape (n_samples, n_features).
             Returns:
                 logits: unnormalized predictions.
         """
-        # Reshape input data
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1], 1])
-        # 1d convolutions
-        x_0 = self.cnn_1d['0'](x)
-        x_1 = self.cnn_1d['1'](x)
-        x_2 = self.cnn_1d['2'](x)
+        layer_list = self.conv_layers_encoder.keys()
+        layer_list.sort()
+        for layer in layer_list:
+            x = self.conv_layers_encoder[str(layer)](x)
+            x = self.pool_layers_encoder[str(layer)](x)
+        encoding = x
 
-        x = tf.concat([x_0, x_1, x_2], axis=2)
-        x = tf.reshape(x, [-1,
-                           x.shape[1],
-                           x.shape[2],
-                           1])
-        # 2d convolutions
-        x = self.cnn_2d['0'](x)
-        x = self.max_pooling2d['0'](x)
+        return encoding
 
-        # dense
-        x = self.flatten(x)
-
-        for layer, nodes in enumerate(self.dense_nodes):
-            x = self.dense_layers[str(layer)](x)
-            x = self.dropout_layers[str(layer)](x, training)
-
-        logits = self.output_layer(x)
-        return logits
+    def decoder(self, encoding, training=True):
+        """ Runs a forward-pass through the network. Only outputs logits for
+            loss function. This is because
+            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
+            internally.
+            Note, training is true here to turn dropout on.
+            Args:
+                input_data: 2D tensor of shape (n_samples, n_features).
+            Returns:
+                logits: unnormalized predictions.
+        """
+        x = encoding
+        layer_list = self.conv_layers_decoder.keys()
+        layer_list.sort()
+        for layer in layer_list:
+            x = tf.reshape(x, (x.shape[0], x.shape[1], x.shape[2], 1))
+            # upscale image by 2x
+            x = resize_images(x, [x.shape[1]*2, 1])
+            x = tf.reshape(x, (x.shape[0], x.shape[1], x.shape[2]))
+            x = self.conv_layers_decoder[str(layer)](x)
+            'decoder conv ' + str(x.shape)
+        decoding = tf.reshape(x, (x.shape[0], x.shape[1]))
+        'decoder FINAL ' + str(x.shape)
+        return decoding
 
     def loss_fn(self, input_data, target, training=True):
         """ Defines the loss function used during
             training.
         """
-        logits = self.predict_logits(input_data, training)
-        cross_entropy_loss = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits(
-                labels=target,
-                logits=logits))
-        loss = cross_entropy_loss
+        encoding = self.encoder(input_data, training)
+        decoding = self.decoder(encoding, training)
+        loss = tf.losses.mean_squared_error(
+            labels=self.scaler.transform(target),
+            predictions=decoding)
         return loss
 
     def grads_fn(self, input_data, target):
@@ -751,42 +872,111 @@ class filter_concat_cnn(tf.keras.Model):
         return all_loss_train, all_loss_test
 
 
-class filter_concat_cnn_model_features(object):
+class cae_model_features(object):
 
     def __init__(self,
                  learining_rate,
-                 l2_regularization_scale,
-                 dropout_probability,
+                 encoder_trainable,
                  batch_size,
-                 output_size,
-                 dense_nodes,
-                 number_filters,
-                 kernel_length,
-                 kernel_strides,
-                 pool_size,
-                 pool_strides,
-                 cnn_activation_function,
-                 dnn_activation_function,
                  scaler,
-                 cnn_trainable
+                 activation_function,
+                 output_function,
+                 Pooling,
+                 cnn_filters_encoder,
+                 cnn_kernel_encoder,
+                 cnn_strides_encoder,
+                 pool_size_encoder,
+                 pool_strides_encoder,
+                 cnn_filters_decoder,
+                 cnn_kernel_decoder,
+                 cnn_strides_decoder
                  ):
         self.learining_rate = learining_rate
-        self.l2_regularization_scale = l2_regularization_scale
-        self.dropout_probability = dropout_probability
+        self.encoder_trainable = encoder_trainable
         self.batch_size = batch_size
-        self.output_size = output_size
-        self.dense_nodes = dense_nodes
-        self.number_filters = number_filters
-        self.kernel_length = kernel_length
-        self.kernel_strides = kernel_strides
-        self.pool_size = pool_size
-        self.pool_strides = pool_strides
-        self.dense_nodes = dense_nodes
-        self.cnn_activation_function = cnn_activation_function
-        self.dnn_activation_function = dnn_activation_function
         self.scaler = scaler
-        self.cnn_trainable = cnn_trainable
+        self.activation_function = activation_function
+        self.output_function = output_function
+        self.Pooling = Pooling
+        self.cnn_filters_encoder = cnn_filters_encoder
+        self.cnn_kernel_encoder = cnn_kernel_encoder
+        self.cnn_strides_encoder = cnn_strides_encoder
+        self.pool_size_encoder = pool_size_encoder
+        self.pool_strides_encoder = pool_strides_encoder
+        self.cnn_filters_decoder = cnn_filters_decoder
+        self.cnn_kernel_decoder = cnn_kernel_decoder
+        self.cnn_strides_decoder = cnn_strides_decoder
 
+
+def generate_random_cae_architecture():
+    """ Generates a random convolutional autoencoder based on a set of
+        predefined architectures.
+
+        inputs: None
+
+        outputs: cae_model_features class
+    """
+    cnn_filters_encoder_choices = ((4, 8, 1),
+                                   (4, 8, 16, 1),
+                                   (4, 8, 16, 32, 1),
+                                   (8, 16, 1),
+                                   (8, 16, 32, 1),
+                                   (8, 16, 32, 64, 1),
+                                   (16, 32, 1),
+                                   (16, 32, 64, 1),
+                                   (16, 32, 64, 128, 1))
+    # cnn_filters_encoder_choices = ((4, 1),
+    #                                (8, 1),
+    #                                (16, 1),
+    #                                (32, 1))
+    cnn_kernel_encoder_choices = ((2,), (4,), (8,), (16,))
+    pool_size_encoder_choices = ((2,), (4,), (8,), (16,))
+    cnn_filters_encoder_choice = np.random.randint(
+        len(cnn_filters_encoder_choices))
+    cnn_kernel_encoder_choice = np.random.randint(
+        len(cnn_kernel_encoder_choices))
+    pool_size_encoder_choice = np.random.randint(
+        len(pool_size_encoder_choices))
+
+    # #############
+    # ## Encoder ##
+    # #############
+    cnn_filters_encoder = cnn_filters_encoder_choices[
+        cnn_filters_encoder_choice]
+    cnn_kernel_encoder = cnn_kernel_encoder_choices[
+        cnn_kernel_encoder_choice]*(len(cnn_filters_encoder_choices))
+    cnn_strides_encoder = (1,)*(len(cnn_filters_encoder_choices))
+    pool_size_encoder = pool_size_encoder_choices[pool_size_encoder_choice]*(
+        len(cnn_filters_encoder_choices))
+    pool_strides_encoder = (2,)*(len(cnn_filters_encoder_choices))
+
+    # #############
+    # ## Decoder ##
+    # #############
+    cnn_filters_decoder = cnn_filters_encoder
+    cnn_kernel_decoder = cnn_kernel_encoder
+    cnn_strides_decoder = cnn_strides_encoder
+
+    model_features = cae_model_features(
+            encoder_trainable=None,
+            learining_rate=None,
+            batch_size=None,
+            scaler=None,
+            activation_function=None,
+            output_function=None,
+            Pooling=None,
+            cnn_filters_encoder=cnn_filters_encoder,
+            cnn_kernel_encoder=cnn_kernel_encoder,
+            cnn_strides_encoder=cnn_strides_encoder,
+            pool_size_encoder=pool_size_encoder,
+            pool_strides_encoder=pool_strides_encoder,
+            cnn_filters_decoder=cnn_filters_decoder,
+            cnn_kernel_decoder=cnn_kernel_decoder,
+            cnn_strides_decoder=cnn_strides_decoder)
+
+    return model_features
+
+# ##############################################################
 # ##############################################################
 # ##############################################################
 # #################### Training Functions ######################
@@ -875,7 +1065,7 @@ def train_earlystopping(training_data,
         print_errors=True)
     if verbose is True:
         print("training loss: {0:.2f}  testing loss: {0:.2f}".format(
-            all_loss_train[-1], all_loss_test[-1]))
+            float(all_loss_train[-1]), float(all_loss_test[-1])))
 
     return all_loss_test
 
