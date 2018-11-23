@@ -11,6 +11,7 @@ from annsa.model_classes import dnn_model_features, dnn
 
 tf.enable_eager_execution()
 
+
 def load_dataset():
     training_dataset = make_classification(n_samples=100,
                                            n_features=1024,
