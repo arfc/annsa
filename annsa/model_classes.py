@@ -449,8 +449,8 @@ def generate_random_cnn1d_architecture():
 
     number_layers = np.random.randint(1, 4)
     dense_nodes = (10**np.random.uniform(1,
-                                         np.log10(1024/len(
-                                             cnn_filters_choices)),
+                                         np.log10(1024/(2**len(
+                                             cnn_filters_choices))),
                                          number_layers)).astype('int')
     dense_nodes = np.sort(dense_nodes)
     dense_nodes = np.flipud(dense_nodes)
