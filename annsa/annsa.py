@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from numpy import genfromtxt
 import random
@@ -212,8 +213,8 @@ def train_fc_ann(training_data,training_key,testing_data,testing_key,my_ANN_stru
             L2_all[i] = sess.run(L2_Reg)
 
 
-            print '\1b[2k\r',    
-            print('Epoch %s of %s, train error is %s, test error is %s' %(i,iters,(loss_train-L2_all)[i], (loss_test-L2_all)[i])),
+            print('\1b[2k\r', end=' ')    
+            print(('Epoch %s of %s, train error is %s, test error is %s' %(i,iters,(loss_train-L2_all)[i], (loss_test-L2_all)[i])), end=' ')
 
         loss_train = (loss_train-L2_all)[0:i]
         loss_test = (loss_test-L2_all)[0:i]
@@ -667,7 +668,7 @@ def results2(res,number_isotopes_displayed):
     index = [i[0] for i in sorted(enumerate(res), key=lambda x:x[1])]
     index = list(reversed(index))
     for i in range(number_isotopes_displayed):
-        print (isotopes[index[i]], round(res[index[i]],3))
+        print((isotopes[index[i]], round(res[index[i]],3)))
 
     
 def load_template_spectra_from_folder(parent_folder,spectrum_identifier, LLD=10):
@@ -717,7 +718,7 @@ def results2(res,number_isotopes_displayed):
     index = [i[0] for i in sorted(enumerate(res), key=lambda x:x[1])]
     index = list(reversed(index))
     for i in range(number_isotopes_displayed):
-        print (isotopes[index[i]], res[index[i]])
+        print((isotopes[index[i]], res[index[i]]))
                
 def zoom_spectrum(spectrum,zoom_strength):
     spectrum= np.abs(zoom( spectrum , zoom_strength))
@@ -973,8 +974,8 @@ def fun_generate_isotope_dataset(N_samples):
         Train_spectra[j]     = computed_spectrum
         Train_spectra_key[j] = temp_key
     
-        print ('\1b[2k\r'),    
-        print('Epoch %s of %s' %(j ,N_samples)),
+        print(('\1b[2k\r'), end=' ')    
+        print(('Epoch %s of %s' %(j ,N_samples)), end=' ')
 
         # Train_spectra, Train_spectra_key, counts
 
