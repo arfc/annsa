@@ -1,5 +1,7 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import numpy as np
-import annsa as an
+from . import annsa as an
 
 background_locations=['albuquerque',
                       'chicago',
@@ -25,7 +27,7 @@ def load_template_spectra_from_folder(parent_folder,spectrum_identifier,normaliz
     def normalize_spectrum(ID):
         temp_spectrum = an.read_spectrum(parent_folder + ID + spectrum_identifier)
         if np.max(temp_spectrum)==0:
-            print ID + ' Contains no values'
+            print(ID + ' Contains no values')
         if normalization==None:
             return temp_spectrum
         elif normalization=='normalheight':
@@ -86,7 +88,7 @@ def load_templates(normalization=None):
     def normalize_spectrum(location,normalization=None):
             temp_spectrum = an.read_spectrum('./templates/background/background-'+location+'.spe')
             if np.max(temp_spectrum)==0:
-                print ID + ' Contains no values'
+                print(ID + ' Contains no values')
             if normalization==None:
                 return temp_spectrum
             elif normalization=='normalheight':
