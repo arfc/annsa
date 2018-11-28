@@ -53,11 +53,16 @@ def load_templates(template_settings,
 
     for setting in template_settings:
         spectral_templates[setting] = load_template_spectra_from_folder(
-            templates_folder + setting + "/", spectrum_identifier, normalization)
+            templates_folder + setting + "/",
+            spectrum_identifier,
+            normalization)
 
     def normalize_spectrum(location, normalization=None):
             temp_spectrum = an.read_spectrum(
-                templates_folder + '/background/background-' + location + '.spe')
+                templates_folder +
+                '/background/background-' +
+                location +
+                '.spe')
             if np.max(temp_spectrum) == 0:
                 print(ID + ' Contains no values')
             if normalization is None:
@@ -98,8 +103,8 @@ def simulate_template_dataset(isotope_list,
     all_background_spectra = []
     all_keys = []
     # Low level discriminator set to channel 10
-    LLD = 10 
-    # Background counts per second set to 85 
+    LLD = 10
+    # Background counts per second set to 85
     background_cps = 85.
     total_spectra = 0
     random_settings = False
@@ -111,7 +116,7 @@ def simulate_template_dataset(isotope_list,
                     for calibration in calibrations:
 
                         # Simulate source
-                        if random_settings is True:
+                        if random_settings:
                             calibration = np.random.uniform(calibrations[0],
                                                             calibrations[-1])
                             signal_to_background = 10**np.random.uniform(
@@ -132,8 +137,8 @@ def simulate_template_dataset(isotope_list,
                         source_template[source_template < 0] = 0
                         source_template /= np.sum(source_template)
                         source_template *= integration_time *\
-                                           background_cps *\
-                                           signal_to_background
+                            background_cps *\
+                            signal_to_background
 
                         background_template = \
                             spectral_templates['background']['chicago']
@@ -147,38 +152,41 @@ def simulate_template_dataset(isotope_list,
                         background_template[background_template < 0] = 0
                         background_template /= np.sum(background_template)
                         background_template *= integration_time*background_cps
-                        
+
                         if not output_separate_background:
                             all_source_spectra.append(
                                 source_template + background_template)
                         else:
                             all_background_spectra.append(background_template)
                             all_source_spectra.append(source_template)
-                            
-                            
+
                         isotope_key = isotope
                         all_keys.append(isotope_key)
 
                         print(('\1b[2k\r'), end=' ')
                         print(('Isotope %s, template %s,'
-                              '%s total spectra simulated' % (isotope,
-                                                              spectral_template_setting,
-                                                              total_spectra)), end=' ')
-    
+                              '%s total spectra simulated' % (
+                                  isotope,
+                                  spectral_template_setting,
+                                  total_spectra)), end=' ')
+    all_source_spectra = np.array(all_source_spectra)
+    all_keys = np.array(all_keys)
     if not output_separate_background:
-        return np.array(all_source_spectra), np.array(all_keys)
+        return all_source_spectra, all_keys
     else:
-        return np.array(all_source_spectra), np.array(all_background_spectra), np.array(all_keys)
+        all_background_spectra = np.array(all_background_spectra)
+        return all_source_spectra, all_background_spectra, all_keys
 
-def create_template_parameters(integration_time_range,
-                               integration_time_division,
-                               signal_to_background_range,
-                               signal_to_background_division,
-                               calibration_range,
-                               calibration_division,
-                               print_divisions=False,
-                               division_offset=False
-                               ):
+
+def create_template_parameters(
+        integration_time_range,
+        integration_time_division,
+        signal_to_background_range,
+        signal_to_background_division,
+        calibration_range,
+        calibration_division,
+        print_divisions=False,
+        division_offset=False):
 
     integration_times = np.logspace(
         np.log10(integration_time_range[0]),
