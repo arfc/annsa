@@ -155,6 +155,7 @@ def RepresentsInt(s):
     except ValueError:
         return False
 
+
 isotopes = [
     'Am241',
     'Ba133',
@@ -225,6 +226,7 @@ isotopes_GADRAS_ID = [
     'UraniumInSoil.spe',
     'PotassiumInSoil.spe',
                  ]
+
 
 isotopes_sources_GADRAS_ID = [
     '241AM',
