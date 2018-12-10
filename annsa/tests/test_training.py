@@ -8,7 +8,7 @@ from sklearn.datasets import make_classification
 from sklearn.preprocessing import LabelBinarizer, FunctionTransformer
 from sklearn.pipeline import make_pipeline
 
-from annsa.model_classes import dnn_model_features, dnn
+from annsa.model_classes_inheritance import dnn_model_features, DNN
 from annsa.results_plotting_functions import hyperparameter_efficiency_plot
 
 tf.enable_eager_execution()
@@ -40,11 +40,13 @@ def test_dnn_training():
     training_keys = training_dataset[1]
     training_keys_binarized = mlb.fit_transform(
         training_keys.reshape([training_data.shape[0], 1]))
-
+    train_dataset = [training_data, training_keys_binarized]
+    
     testing_data = np.abs(testing_dataset[0])
     testing_keys = testing_dataset[1]
     testing_keys_binarized = mlb.transform(
         testing_keys.reshape([testing_data.shape[0], 1]))
+    test_dataset = [testing_data, testing_keys_binarized]
 
     model_features = dnn_model_features(
         learining_rate=1e-1,
@@ -57,24 +59,26 @@ def test_dnn_training():
         )
 
     model_features.scaler.fit(training_data)
-    X_tensor = tf.constant(training_data)
-    y_tensor = tf.constant(training_keys_binarized)
-    train_dataset_tensor = tf.data.Dataset.from_tensor_slices((X_tensor,
-                                                               y_tensor))
     test_dataset = (testing_data, testing_keys_binarized)
-
+    def data_augmentation(input_data):
+        return np.random.poisson(input_data).astype(float)
+    
+    
     tf.reset_default_graph()
     optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
-    model = dnn(model_features)
+    model = DNN(model_features)
     all_loss_train, all_loss_test = model.fit_batch(
-        train_dataset_tensor,
+        train_dataset,
         test_dataset,
         optimizer,
         num_epochs=1,
-        early_stopping_patience=0,
+        earlystop_patience=0,
         verbose=1,
-        print_errors=False,
-        max_time=3600)
+        print_errors=0,
+        max_time=3600,
+        obj_cost=model.cross_entropy,
+        earlystop_cost_fn=model.cross_entropy,
+        data_augmentation=data_augmentation,)
     pass
 
 
