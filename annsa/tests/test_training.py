@@ -9,7 +9,7 @@ from sklearn.preprocessing import LabelBinarizer, FunctionTransformer
 from sklearn.pipeline import make_pipeline
 
 from annsa.model_classes import dnn_model_features, DNN
-# from annsa.results_plotting_functions import hyperparameter_efficiency_plot
+from annsa.results_plotting_functions import hyperparameter_efficiency_plot
 
 tf.enable_eager_execution()
 
@@ -41,13 +41,8 @@ def load_dataset():
 
     return train_dataset, test_dataset
 
-
-def test_dnn_training():
-    """
-    Testing the dense neural network class and training function.
-    """
+def construct_dnn():
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
-
     model_features = dnn_model_features(
         learining_rate=1e-1,
         l2_regularization_scale=1e-1,
@@ -57,16 +52,28 @@ def test_dnn_training():
         dense_nodes=[50],
         scaler=scaler
         )
+    optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
+    model = DNN(model_features)
+    return model_features, optimizer, model
+    
+def test_dnn_construction():
+    _, _, _ = construct_dnn()
+    pass
 
+def test_dnn_classification_training():
+    """
+    Testing the dense neural network class and training function.
+    """
+
+    tf.reset_default_graph()
+    model_features, optimizer, model = construct_dnn()
     train_dataset, test_dataset = load_dataset()
     model_features.scaler.fit(train_dataset[0])
 
     def data_augmentation(input_data):
         return input_data
 
-    tf.reset_default_graph()
-    optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
-    model = DNN(model_features)
+
     all_loss_train, all_loss_test = model.fit_batch(
         train_dataset,
         test_dataset,
@@ -96,11 +103,11 @@ def test_ae_training():
     pass
 
 
-# def test_hyperparameter_efficiency_plot():
-#     """
-#     Testing the hyperparameter_efficiency_plot function with a test
-#     data vector.
-#     """
-#     accuracy = np.random.normal(0.8, 0.2, 64)
-#     _, _ = hyperparameter_efficiency_plot(accuracy)
-#     pass
+def test_hyperparameter_efficiency_plot():
+    """
+    Testing the hyperparameter_efficiency_plot function with a test
+    data vector.
+    """
+    accuracy = np.random.normal(0.8, 0.2, 64)
+    _, _ = hyperparameter_efficiency_plot(accuracy)
+    pass
