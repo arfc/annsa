@@ -9,7 +9,6 @@ from sklearn.preprocessing import LabelBinarizer, FunctionTransformer
 from sklearn.pipeline import make_pipeline
 
 from annsa.model_classes import dnn_model_features, DNN
-from annsa.results_plotting_functions import hyperparameter_efficiency_plot
 
 tf.enable_eager_execution()
 
@@ -103,11 +102,3 @@ def test_ae_training():
     pass
 
 
-def test_hyperparameter_efficiency_plot():
-    """
-    Testing the hyperparameter_efficiency_plot function with a test
-    data vector.
-    """
-    accuracy = np.random.normal(0.8, 0.2, 64)
-    _, _ = hyperparameter_efficiency_plot(accuracy)
-    pass
