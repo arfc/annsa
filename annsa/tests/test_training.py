@@ -8,7 +8,7 @@ from sklearn.datasets import make_classification
 from sklearn.preprocessing import LabelBinarizer, FunctionTransformer
 from sklearn.pipeline import make_pipeline
 
-from annsa.model_classes_inheritance import dnn_model_features, DNN
+from annsa.model_classes import dnn_model_features, DNN
 from annsa.results_plotting_functions import hyperparameter_efficiency_plot
 
 tf.enable_eager_execution()
