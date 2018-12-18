@@ -22,7 +22,7 @@ class BaseClass(object):
     def __init__(self):
         pass
 
-    def predict_class(self, input_data):
+    def predict_class(self, input_data, training=False):
         """ Uses the model to predict the class of some input_data. When
             predicting class, training needs to be false to avoid using
             dropout.
@@ -34,8 +34,8 @@ class BaseClass(object):
             Returns:
                 class_predictions: [nxl] matrix of int class predictions.
         """
-        model_predictions = self.forward_pass(input_data, training=False)
-        class_predictions = tf.argmax(model_predictions, axis=2)
+        model_predictions = self.forward_pass(input_data, training=training)
+        class_predictions = tf.argmax(model_predictions, axis=-1)
         return class_predictions
 
     def cross_entropy(self, input_data, targets, training):
@@ -83,10 +83,11 @@ class BaseClass(object):
                     model's prediction given the inputs and the ground-truth
                     target.
         """
+        targets_scaled = self.scaler.transform(targets)
         model_predictions = self.forward_pass(input_data, training=training)
-        return tf.losses.mean_squared_error(targets, model_predictions)
+        return tf.losses.mean_squared_error(targets_scaled, model_predictions)
 
-    def f1_error(self, input_data, targets):
+    def f1_error(self, input_data, targets, training=False):
         """ Computes 1-(F1 score) on some data and target
 
             Args:
@@ -103,7 +104,7 @@ class BaseClass(object):
                     metrics globally by counting the total true positives,
                     false negatives and false positives."
         """
-        class_predictions = self.predict_class(input_data)
+        class_predictions = self.predict_class(input_data, training)
         class_truth = tf.argmax(targets, axis=1)
         f1_error = 1.0 - f1_score(class_truth,
                                   class_predictions,
@@ -233,17 +234,33 @@ class BaseClass(object):
                              obj_cost,
                              optimizer,
                              data_augmentation)
+            
+            training_data_aug = data_augmentation(train_dataset[0])
+            testing_data_aug = data_augmentation(test_dataset[0])
+            
             # Record errors at each epoch
             if earlystop_patience:
                 earlystop_cost['train'].append(
-                    earlystop_cost_fn(train_dataset[0], train_dataset[1]))
+                    earlystop_cost_fn(training_data_aug,
+                                      train_dataset[1],
+                                      training=False))
                 earlystop_cost['test'].append(
-                    earlystop_cost_fn(test_dataset[0], test_dataset[1]))
-
+                    earlystop_cost_fn(testing_data_aug,
+                                      test_dataset[1],
+                                      training=False))
+            else:
+                earlystop_cost['train'].append(0)
+                earlystop_cost['test'].append(0)
             objective_cost['train'].append(
-                self.loss_fn(train_dataset[0], train_dataset[1], obj_cost))
+                self.loss_fn(training_data_aug,
+                             train_dataset[1],
+                             obj_cost,
+                             training=False))
             objective_cost['test'].append(
-                self.loss_fn(test_dataset[0], test_dataset[1], obj_cost))
+                self.loss_fn(testing_data_aug,
+                             test_dataset[1],
+                             obj_cost,
+                             training=False))
             # Print erros at end of epoch
             if (print_errors and ((epoch+1) % verbose == 0)) is True:
                 print('Epoch %d: CostFunc loss: %3.2f %3.2f, '
@@ -674,10 +691,8 @@ class DAE(tf.keras.Model, BaseClass):
             Args:
                 input_data: 2D tensor of shape (n_samples, n_features).
             Returns:
-                logits: unnormalized predictions.
+                encoding: The encoding.
         """
-        if training:
-            x = np.random.poisson(input_data).astype(float)
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1]])
         for layer, nodes in enumerate(self.dense_nodes_encoder):
@@ -703,6 +718,29 @@ class DAE(tf.keras.Model, BaseClass):
             x = self.dropout_layers_decoder[str(layer)](x, training)
         decoding = self.output_layer(x)
         return decoding
+
+    def total_activity(self, input_data, training=False):
+        """ Calculates the total network activity (l1 activation) on 
+            some input data.
+            Args:
+                input_data: 2D tensor of shape (n_samples, n_features).
+            Returns:
+                average_activity (float): Average total l1 activation.
+        """
+        activity = 0
+        x = self.scaler.transform(input_data)
+        x = tf.reshape(x, [-1, x.shape[1]])
+        for layer, nodes in enumerate(self.dense_nodes_encoder):
+            x = self.dense_layers_encoder[str(layer)](x)
+            activity += np.sum(np.abs(x))
+            x = self.dropout_layers_encoder[str(layer)](x, training)
+        for layer, nodes in enumerate(self.dense_nodes_decoder):
+            x = self.dense_layers_decoder[str(layer)](x)
+            activity += np.sum(np.abs(x))
+            x = self.dropout_layers_encoder[str(layer)](x, training)
+        average_activity = activity/int(input_data.shape[0])
+        return average_activity
+
 
     def forward_pass(self, input_data, training):
         """ Runs a forward-pass through the network. Outputs are defined by
@@ -747,8 +785,8 @@ class DAE(tf.keras.Model, BaseClass):
                 during training.
         """
         loss = cost(input_data, targets, training)
+        loss += self.l1_regularization_scale * self.total_activity(input_data)
         return loss
-
 
 class dae_model_features(object):
 
@@ -860,7 +898,7 @@ class CAE(tf.keras.Model, BaseClass):
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1], 1])
-        layer_list = self.conv_layers_encoder.keys()
+        layer_list = list(self.conv_layers_encoder.keys())
         layer_list.sort()
         for layer in layer_list:
             x = self.conv_layers_encoder[str(layer)](x)
@@ -881,7 +919,7 @@ class CAE(tf.keras.Model, BaseClass):
                 logits: unnormalized predictions.
         """
         x = encoding
-        layer_list = self.conv_layers_decoder.keys()
+        layer_list = list(self.conv_layers_decoder.keys())
         layer_list.sort()
         for layer in layer_list:
             x = tf.reshape(x, (x.shape[0], x.shape[1], x.shape[2], 1))
@@ -892,6 +930,26 @@ class CAE(tf.keras.Model, BaseClass):
             'decoder conv ' + str(x.shape)
         decoding = tf.reshape(x, (x.shape[0], x.shape[1]))
         'decoder FINAL ' + str(x.shape)
+        return decoding
+
+    def forward_pass(self, input_data, training):
+        """ Runs a forward-pass through the network. Outputs are defined by
+            'output_layer' in the model's structure. The scaler is applied
+            here.
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                training: Binary (True or False). If true, dropout is applied.
+                    When training weights this needs to be true for dropout to
+                    work.
+            Returns:
+                logits: [nxl] matrix of model outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
+        """
+        encoding = self.encoder(input_data, training)
+        decoding = self.decoder(encoding, training)
         return decoding
 
     def loss_fn(self, input_data, targets, cost, training=True):
@@ -1062,10 +1120,10 @@ def train_earlystop(training_data,
         data_augmentation=data_augmentation,
         print_errors=True)
 
-    costfunctionerr_test.append(earlystop_cost['test'][-earlystop_patience])
+    costfunctionerr_test.append(objective_cost['test'][-earlystop_patience])
     earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
     if verbose is True:
-        print("cost func error: {0:.2f}  early stop error: {0:.2f}".format(
+        print("Test error at early stop: Objectives fctn: {0:.2f} Early stop fctn: {0:.2f}".format(
             float(costfunctionerr_test[-1]), float(earlystoperr_test[-1])))
 
     return costfunctionerr_test, earlystoperr_test
