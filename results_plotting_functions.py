@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def hyperparameter_efficiency_plot(accuracy):
     """
     Input: Vector of some accuracy metric. Vector length must be a power of 2.
