@@ -1172,6 +1172,7 @@ def load_model(model_folder,
 
     return model, new_model_features.scaler
 
+
 class_isotopes = ['Am241',
                   'Ba133',
                   'Co57',
