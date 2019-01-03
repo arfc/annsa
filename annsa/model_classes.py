@@ -234,10 +234,10 @@ class BaseClass(object):
                              obj_cost,
                              optimizer,
                              data_augmentation)
-            
+
             training_data_aug = data_augmentation(train_dataset[0])
             testing_data_aug = data_augmentation(test_dataset[0])
-            
+
             # Record errors at each epoch
             if earlystop_patience:
                 earlystop_cost['train'].append(
@@ -290,7 +290,6 @@ class BaseClass(object):
 
 class DNN(tf.keras.Model, BaseClass):
     """Defines dense NN structure, loss functions, training functions.
-
     """
     def __init__(self, model_features):
         """Initializes dnn structure with model features.
@@ -720,7 +719,7 @@ class DAE(tf.keras.Model, BaseClass):
         return decoding
 
     def total_activity(self, input_data, training=False):
-        """ Calculates the total network activity (l1 activation) on 
+        """ Calculates the total network activity (l1 activation) on
             some input data.
             Args:
                 input_data: 2D tensor of shape (n_samples, n_features).
@@ -740,7 +739,6 @@ class DAE(tf.keras.Model, BaseClass):
             x = self.dropout_layers_encoder[str(layer)](x, training)
         average_activity = activity/int(input_data.shape[0])
         return average_activity
-
 
     def forward_pass(self, input_data, training):
         """ Runs a forward-pass through the network. Outputs are defined by
@@ -787,6 +785,7 @@ class DAE(tf.keras.Model, BaseClass):
         loss = cost(input_data, targets, training)
         loss += self.l1_regularization_scale * self.total_activity(input_data)
         return loss
+
 
 class dae_model_features(object):
 
@@ -1123,8 +1122,9 @@ def train_earlystop(training_data,
     costfunctionerr_test.append(objective_cost['test'][-earlystop_patience])
     earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
     if verbose is True:
-        print("Test error at early stop: Objectives fctn: {0:.2f} Early stop fctn: {0:.2f}".format(
-            float(costfunctionerr_test[-1]), float(earlystoperr_test[-1])))
+        print("Test error at early stop: Objectives fctn: ",
+              "{0:.2f} Early stop fctn: {0:.2f}".format(
+                float(costfunctionerr_test[-1]), float(earlystoperr_test[-1])))
 
     return costfunctionerr_test, earlystoperr_test
 
