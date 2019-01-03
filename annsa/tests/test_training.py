@@ -40,6 +40,7 @@ def load_dataset():
 
     return train_dataset, test_dataset
 
+
 def construct_dnn():
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
     model_features = dnn_model_features(
@@ -54,10 +55,12 @@ def construct_dnn():
     optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
     model = DNN(model_features)
     return model_features, optimizer, model
-    
+
+
 def test_dnn_construction():
     _, _, _ = construct_dnn()
     pass
+
 
 def test_dnn_classification_training():
     """
@@ -71,7 +74,6 @@ def test_dnn_classification_training():
 
     def data_augmentation(input_data):
         return input_data
-
 
     all_loss_train, all_loss_test = model.fit_batch(
         train_dataset,
@@ -100,5 +102,3 @@ def test_ae_training():
     Testing the autoencoder training function.
     """
     pass
-
-
