@@ -1,6 +1,8 @@
 Mark Kamuda, annsa, (2018), GitHub repository, https://github.com/kamuda1/annsa
 
 
+
+```latex
 @misc{kamuda2018,
   author = {Kamuda, Mark},
   title = {annsa},
@@ -9,3 +11,4 @@ Mark Kamuda, annsa, (2018), GitHub repository, https://github.com/kamuda1/annsa
   journal = {GitHub repository},
   howpublished = {\url{https://github.com/kamuda1/annsa}}
 }
+```
