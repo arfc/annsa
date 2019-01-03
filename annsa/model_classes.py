@@ -4,9 +4,280 @@ import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.eager as tfe
 from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import f1_score
 from tensorflow.image import resize_images
 from tensorflow.keras.initializers import he_normal
 import time
+
+# ##############################################################
+# ##############################################################
+# ##############################################################
+# ######################### Base Class #########################
+# ##############################################################
+# ##############################################################
+# ##############################################################
+
+
+class BaseClass(object):
+    def __init__(self):
+        pass
+
+    def predict_class(self, input_data, training=False):
+        """ Uses the model to predict the class of some input_data. When
+            predicting class, training needs to be false to avoid using
+            dropout.
+
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                    (typically 1024).
+            Returns:
+                class_predictions: [nxl] matrix of int class predictions.
+        """
+        model_predictions = self.forward_pass(input_data, training=training)
+        class_predictions = tf.argmax(model_predictions, axis=-1)
+        return class_predictions
+
+    def cross_entropy(self, input_data, targets, training):
+        """ Computes the cross entropy error on some data and target
+
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                    (typically 1024).
+                target: [nxl] matrix of target outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
+                training: Binary (True or False). If true, dropout is applied.
+                    When training weights this needs to be true for dropout to
+                    work.
+            Returns:
+                mean_squared_error: Float. The cross entropy between the
+                    model's prediction given the inputs and the ground-truth
+                    target.
+        """
+        logits = self.forward_pass(input_data, training=training)
+        cross_entropy_loss = tf.reduce_mean(
+            tf.nn.softmax_cross_entropy_with_logits_v2(
+                labels=targets,
+                logits=logits))
+        return cross_entropy_loss
+
+    def mse(self, input_data, targets, training):
+        """ Computes the mean squared error on some data and target
+
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                    (typically 1024).
+                target: [nxl] matrix of target outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
+                training: Binary (True or False). If true, dropout is applied.
+                    When training weights this needs to be true for dropout to
+                    work.
+            Returns:
+                mean_squared_error: Float. The mean squared error between the
+                    model's prediction given the inputs and the ground-truth
+                    target.
+        """
+        targets_scaled = self.scaler.transform(targets)
+        model_predictions = self.forward_pass(input_data, training=training)
+        return tf.losses.mean_squared_error(targets_scaled, model_predictions)
+
+    def f1_error(self, input_data, targets, training=False):
+        """ Computes 1-(F1 score) on some data and target
+
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                    (typically 1024).
+                target: [nxl] matrix of target outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
+            Returns:
+                f1_error: float representing the f1_score implemented using
+                    sklearn. From the sklearn documentation: "micro calculate
+                    metrics globally by counting the total true positives,
+                    false negatives and false positives."
+        """
+        class_predictions = self.predict_class(input_data, training)
+        class_truth = tf.argmax(targets, axis=1)
+        f1_error = 1.0 - f1_score(class_truth,
+                                  class_predictions,
+                                  average='micro')
+        return f1_error
+
+    def grads_fn(self, input_data, target, cost):
+        """ Dynamically computes the gradients of the loss value
+            with respect to the parameters of the model, in each
+            forward pass.
+
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                    (typically 1024).
+                target: [nxl] matrix of target outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
+                cost: Main cost function the algorithm minimizes. examples are
+                    'self.mse' or 'self.cross_entropy'.
+
+            Returns:
+                gradient: The gradient of the loss function with respect to the
+                    weights.
+        """
+        with tfe.GradientTape() as tape:
+            loss = self.loss_fn(input_data, target, cost)
+        gradient = tape.gradient(loss, self.variables)
+        return gradient
+
+    def train_epoch(self,
+                    train_dataset_tensor,
+                    obj_cost,
+                    optimizer,
+                    data_augmentation):
+        """ Trains model on a single epoch using mini-batch training.
+
+            Args:
+                train_dataset_tensor: TensorFlow dataset composed of training
+                    data and training keys.
+                obj_cost: objective function to minimize.
+
+            Returns:
+                None
+        """
+        for (input_data, target) in tfe.Iterator(
+                train_dataset_tensor.shuffle(1e8).batch(self.batch_size)):
+                input_data = data_augmentation(input_data)
+                grads = self.grads_fn(input_data,
+                                      target,
+                                      obj_cost)
+                optimizer.apply_gradients(zip(grads, self.variables))
+        return None
+
+    def check_earlystop(self, earlystop_cost, earlystop_patience):
+        """ Checks if early stop condition is met and either continues or
+            stops training.
+
+            Args:
+                earlystop_cost: Cost values used for early stopping.
+                earlystop_patience: [int] The early stopping patience.
+
+            Returns:
+                earlystop_flag: bool. If true will end training. If false
+                    training continues.
+        """
+        earlystop_flag = 0
+        argmin_error_in_patience_range = np.argmin(
+            earlystop_cost[-earlystop_patience:])
+        if (argmin_error_in_patience_range == 0):
+            earlystop_flag = 1
+        return earlystop_flag
+
+    def fit_batch(self,
+                  train_dataset,
+                  test_dataset,
+                  optimizer,
+                  num_epochs=50,
+                  verbose=50,
+                  print_errors=True,
+                  earlystop_patience=0,
+                  max_time=300,
+                  obj_cost=None,
+                  earlystop_cost_fn=None,
+                  data_augmentation=None):
+        """ Function to train the model, using the selected optimizer and
+            for the desired number of epochs. Uses optional early stopping
+            with patience.
+
+            Args:
+                train_dataset: Two element list of [data, keys] where data
+                    is a [nxm] numpy matrix of unprocessed gamma-ray spectra
+                    and keys are a [nxl] matrix of  target outputs.
+                test_dataset: Two element list of [data, keys] where data
+                    is a [nxm] numpy matrix of unprocessed gamma-ray spectra
+                    and keys are a [nxl] matrix of  target outputs.
+                optimizer: The TensorFlow optimizer used to train.
+                num_epochs: [int] Total number of epochs training is allowed
+                    to run.
+                verbose: [int] Frequency that the errors are printed if
+                    print_errors is True.
+                print_errors: [bool]
+                earlystop_patience: [int] Number of epochs training is allowed
+                    to run without improvment. If 0, training will run until
+                    max_time or num_epochs is passed.
+                max_time: [int] Max time in seconds training is allowed to run.
+                earlystop_cost: Main cost function the algorithm minimizes.
+                    examples are 'self.f1_error', 'self.mse', and
+                    'self.cross_entropy'
+                data_augmentation: Function that adds some data augmentation
+                    transform to the data during training
+            Returns: [objective_cost, earlystop_cost]. Dictionaries containing
+                costs
+
+        """
+        earlystop_cost = {'train': [], 'test': []}
+        objective_cost = {'train': [], 'test': []}
+
+        train_dataset_tensor = tf.data.Dataset.from_tensor_slices(
+            (tf.constant(train_dataset[0]), tf.constant(train_dataset[1])))
+
+        time_start = time.time()
+        for epoch in range(num_epochs):
+            # Train through one epoch
+            self.train_epoch(train_dataset_tensor,
+                             obj_cost,
+                             optimizer,
+                             data_augmentation)
+
+            training_data_aug = data_augmentation(train_dataset[0])
+            testing_data_aug = data_augmentation(test_dataset[0])
+
+            # Record errors at each epoch
+            if earlystop_patience:
+                earlystop_cost['train'].append(
+                    earlystop_cost_fn(training_data_aug,
+                                      train_dataset[1],
+                                      training=False))
+                earlystop_cost['test'].append(
+                    earlystop_cost_fn(testing_data_aug,
+                                      test_dataset[1],
+                                      training=False))
+            else:
+                earlystop_cost['train'].append(0)
+                earlystop_cost['test'].append(0)
+            objective_cost['train'].append(
+                self.loss_fn(training_data_aug,
+                             train_dataset[1],
+                             obj_cost,
+                             training=False))
+            objective_cost['test'].append(
+                self.loss_fn(testing_data_aug,
+                             test_dataset[1],
+                             obj_cost,
+                             training=False))
+            # Print erros at end of epoch
+            if (print_errors and ((epoch+1) % verbose == 0)) is True:
+                print('Epoch %d: CostFunc loss: %3.2f %3.2f, '
+                      'EarlyStop loss: %3.2f %3.2f' % (
+                          epoch+1,
+                          objective_cost['train'][-1],
+                          objective_cost['test'][-1],
+                          earlystop_cost['train'][-1],
+                          earlystop_cost['test'][-1]))
+            # Apply early stopping
+            if (earlystop_patience and
+                (epoch > earlystop_patience) and
+                self.check_earlystop(earlystop_cost['test'],
+                                     earlystop_patience)):
+                break
+
+        return [objective_cost, earlystop_cost]
 
 # ##############################################################
 # ##############################################################
@@ -17,9 +288,8 @@ import time
 # ##############################################################
 
 
-class dnn(tf.keras.Model):
-    """Defines dense NN structure and training functions.
-
+class DNN(tf.keras.Model, BaseClass):
+    """Defines dense NN structure, loss functions, training functions.
     """
     def __init__(self, model_features):
         """Initializes dnn structure with model features.
@@ -29,7 +299,7 @@ class dnn(tf.keras.Model):
             to construct the dense neural network.
 
         """
-        super(dnn, self).__init__()
+        super(DNN, self).__init__()
         """ Define here the layers used during the forward-pass
             of the neural network.
         """
@@ -48,127 +318,67 @@ class dnn(tf.keras.Model):
         self.drop_layers = {}
         for layer, nodes in enumerate(self.dense_nodes):
 
-            self.dense_layers[layer] = tf.layers.Dense(
+            self.dense_layers[str(layer)] = tf.layers.Dense(
                 nodes,
                 activation=tf.nn.relu,
                 kernel_initializer=he_normal(),
                 kernel_regularizer=regularizer)
-            self.drop_layers[layer] = tf.layers.Dropout(dropout_probability)
+            self.drop_layers[str(layer)] = tf.layers.Dropout(
+                dropout_probability)
         self.output_layer = tf.layers.Dense(output_size, activation=None)
 
-    def predict_logits(self, input_data, training=True):
-        """ Runs a forward-pass through the network. Only outputs logits for
-            loss function. This is because
-            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
-            internally. Note, training is true here to turn dropout on.
+    def forward_pass(self, input_data, training):
+        """ Runs a forward-pass through the network. Outputs are defined by
+            'output_layer' in the model's structure. The scaler is applied
+            here.
             Args:
-                input_data: 2D tensor of shape (n_samples, n_features).
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                training: Binary (True or False). If true, dropout is applied.
+                    When training weights this needs to be true for dropout to
+                    work.
             Returns:
-                logits: unnormalized predictions.
+                logits: [nxl] matrix of model outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, 1, x.shape[1]])
         for layer, nodes in enumerate(self.dense_nodes):
-            x = self.dense_layers[layer](x)
-            x = self.drop_layers[layer](x, training)
+            x = self.dense_layers[str(layer)](x)
+            x = self.drop_layers[str(layer)](x, training=training)
         logits = self.output_layer(x)
-
         return logits
 
-    def predict(self, input_data, training=False):
-        """ Runs a forward-pass through the network and uses softmax output.
-            Dropout training is off, this is not used for gradient calculations
-            in loss function.
-            Args:
-                input_data: 2D tensor of shape (n_samples, n_features).
-            Returns:
-                logits: unnormalized predictions.
-        """
-        return tf.nn.softmax(self.predict_logits(self, input_data, training))
-
-    def loss_fn(self, input_data, target, training=True):
-        """ Defines the loss function used during
+    def loss_fn(self, input_data, targets, cost, training=True):
+        """ Defines the loss function, including regularization, used during
             training.
+
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                    (typically 1024).
+                target: [nxl] matrix of target outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
+                cost: Main cost function the algorithm minimizes. examples are
+                    'self.mse' or 'self.cross_entropy'.
+                training: Binary (True or False). If true, dropout is applied.
+                    When training weights this needs to be true for dropout to
+                    work.
+
+            Returns:
+                loss: TensorFlow float of the complete loss function used
+                during training.
         """
-        logits = self.predict_logits(input_data, training)
-        cross_entropy_loss = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits_v2(
-                labels=target,
-                logits=logits))
-        loss = cross_entropy_loss
+        loss = cost(input_data, targets, training)
         if self.l2_regularization_scale > 0:
             for layer, nodes in enumerate(self.dense_layers):
-                loss += self.dense_layers[layer].losses
+                loss += self.dense_layers[str(layer)].losses
 
         return loss
-
-    def grads_fn(self, input_data, target):
-        """ Dynamically computes the gradients of the loss value
-            with respect to the parameters of the model, in each
-            forward pass.
-        """
-        with tfe.GradientTape() as tape:
-            loss = self.loss_fn(input_data, target)
-
-        return tape.gradient(loss, self.variables)
-
-    def fit_batch(self,
-                  train_dataset,
-                  test_dataset,
-                  optimizer,
-                  num_epochs=50,
-                  verbose=50,
-                  print_errors=True,
-                  early_stopping_patience=0,
-                  max_time=300):
-        """ Function to train the model, using the selected optimizer and
-            for the desired number of epochs. Uses early stopping with
-            patience.
-        """
-        all_loss_train = []
-        all_loss_test = []
-        time_start = time.time()
-        early_stopping_flag = False
-        for epoch in range(num_epochs):
-            for (input_data, target) in tfe.Iterator(
-                            train_dataset.shuffle(1e8).batch(self.batch_size)):
-                input_data = np.random.poisson(input_data).astype(float)
-                grads = self.grads_fn(input_data, target)
-                optimizer.apply_gradients(zip(grads, self.variables))
-                all_loss_train.append(
-                    self.loss_fn(input_data, target, training=False).numpy())
-                if early_stopping_patience == 0:
-                    all_loss_test.append(self.loss_fn(test_dataset[0],
-                                                      test_dataset[1],
-                                                      training=False).numpy())
-
-            # Save error for early stopping
-            if early_stopping_patience != 0:
-                all_loss_test.append(self.loss_fn(test_dataset[0],
-                                                  test_dataset[1],
-                                                  training=False).numpy())
-                tmp_min_test_error = all_loss_test[-1]
-                if epoch == 0:
-                    patience_counter = 0
-                    min_test_error = tmp_min_test_error
-                elif (epoch > 0) and (tmp_min_test_error < min_test_error):
-                    min_test_error = tmp_min_test_error
-                    patience_counter = 0
-                else:
-                    patience_counter += 1
-                time_taken = time.time()-time_start
-                if ((patience_counter >= early_stopping_patience) or
-                        (time_taken > max_time)):
-                    early_stopping_flag = True
-
-            if (print_errors and
-                    ((epoch == 0) | ((epoch+1) % verbose == 0))) is True:
-                print('Loss at epoch %d: %3.2f %3.2f' % (epoch+1,
-                                                         all_loss_train[-1],
-                                                         all_loss_test[-1]))
-            if early_stopping_flag is True:
-                break
-        return all_loss_train, all_loss_test
 
 
 class dnn_model_features(object):
@@ -197,9 +407,9 @@ class dnn_model_features(object):
 # ##############################################################
 
 
-class cnn1d(tf.keras.Model):
+class CNN1D(tf.keras.Model, BaseClass):
     def __init__(self, model_features):
-        super(cnn1d, self).__init__()
+        super(CNN1D, self).__init__()
         """ Define here the layers used during the forward-pass
             of the neural network.
         """
@@ -253,15 +463,49 @@ class cnn1d(tf.keras.Model):
         self.output_layer = tf.layers.Dense(output_size,
                                             activation=output_function)
 
-    def predict_logits(self, input_data, training=True):
-        """ Runs a forward-pass through the network. Only outputs logits for
-            loss function. This is because
-            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
-            internally. Note, training is true here to turn dropout on.
+    def loss_fn(self, input_data, targets, cost, training=True):
+        """ Defines the loss function, including regularization, used during
+            training.
+
             Args:
-                input_data: 2D tensor of shape (n_samples, n_features).
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                    (typically 1024).
+                target: [nxl] matrix of target outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
+                cost: Main cost function the algorithm minimizes. examples are
+                    'self.mse' or 'self.cross_entropy'.
+                training: Binary (True or False). If true, dropout is applied.
+                    When training weights this needs to be true for dropout to
+                    work.
+
             Returns:
-                logits: unnormalized predictions.
+                loss: TensorFlow float of the complete loss function used
+                during training.
+        """
+        loss = cost(input_data, targets, training)
+        if self.l2_regularization_scale > 0:
+            for layer in self.dense_layers.keys():
+                loss += self.dense_layers[layer].losses
+        return loss
+
+    def forward_pass(self, input_data, training):
+        """ Runs a forward-pass through the network. Outputs are defined by
+            'output_layer' in the model's structure. The scaler is applied
+            here.
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                training: Binary (True or False). If true, dropout is applied.
+                    When training weights this needs to be true for dropout to
+                    work.
+            Returns:
+                logits: [nxl] matrix of model outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1], 1])
@@ -274,101 +518,6 @@ class cnn1d(tf.keras.Model):
             x = self.drop_layers[str(layer)](x, training)
         logits = self.output_layer(x)
         return logits
-
-    def predict(self, input_data, training=False):
-        """ Runs a forward-pass through the network and uses softmax output.
-            Dropout training is off, this is not used for gradient calculations
-            in loss function.
-            Args:
-                input_data: 2D tensor of shape (n_samples, n_features).
-            Returns:
-                logits: unnormalized predictions.
-        """
-        return tf.nn.softmax(self.predict_logits(self, input_data, training))
-
-    def loss_fn(self, input_data, target, training=True):
-        """ Defines the loss function used during
-            training.
-        """
-        logits = self.predict_logits(input_data, training)
-        cross_entropy_loss = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits_v2(
-                labels=target,
-                logits=logits))
-        loss = cross_entropy_loss
-
-        if self.l2_regularization_scale > 0:
-            for layer in self.dense_layers.keys():
-                loss += self.dense_layers[layer].losses
-        return loss
-
-    def grads_fn(self, input_data, target):
-        """ Dynamically computes the gradients of the loss value
-            with respect to the parameters of the model, in each
-            forward pass.
-        """
-        with tfe.GradientTape() as tape:
-            loss = self.loss_fn(input_data, target)
-
-        return tape.gradient(loss, self.variables)
-
-    def fit_batch(self,
-                  train_dataset,
-                  test_dataset,
-                  optimizer,
-                  num_epochs=50,
-                  verbose=50,
-                  print_errors=True,
-                  early_stopping_patience=0,
-                  max_time=300):
-        """ Function to train the model, using the selected optimizer and
-            for the desired number of epochs. Uses early stopping with
-            patience.
-        """
-        all_loss_train = []
-        all_loss_test = []
-        time_start = time.time()
-        early_stopping_flag = False
-        for epoch in range(num_epochs):
-            for (input_data, target) in tfe.Iterator(
-                            train_dataset.shuffle(1e8).batch(self.batch_size)):
-                input_data = np.random.poisson(input_data).astype(float)
-                grads = self.grads_fn(input_data, target)
-                optimizer.apply_gradients(zip(grads, self.variables))
-                all_loss_train.append(
-                    self.loss_fn(input_data, target, training=False).numpy())
-                if early_stopping_patience == 0:
-                    all_loss_test.append(self.loss_fn(test_dataset[0],
-                                                      test_dataset[1],
-                                                      training=False).numpy())
-
-            # Save error for early stopping
-            if early_stopping_patience != 0:
-                all_loss_test.append(self.loss_fn(test_dataset[0],
-                                                  test_dataset[1],
-                                                  training=False).numpy())
-                tmp_min_test_error = all_loss_test[-1]
-                if epoch == 0:
-                    patience_counter = 0
-                    min_test_error = tmp_min_test_error
-                elif (epoch > 0) and (tmp_min_test_error < min_test_error):
-                    min_test_error = tmp_min_test_error
-                    patience_counter = 0
-                else:
-                    patience_counter += 1
-                time_taken = time.time()-time_start
-                if ((patience_counter >= early_stopping_patience) or
-                        (time_taken > max_time)):
-                    early_stopping_flag = True
-
-            if (print_errors and
-                    ((epoch == 0) | ((epoch+1) % verbose == 0))) is True:
-                print('Loss at epoch %d: %3.2f %3.2f' % (epoch+1,
-                                                         all_loss_train[-1],
-                                                         all_loss_test[-1]))
-            if early_stopping_flag is True:
-                break
-        return all_loss_train, all_loss_test
 
 
 class cnn1d_model_features(object):
@@ -487,9 +636,9 @@ def generate_random_cnn1d_architecture():
 # ##############################################################
 
 
-class dae(tf.keras.Model):
+class DAE(tf.keras.Model, BaseClass):
     def __init__(self, model_features):
-        super(dae, self).__init__()
+        super(DAE, self).__init__()
         """ Define here the layers used during the forward-pass
             of the neural network.
         """
@@ -541,10 +690,8 @@ class dae(tf.keras.Model):
             Args:
                 input_data: 2D tensor of shape (n_samples, n_features).
             Returns:
-                logits: unnormalized predictions.
+                encoding: The encoding.
         """
-        if training:
-            x = np.random.poisson(input_data).astype(float)
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1]])
         for layer, nodes in enumerate(self.dense_nodes_encoder):
@@ -571,83 +718,73 @@ class dae(tf.keras.Model):
         decoding = self.output_layer(x)
         return decoding
 
-    def loss_fn(self, input_data, target, training=True):
-        """ Defines the loss function used during
-            training.
+    def total_activity(self, input_data, training=False):
+        """ Calculates the total network activity (l1 activation) on
+            some input data.
+            Args:
+                input_data: 2D tensor of shape (n_samples, n_features).
+            Returns:
+                average_activity (float): Average total l1 activation.
+        """
+        activity = 0
+        x = self.scaler.transform(input_data)
+        x = tf.reshape(x, [-1, x.shape[1]])
+        for layer, nodes in enumerate(self.dense_nodes_encoder):
+            x = self.dense_layers_encoder[str(layer)](x)
+            activity += np.sum(np.abs(x))
+            x = self.dropout_layers_encoder[str(layer)](x, training)
+        for layer, nodes in enumerate(self.dense_nodes_decoder):
+            x = self.dense_layers_decoder[str(layer)](x)
+            activity += np.sum(np.abs(x))
+            x = self.dropout_layers_encoder[str(layer)](x, training)
+        average_activity = activity/int(input_data.shape[0])
+        return average_activity
+
+    def forward_pass(self, input_data, training):
+        """ Runs a forward-pass through the network. Outputs are defined by
+            'output_layer' in the model's structure. The scaler is applied
+            here.
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                training: Binary (True or False). If true, dropout is applied.
+                    When training weights this needs to be true for dropout to
+                    work.
+            Returns:
+                logits: [nxl] matrix of model outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
         """
         encoding = self.encoder(input_data, training)
         decoding = self.decoder(encoding, training)
-        loss = tf.losses.mean_squared_error(
-            labels=self.scaler.transform(target),
-            predictions=decoding)
+        return decoding
+
+    def loss_fn(self, input_data, targets, cost, training=True):
+        """ Defines the loss function, including regularization, used during
+            training.
+
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                    (typically 1024).
+                target: [nxl] matrix of target outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
+                cost: Main cost function the algorithm minimizes. examples are
+                    'self.mse' or 'self.cross_entropy'.
+                training: Binary (True or False). If true, dropout is applied.
+                    When training weights this needs to be true for dropout to
+                    work.
+
+            Returns:
+                loss: TensorFlow float of the complete loss function used
+                during training.
+        """
+        loss = cost(input_data, targets, training)
+        loss += self.l1_regularization_scale * self.total_activity(input_data)
         return loss
-
-    def grads_fn(self, input_data, target):
-        """ Dynamically computes the gradients of the loss value
-            with respect to the parameters of the model, in each
-            forward pass.
-        """
-        with tfe.GradientTape() as tape:
-            loss = self.loss_fn(input_data, target)
-        return tape.gradient(loss, self.variables)
-
-    def fit_batch(self,
-                  train_dataset,
-                  test_dataset,
-                  optimizer,
-                  num_epochs=50,
-                  verbose=50,
-                  print_errors=True,
-                  early_stopping_patience=0,
-                  max_time=300):
-        """ Function to train the model, using the selected optimizer and
-            for the desired number of epochs. Uses early stopping with
-            patience.
-        """
-        all_loss_train = []
-        all_loss_test = []
-        time_start = time.time()
-        early_stopping_flag = False
-        for epoch in range(num_epochs):
-            for (input_data, target) in tfe.Iterator(
-                            train_dataset.shuffle(1e8).batch(self.batch_size)):
-                input_data = np.random.poisson(input_data).astype(float)
-                grads = self.grads_fn(input_data, target)
-                optimizer.apply_gradients(zip(grads, self.variables))
-                all_loss_train.append(
-                    self.loss_fn(input_data, target, training=False).numpy())
-                if early_stopping_patience == 0:
-                    all_loss_test.append(self.loss_fn(test_dataset[0],
-                                                      test_dataset[1],
-                                                      training=False).numpy())
-
-            # Save error for early stopping
-            if early_stopping_patience != 0:
-                all_loss_test.append(self.loss_fn(test_dataset[0],
-                                                  test_dataset[1],
-                                                  training=False).numpy())
-                tmp_min_test_error = all_loss_test[-1]
-                if epoch == 0:
-                    patience_counter = 0
-                    min_test_error = tmp_min_test_error
-                elif (epoch > 0) and (tmp_min_test_error < min_test_error):
-                    min_test_error = tmp_min_test_error
-                    patience_counter = 0
-                else:
-                    patience_counter += 1
-                time_taken = time.time()-time_start
-                if ((patience_counter >= early_stopping_patience) or
-                        (time_taken > max_time)):
-                    early_stopping_flag = True
-
-            if (print_errors and
-                    ((epoch == 0) | ((epoch+1) % verbose == 0))) is True:
-                print('Loss at epoch %d: %3.2f %3.2f' % (epoch+1,
-                                                         all_loss_train[-1],
-                                                         all_loss_test[-1]))
-            if early_stopping_flag is True:
-                break
-        return all_loss_train, all_loss_test
 
 
 class dae_model_features(object):
@@ -682,9 +819,9 @@ class dae_model_features(object):
 # ##############################################################
 # ##############################################################
 
-class cae(tf.keras.Model):
+class CAE(tf.keras.Model, BaseClass):
     def __init__(self, model_features):
-        super(cae, self).__init__()
+        super(CAE, self).__init__()
         """ Define here the layers used during the forward-pass
             of the neural network.
         """
@@ -760,7 +897,7 @@ class cae(tf.keras.Model):
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1], 1])
-        layer_list = self.conv_layers_encoder.keys()
+        layer_list = list(self.conv_layers_encoder.keys())
         layer_list.sort()
         for layer in layer_list:
             x = self.conv_layers_encoder[str(layer)](x)
@@ -781,7 +918,7 @@ class cae(tf.keras.Model):
                 logits: unnormalized predictions.
         """
         x = encoding
-        layer_list = self.conv_layers_decoder.keys()
+        layer_list = list(self.conv_layers_decoder.keys())
         layer_list.sort()
         for layer in layer_list:
             x = tf.reshape(x, (x.shape[0], x.shape[1], x.shape[2], 1))
@@ -794,83 +931,50 @@ class cae(tf.keras.Model):
         'decoder FINAL ' + str(x.shape)
         return decoding
 
-    def loss_fn(self, input_data, target, training=True):
-        """ Defines the loss function used during
-            training.
+    def forward_pass(self, input_data, training):
+        """ Runs a forward-pass through the network. Outputs are defined by
+            'output_layer' in the model's structure. The scaler is applied
+            here.
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                training: Binary (True or False). If true, dropout is applied.
+                    When training weights this needs to be true for dropout to
+                    work.
+            Returns:
+                logits: [nxl] matrix of model outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
         """
         encoding = self.encoder(input_data, training)
         decoding = self.decoder(encoding, training)
-        loss = tf.losses.mean_squared_error(
-            labels=self.scaler.transform(target),
-            predictions=decoding)
+        return decoding
+
+    def loss_fn(self, input_data, targets, cost, training=True):
+        """ Defines the loss function, including regularization, used during
+            training.
+
+            Args:
+                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
+                    number of samples, m is length of a spectrum
+                    (typically 1024).
+                target: [nxl] matrix of target outputs. n is number of samples,
+                    same as n in input. l is the number of elements in each
+                    output . If using one-hot encoding l is equal to number
+                    of classes. If used as autoencoder l is equal to m.
+                cost: Main cost function the algorithm minimizes. examples are
+                    'self.mse' or 'self.cross_entropy'.
+                training: Binary (True or False). If true, dropout is applied.
+                    When training weights this needs to be true for dropout to
+                    work.
+
+            Returns:
+                loss: TensorFlow float of the complete loss function used
+                during training.
+        """
+        loss = cost(input_data, targets, training)
         return loss
-
-    def grads_fn(self, input_data, target):
-        """ Dynamically computes the gradients of the loss value
-            with respect to the parameters of the model, in each
-            forward pass.
-        """
-        with tfe.GradientTape() as tape:
-            loss = self.loss_fn(input_data, target)
-        return tape.gradient(loss, self.variables)
-
-    def fit_batch(self,
-                  train_dataset,
-                  test_dataset,
-                  optimizer,
-                  num_epochs=50,
-                  verbose=50,
-                  print_errors=True,
-                  early_stopping_patience=0,
-                  max_time=300):
-        """ Function to train the model, using the selected optimizer and
-            for the desired number of epochs. Uses early stopping with
-            patience.
-        """
-        all_loss_train = []
-        all_loss_test = []
-        time_start = time.time()
-        early_stopping_flag = False
-        for epoch in range(num_epochs):
-            for (input_data, target) in tfe.Iterator(
-                            train_dataset.shuffle(1e8).batch(self.batch_size)):
-                input_data = np.random.poisson(input_data).astype(float)
-                grads = self.grads_fn(input_data, target)
-                optimizer.apply_gradients(zip(grads, self.variables))
-                all_loss_train.append(
-                    self.loss_fn(input_data, target, training=False).numpy())
-                if early_stopping_patience == 0:
-                    all_loss_test.append(self.loss_fn(test_dataset[0],
-                                                      test_dataset[1],
-                                                      training=False).numpy())
-
-            # Save error for early stopping
-            if early_stopping_patience != 0:
-                all_loss_test.append(self.loss_fn(test_dataset[0],
-                                                  test_dataset[1],
-                                                  training=False).numpy())
-                tmp_min_test_error = all_loss_test[-1]
-                if epoch == 0:
-                    patience_counter = 0
-                    min_test_error = tmp_min_test_error
-                elif (epoch > 0) and (tmp_min_test_error < min_test_error):
-                    min_test_error = tmp_min_test_error
-                    patience_counter = 0
-                else:
-                    patience_counter += 1
-                time_taken = time.time()-time_start
-                if ((patience_counter >= early_stopping_patience) or
-                        (time_taken > max_time)):
-                    early_stopping_flag = True
-
-            if (print_errors and
-                    ((epoch == 0) | ((epoch+1) % verbose == 0))) is True:
-                print('Loss at epoch %d: %3.2f %3.2f' % (epoch+1,
-                                                         all_loss_train[-1],
-                                                         all_loss_test[-1]))
-            if early_stopping_flag is True:
-                break
-        return all_loss_train, all_loss_test
 
 
 class cae_model_features(object):
@@ -986,89 +1090,43 @@ def generate_random_cae_architecture():
 # ##############################################################
 
 
-def train_kfolds(training_data,
-                 training_keys,
-                 number_folds,
-                 num_epochs,
-                 model_class,
-                 model_features,
-                 verbose=True):
+def train_earlystop(training_data,
+                    training_keys,
+                    testing_data,
+                    testing_keys,
+                    model,
+                    optimizer,
+                    num_epochs,
+                    obj_cost,
+                    earlystop_cost_fn,
+                    earlystop_patience,
+                    data_augmentation,
+                    verbose=True,
+                    fit_batch_verbose=5):
 
-    skf = StratifiedKFold(n_splits=number_folds, shuffle=True, random_state=1)
-
-    errors_train = []
-    errors_test = []
-
-    for train_index, test_index in skf.split(training_data, training_keys):
-
-        # only fit scaler to training data
-        model_features.scaler.fit(training_data[train_index])
-        X_tensor = tf.constant(training_data[train_index])
-        y_tensor = tf.constant(training_keys[train_index])
-        train_dataset_tensor = tf.data.Dataset.from_tensor_slices((X_tensor,
-                                                                   y_tensor))
-        # not iterating through test dataset, don't need to put in TF DataSet
-        test_dataset = (training_data[test_index], training_keys[test_index])
-
-        tf.reset_default_graph()
-        optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
-        model = model_class(model_features)
-        all_loss_train, all_loss_test = model.fit_batch(train_dataset_tensor,
-                                                        test_dataset,
-                                                        optimizer,
-                                                        num_epochs=1,
-                                                        verbose=1,
-                                                        print_errors=False)
-        if verbose is True:
-            print("training loss: {0:.2f}  testing loss: {0:.2f}".format(
-                all_loss_train[-1], all_loss_test[-1]))
-        errors_train.append(all_loss_train)
-        errors_test.append(all_loss_test)
-    if verbose is True:
-        print(("final average training loss: {0:.2f} "
-              "final average testing loss: {0:.2f}").format(
-                    np.average(errors_train, axis=0)[-1],
-                    np.average(errors_test, axis=0)[-1]))
-
-    return np.average(errors_train, axis=0)[-1],
-    np.average(errors_test, axis=0)[-1]
-
-
-def train_earlystopping(training_data,
-                        training_keys,
-                        testing_data,
-                        testing_keys,
-                        model_class,
-                        model_features,
-                        num_epochs,
-                        early_stopping_patience,
-                        verbose=True,
-                        fit_batch_verbose=5):
-
-    # only fit scaler to training data
-    X_tensor = tf.constant(training_data)
-    y_tensor = tf.constant(training_keys)
-    train_dataset_tensor = tf.data.Dataset.from_tensor_slices((X_tensor,
-                                                               y_tensor))
-    # not iterating through test dataset, don't need to put in TF DataSet
-    test_dataset = (testing_data, testing_keys)
+    costfunctionerr_test, earlystoperr_test = [], []
 
     tf.reset_default_graph()
-    optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
-    model = model_class(model_features)
-    all_loss_train, all_loss_test = model.fit_batch(
-        train_dataset_tensor,
-        test_dataset,
+    objective_cost, earlystop_cost = model.fit_batch(
+        (training_data, training_keys),
+        (testing_data, testing_keys),
         optimizer,
         num_epochs=num_epochs,
         verbose=fit_batch_verbose,
-        early_stopping_patience=early_stopping_patience,
+        obj_cost=obj_cost,
+        earlystop_cost_fn=earlystop_cost_fn,
+        earlystop_patience=earlystop_patience,
+        data_augmentation=data_augmentation,
         print_errors=True)
-    if verbose is True:
-        print("training loss: {0:.2f}  testing loss: {0:.2f}".format(
-            float(all_loss_train[-1]), float(all_loss_test[-1])))
 
-    return all_loss_test
+    costfunctionerr_test.append(objective_cost['test'][-earlystop_patience])
+    earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
+    if verbose is True:
+        print("Test error at early stop: Objectives fctn: ",
+              "{0:.2f} Early stop fctn: {0:.2f}".format(
+                float(costfunctionerr_test[-1]), float(earlystoperr_test[-1])))
+
+    return costfunctionerr_test, earlystoperr_test
 
 
 def save_model(folder_name, model_id, model, model_features):
