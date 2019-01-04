@@ -23,40 +23,56 @@ class BaseClass(object):
         pass
 
     def predict_class(self, input_data, training=False):
-        """ Uses the model to predict the class of some input_data. When
-            predicting class, training needs to be false to avoid using
-            dropout.
+        """
+        Predicts the class (one-hot format) of some data.
 
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                    (typically 1024).
-            Returns:
-                class_predictions: [nxl] matrix of int class predictions.
+        Uses the model to predict the class of some data. When
+        predicting class, training needs to be false to avoid
+        applying dropout.
+
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        training : bool, optional
+            Turns training on or off for optional features.
+
+        Returns
+        -------
+        class_predictions : int
+            [nxl] matrix of class predictions. n is number of samples, l is
+            number of classes
         """
         model_predictions = self.forward_pass(input_data, training=training)
         class_predictions = tf.argmax(model_predictions, axis=-1)
         return class_predictions
 
     def cross_entropy(self, input_data, targets, training):
-        """ Computes the cross entropy error on some data and target
-
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                    (typically 1024).
-                target: [nxl] matrix of target outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
-                training: Binary (True or False). If true, dropout is applied.
-                    When training weights this needs to be true for dropout to
-                    work.
-            Returns:
-                mean_squared_error: Float. The cross entropy between the
-                    model's prediction given the inputs and the ground-truth
-                    target.
         """
+        Computes the cross entropy error on some data and target.
+
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        target : narray, int
+            [nxl] matrix of target outputs. n is number of samples,
+            same as n in input. l is the number of elements in each
+            output . If using one-hot encoding l is equal to number
+            of classes. If used as autoencoder l is equal to m.
+        training : bool
+            Turns training on or off for optional features.
+
+        Returns
+        -------
+        cross_entropy_loss : float
+            The cross entropy between the
+            model's prediction given the inputs and the ground-truth
+            target.
+        """
+
         logits = self.forward_pass(input_data, training=training)
         cross_entropy_loss = tf.reduce_mean(
             tf.nn.softmax_cross_entropy_with_logits_v2(
@@ -65,44 +81,72 @@ class BaseClass(object):
         return cross_entropy_loss
 
     def mse(self, input_data, targets, training):
-        """ Computes the mean squared error on some data and target
+        """
+        Computes the mean squared error on some data and target.
 
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                    (typically 1024).
-                target: [nxl] matrix of target outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
-                training: Binary (True or False). If true, dropout is applied.
-                    When training weights this needs to be true for dropout to
-                    work.
-            Returns:
-                mean_squared_error: Float. The mean squared error between the
-                    model's prediction given the inputs and the ground-truth
-                    target.
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        target : narray, int
+            [nxl] matrix of target outputs. n is number of samples,
+            same as n in input. l is the number of elements in each
+            output . If using one-hot encoding l is equal to number
+            of classes. If used as autoencoder l is equal to m.
+        training : bool, optional
+            Turns training on or off for optional features.
+
+        Returns
+        -------
+        mean_squared_error : float
+            The mean squared error between the model's prediction given
+            the inputs and the ground-truth target.
         """
         targets_scaled = self.scaler.transform(targets)
         model_predictions = self.forward_pass(input_data, training=training)
         return tf.losses.mean_squared_error(targets_scaled, model_predictions)
 
-    def f1_error(self, input_data, targets, training=False):
-        """ Computes 1-(F1 score) on some data and target
+    def f1_error(self, input_data, targets, training=False, average='micro'):
+        """
+        Computes the f1 score on some data and target.
 
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                    (typically 1024).
-                target: [nxl] matrix of target outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
-            Returns:
-                f1_error: float representing the f1_score implemented using
-                    sklearn. From the sklearn documentation: "micro calculate
-                    metrics globally by counting the total true positives,
-                    false negatives and false positives."
+        From the sklearn documentation:
+            'micro' calculates metrics globally by counting the total true
+            positives, false negatives and false positives.
+
+            'macro' calculates metrics for each label, and find their
+            unweighted mean. This does not take label imbalance into account.
+
+            'weighted' calculates metrics for each label, and find their
+            average weighted by support (the number of true instances for
+            each label). This alters ‘macro’ to account for label imbalance; it
+            can result in an F-score that is not between precision and recall.
+
+            'samples' calculates metrics for each instance, and find their
+            average (only meaningful for multilabel classification where this
+            differs from accuracy_score).
+
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        target : narray, int
+            [nxl] matrix of target outputs. n is number of samples,
+            same as n in input. l is the number of elements in each
+            output . If using one-hot encoding l is equal to number
+            of classes. If used as autoencoder l is equal to m.
+        training : bool, optional
+            Turns training on or off for optional features.
+        average : string, optional
+            Type of averaging used by sklearns f1 score function.
+
+        Returns
+        -------
+        f1_error: float
+            The f1_score of the model  on some data implemented using sklearn.
+
         """
         class_predictions = self.predict_class(input_data, training)
         class_truth = tf.argmax(targets, axis=1)
@@ -112,24 +156,30 @@ class BaseClass(object):
         return f1_error
 
     def grads_fn(self, input_data, target, cost):
-        """ Dynamically computes the gradients of the loss value
-            with respect to the parameters of the model, in each
-            forward pass.
+        """
+        Dynamically computes the gradients of the loss value
+        with respect to the parameters of the model, in each
+        forward pass.
 
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                    (typically 1024).
-                target: [nxl] matrix of target outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
-                cost: Main cost function the algorithm minimizes. examples are
-                    'self.mse' or 'self.cross_entropy'.
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        target : narray, int
+            [nxl] matrix of target outputs. n is number of samples,
+            same as n in input. l is the number of elements in each
+            output . If using one-hot encoding l is equal to number
+            of classes. If used as autoencoder l is equal to m.
+        cost : function
+            Main cost function the algorithm minimizes. examples are
+            'self.mse' or 'self.cross_entropy'.
 
-            Returns:
-                gradient: The gradient of the loss function with respect to the
-                    weights.
+        Returns
+        -------
+        gradient: float
+            The gradient of the loss function with respect to the
+            weights.
         """
         with tfe.GradientTape() as tape:
             loss = self.loss_fn(input_data, target, cost)
@@ -141,15 +191,26 @@ class BaseClass(object):
                     obj_cost,
                     optimizer,
                     data_augmentation):
-        """ Trains model on a single epoch using mini-batch training.
+        """
+        Trains model on a single epoch using mini-batch training.
 
-            Args:
-                train_dataset_tensor: TensorFlow dataset composed of training
-                    data and training keys.
-                obj_cost: objective function to minimize.
+        Parameters
+        ----------
+        train_dataset_tensor : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        obj_cost : function
+            Main cost function the algorithm minimizes. examples are
+            'self.mse' or 'self.cross_entropy'.
+        optimizer : TensorFlow optimizer class
+            The optimizer to use to optimize the algorithm. Choices include
+            ``tf.train.AdamOptimizer``, ``tf.train.GradientDescentOptimizer``.
+        data_augmentation : function
+            Function used to apply data augmentation each training iteration.
 
-            Returns:
-                None
+        Returns
+        -------
+        None
         """
         for (input_data, target) in tfe.Iterator(
                 train_dataset_tensor.shuffle(1e8).batch(self.batch_size)):
@@ -161,16 +222,22 @@ class BaseClass(object):
         return None
 
     def check_earlystop(self, earlystop_cost, earlystop_patience):
-        """ Checks if early stop condition is met and either continues or
+        """
+        Checks if early stop condition is met and either continues or
             stops training.
 
-            Args:
-                earlystop_cost: Cost values used for early stopping.
-                earlystop_patience: [int] The early stopping patience.
+        Parameters
+        ----------
+        earlystop_cost : narray, float
+            Array of cost values for each iteration used for early stopping.
+        earlystop_patience : int
+            Number of epochs training is allowed to run without improvment.
+            If 0, training will run until max_time or num_epochs is passed.
 
-            Returns:
-                earlystop_flag: bool. If true will end training. If false
-                    training continues.
+        Returns
+        -------
+        earlystop_flag: bool
+            If true will end training. If false training continues.
         """
         earlystop_flag = 0
         argmin_error_in_patience_range = np.argmin(
@@ -191,35 +258,43 @@ class BaseClass(object):
                   obj_cost=None,
                   earlystop_cost_fn=None,
                   data_augmentation=None):
-        """ Function to train the model, using the selected optimizer and
-            for the desired number of epochs. Uses optional early stopping
-            with patience.
+        """
+        Function used to train the model.
 
-            Args:
-                train_dataset: Two element list of [data, keys] where data
-                    is a [nxm] numpy matrix of unprocessed gamma-ray spectra
-                    and keys are a [nxl] matrix of  target outputs.
-                test_dataset: Two element list of [data, keys] where data
-                    is a [nxm] numpy matrix of unprocessed gamma-ray spectra
-                    and keys are a [nxl] matrix of  target outputs.
-                optimizer: The TensorFlow optimizer used to train.
-                num_epochs: [int] Total number of epochs training is allowed
-                    to run.
-                verbose: [int] Frequency that the errors are printed if
-                    print_errors is True.
-                print_errors: [bool]
-                earlystop_patience: [int] Number of epochs training is allowed
-                    to run without improvment. If 0, training will run until
-                    max_time or num_epochs is passed.
-                max_time: [int] Max time in seconds training is allowed to run.
-                earlystop_cost: Main cost function the algorithm minimizes.
-                    examples are 'self.f1_error', 'self.mse', and
-                    'self.cross_entropy'
-                data_augmentation: Function that adds some data augmentation
-                    transform to the data during training
-            Returns: [objective_cost, earlystop_cost]. Dictionaries containing
-                costs
+        Parameters
+        ----------
+        train_dataset : list, float, int
+            Two element list of [data, keys] where data
+            is a [nxm] numpy matrix of unprocessed gamma-ray spectra
+            and keys are a [nxl] matrix of  target outputs.
+        test_dataset : list, float, int
+            Two element list of [data, keys] where data
+            is a [nxm] numpy matrix of unprocessed gamma-ray spectra
+            and keys are a [nxl] matrix of  target outputs.
+        optimizer : TensorFlow optimizer class
+            The optimizer to use to optimize the algorithm. Choices include
+            ``tf.train.AdamOptimizer``, ``tf.train.GradientDescentOptimizer``.
+        num_epochs : int, optional
+            Total number of epochs training is allowed to run.
+        verbose : int, optional
+            Frequency that the errors are printed per iteration.
+        print_errors : bool, optional
+            If true, will print model errors after each epoch.
+        earlystop_patience : int, optional
+            Number of epochs training is allowed to run without improvment.
+            If 0, training will run until max_time or num_epochs is passed.
+        max_time : int, optional
+            Max time in seconds training is allowed to run.
+        earlystop_cost_fctn : function
+            Cost function used for early stopping. Examples are
+            ``self.f1_error``, ``self.mse``, and ``self.cross_entropy``.
+        data_augmentation : function
+            Function used to apply data augmentation each training iteration.
 
+        Returns
+        -------
+        [objective_cost, earlystop_cost]: list of dictionaries
+            If true will end training. If false training continues.
         """
         earlystop_cost = {'train': [], 'test': []}
         objective_cost = {'train': [], 'test': []}
@@ -289,10 +364,13 @@ class BaseClass(object):
 
 
 class DNN(tf.keras.Model, BaseClass):
-    """Defines dense NN structure, loss functions, training functions.
+    """
+    Defines dense neural network structure, loss functions, training functions.
+
     """
     def __init__(self, model_features):
-        """Initializes dnn structure with model features.
+        """
+        Initializes dnn structure with model features.
 
         Args:
             model_features: Class that contains variables
@@ -300,10 +378,11 @@ class DNN(tf.keras.Model, BaseClass):
 
         """
         super(DNN, self).__init__()
-        """ Define here the layers used during the forward-pass
-            of the neural network.
         """
+        Define here the layers used during the forward-pass of the neural
+        network.
 
+        """
         self.l2_regularization_scale = model_features.l2_regularization_scale
         dropout_probability = model_features.dropout_probability
         self.dense_nodes = model_features.dense_nodes
@@ -328,20 +407,22 @@ class DNN(tf.keras.Model, BaseClass):
         self.output_layer = tf.layers.Dense(output_size, activation=None)
 
     def forward_pass(self, input_data, training):
-        """ Runs a forward-pass through the network. Outputs are defined by
-            'output_layer' in the model's structure. The scaler is applied
-            here.
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                training: Binary (True or False). If true, dropout is applied.
-                    When training weights this needs to be true for dropout to
-                    work.
-            Returns:
-                logits: [nxl] matrix of model outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
+        """
+        Runs a forward-pass through the network.
+
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        training : bool, optional
+            Turns training on or off for optional features.
+
+        Returns
+        -------
+        logits : tensor
+            Output layer of the network.
+
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, 1, x.shape[1]])
@@ -352,26 +433,31 @@ class DNN(tf.keras.Model, BaseClass):
         return logits
 
     def loss_fn(self, input_data, targets, cost, training=True):
-        """ Defines the loss function, including regularization, used during
-            training.
+        """
+        Defines the loss function, including regularization, used during
+        training.
 
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                    (typically 1024).
-                target: [nxl] matrix of target outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
-                cost: Main cost function the algorithm minimizes. examples are
-                    'self.mse' or 'self.cross_entropy'.
-                training: Binary (True or False). If true, dropout is applied.
-                    When training weights this needs to be true for dropout to
-                    work.
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        target: narray, int
+            [nxl] matrix of target outputs. n is number of samples,
+            same as n in input. l is the number of elements in each
+            output . If using one-hot encoding l is equal to number
+            of classes. If used as autoencoder l is equal to m.
+        cost: string
+            Main cost function the algorithm minimizes. examples are
+            'self.mse' or 'self.cross_entropy'.
+        training : bool, optional
+            Turns training on or off for optional features.
 
-            Returns:
-                loss: TensorFlow float of the complete loss function used
-                during training.
+        Returns
+        -------
+        loss : TensorFlow float
+            The value of all network losses computed during training
+
         """
         loss = cost(input_data, targets, training)
         if self.l2_regularization_scale > 0:
@@ -410,8 +496,10 @@ class dnn_model_features(object):
 class CNN1D(tf.keras.Model, BaseClass):
     def __init__(self, model_features):
         super(CNN1D, self).__init__()
-        """ Define here the layers used during the forward-pass
-            of the neural network.
+        """
+        Define here the layers used during the forward-pass of the neural
+        network.
+
         """
         self.batch_size = model_features.batch_size
         output_size = model_features.output_size
@@ -464,26 +552,31 @@ class CNN1D(tf.keras.Model, BaseClass):
                                             activation=output_function)
 
     def loss_fn(self, input_data, targets, cost, training=True):
-        """ Defines the loss function, including regularization, used during
-            training.
+        """
+        Defines the loss function, including regularization, used during
+        training.
 
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                    (typically 1024).
-                target: [nxl] matrix of target outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
-                cost: Main cost function the algorithm minimizes. examples are
-                    'self.mse' or 'self.cross_entropy'.
-                training: Binary (True or False). If true, dropout is applied.
-                    When training weights this needs to be true for dropout to
-                    work.
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        target: narray, int
+            [nxl] matrix of target outputs. n is number of samples,
+            same as n in input. l is the number of elements in each
+            output . If using one-hot encoding l is equal to number
+            of classes. If used as autoencoder l is equal to m.
+        cost: string
+            Main cost function the algorithm minimizes. examples are
+            'self.mse' or 'self.cross_entropy'.
+        training : bool, optional
+            Turns training on or off for optional features.
 
-            Returns:
-                loss: TensorFlow float of the complete loss function used
-                during training.
+        Returns
+        -------
+        loss : TensorFlow float
+            The value of all network losses computed during training
+
         """
         loss = cost(input_data, targets, training)
         if self.l2_regularization_scale > 0:
@@ -506,6 +599,7 @@ class CNN1D(tf.keras.Model, BaseClass):
                     same as n in input. l is the number of elements in each
                     output . If using one-hot encoding l is equal to number
                     of classes. If used as autoencoder l is equal to m.
+
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1], 1])
@@ -559,12 +653,15 @@ class cnn1d_model_features(object):
 
 
 def generate_random_cnn1d_architecture():
-    """ Generates a random 1d convolutional neural network based on a set of
-        predefined architectures.
+    """
+    Generates a random 1d convolutional neural network based on a set of
+    predefined architectures.
 
-        inputs: None
+    Returns
+    -------
+    model_features : class
+        Class that describes the structure of a 1D convolution neural network.
 
-        outputs: cae_model_features class
     """
     cnn_filters_choices = ((4, 8, 1),
                            (4, 8, 16, 1),
@@ -639,8 +736,10 @@ def generate_random_cnn1d_architecture():
 class DAE(tf.keras.Model, BaseClass):
     def __init__(self, model_features):
         super(DAE, self).__init__()
-        """ Define here the layers used during the forward-pass
-            of the neural network.
+        """
+        Define here the layers used during the forward-pass of the neural
+        network.
+
         """
         self.batch_size = model_features.batch_size
         self.scaler = model_features.scaler
@@ -682,15 +781,23 @@ class DAE(tf.keras.Model, BaseClass):
         self.output_layer = tf.layers.Dense(1024, activation=output_function)
 
     def encoder(self, input_data, training=True):
-        """ Runs a forward-pass through the network. Only outputs logits for
-            loss function. This is because
-            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
-            internally.
-            Note, training is true here to turn dropout on.
-            Args:
-                input_data: 2D tensor of shape (n_samples, n_features).
-            Returns:
-                encoding: The encoding.
+        """
+        Runs a forward-pass through only the encoder.
+        Note, training is currently not used here.
+
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        training : bool, optional
+            Turns training on or off for optional features.
+
+        Returns
+        -------
+        encoding : tensor
+            The DAE's encoding of the input.
+
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1]])
@@ -701,15 +808,22 @@ class DAE(tf.keras.Model, BaseClass):
         return encoding
 
     def decoder(self, encoding, training=True):
-        """ Runs a forward-pass through the network. Only outputs logits for
-            loss function. This is because
-            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
-            internally.
-            Note, training is true here to turn dropout on.
-            Args:
-                input_data: 2D tensor of shape (n_samples, n_features).
-            Returns:
-                logits: unnormalized predictions.
+        """
+        Runs a forward-pass through only the decoder.
+        Note, training is currently not used here.
+
+        Parameters
+        ----------
+        encoding : 2D tensor, float
+            Input tensor of shape (n_samples, size_encoding).
+        training : bool, optional
+            Turns training on or off for optional features.
+
+        Returns
+        -------
+        decoding : tensor
+            The DAE's decoding of the encoding.
+
         """
         x = encoding
         for layer, nodes in enumerate(self.dense_nodes_decoder):
@@ -725,6 +839,7 @@ class DAE(tf.keras.Model, BaseClass):
                 input_data: 2D tensor of shape (n_samples, n_features).
             Returns:
                 average_activity (float): Average total l1 activation.
+
         """
         activity = 0
         x = self.scaler.transform(input_data)
@@ -741,46 +856,53 @@ class DAE(tf.keras.Model, BaseClass):
         return average_activity
 
     def forward_pass(self, input_data, training):
-        """ Runs a forward-pass through the network. Outputs are defined by
-            'output_layer' in the model's structure. The scaler is applied
-            here.
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                training: Binary (True or False). If true, dropout is applied.
-                    When training weights this needs to be true for dropout to
-                    work.
-            Returns:
-                logits: [nxl] matrix of model outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
+        """
+        Runs a forward-pass through the encoder and decoder.
+
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        training : bool, optional
+            Turns training on or off for optional features.
+
+        Returns
+        -------
+        decoding : tensor
+            The DAE's decoding of the encoding.
+
         """
         encoding = self.encoder(input_data, training)
         decoding = self.decoder(encoding, training)
         return decoding
 
     def loss_fn(self, input_data, targets, cost, training=True):
-        """ Defines the loss function, including regularization, used during
-            training.
+        """
+        Defines the loss function, including regularization, used during
+        training.
 
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                    (typically 1024).
-                target: [nxl] matrix of target outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
-                cost: Main cost function the algorithm minimizes. examples are
-                    'self.mse' or 'self.cross_entropy'.
-                training: Binary (True or False). If true, dropout is applied.
-                    When training weights this needs to be true for dropout to
-                    work.
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        target: narray, int
+            [nxl] matrix of target outputs. n is number of samples,
+            same as n in input. l is the number of elements in each
+            output . If using one-hot encoding l is equal to number
+            of classes. If used as autoencoder l is equal to m.
+        cost: string
+            Main cost function the algorithm minimizes. examples are
+            'self.mse' or 'self.cross_entropy'.
+        training : bool, optional
+            Turns training on or off for optional features.
 
-            Returns:
-                loss: TensorFlow float of the complete loss function used
-                during training.
+        Returns
+        -------
+        loss : TensorFlow float
+            The value of all network losses computed during training
+
         """
         loss = cost(input_data, targets, training)
         loss += self.l1_regularization_scale * self.total_activity(input_data)
@@ -820,10 +942,16 @@ class dae_model_features(object):
 # ##############################################################
 
 class CAE(tf.keras.Model, BaseClass):
+    """
+    Class info
+
+    """
     def __init__(self, model_features):
         super(CAE, self).__init__()
-        """ Define here the layers used during the forward-pass
-            of the neural network.
+        """
+        Define here the layers used during the forward-pass of the neural
+        network.
+
         """
         self.batch_size = model_features.batch_size
         self.scaler = model_features.scaler
@@ -885,15 +1013,23 @@ class CAE(tf.keras.Model, BaseClass):
             activation=output_function)
 
     def encoder(self, input_data, training=True):
-        """ Runs a forward-pass through the network. Only outputs logits for
-            loss function. This is because
-            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
-            internally.
-            Note, training is true here to turn dropout on.
-            Args:
-                input_data: 2D tensor of shape (n_samples, n_features).
-            Returns:
-                logits: unnormalized predictions.
+        """
+        Runs a forward-pass through only the encoder.
+        Note, training is currently not used here.
+
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        training : bool, optional
+            Turns training on or off for optional features.
+
+        Returns
+        -------
+        encoding : tensor
+            The CAE's encoding of the input.
+
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1], 1])
@@ -907,15 +1043,22 @@ class CAE(tf.keras.Model, BaseClass):
         return encoding
 
     def decoder(self, encoding, training=True):
-        """ Runs a forward-pass through the network. Only outputs logits for
-            loss function. This is because
-            tf.nn.softmax_cross_entropy_with_logits_v2 calculates softmax
-            internally.
-            Note, training is true here to turn dropout on.
-            Args:
-                input_data: 2D tensor of shape (n_samples, n_features).
-            Returns:
-                logits: unnormalized predictions.
+        """
+        Runs a forward-pass through only the decoder.
+        Note, training is currently not used here.
+
+        Parameters
+        ----------
+        encoding : 2D tensor, float
+            Input tensor of shape (n_samples, size_encoding).
+        training : bool, optional
+            Turns training on or off for optional features.
+
+        Returns
+        -------
+        decoding : tensor
+            The CAE's decoding of the encoding.
+
         """
         x = encoding
         layer_list = list(self.conv_layers_decoder.keys())
@@ -932,46 +1075,53 @@ class CAE(tf.keras.Model, BaseClass):
         return decoding
 
     def forward_pass(self, input_data, training):
-        """ Runs a forward-pass through the network. Outputs are defined by
-            'output_layer' in the model's structure. The scaler is applied
-            here.
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                training: Binary (True or False). If true, dropout is applied.
-                    When training weights this needs to be true for dropout to
-                    work.
-            Returns:
-                logits: [nxl] matrix of model outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
+        """
+        Runs a forward-pass through the encoder and decoder.
+
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        training : bool, optional
+            Turns training on or off for optional features.
+
+        Returns
+        -------
+        decoding : tensor
+            The CAE's decoding of the encoding.
+
         """
         encoding = self.encoder(input_data, training)
         decoding = self.decoder(encoding, training)
         return decoding
 
     def loss_fn(self, input_data, targets, cost, training=True):
-        """ Defines the loss function, including regularization, used during
-            training.
+        """
+        Defines the loss function, including regularization, used during
+        training.
 
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                    (typically 1024).
-                target: [nxl] matrix of target outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
-                cost: Main cost function the algorithm minimizes. examples are
-                    'self.mse' or 'self.cross_entropy'.
-                training: Binary (True or False). If true, dropout is applied.
-                    When training weights this needs to be true for dropout to
-                    work.
+        Parameters
+        ----------
+        input_data : 2D tensor, float
+            Input tensor of shape (n_samples, n_features). Tensor is
+            unprocessed gamma-ray spectra (counts per channel).
+        target: narray, int
+            [nxl] matrix of target outputs. n is number of samples,
+            same as n in input. l is the number of elements in each
+            output . If using one-hot encoding l is equal to number
+            of classes. If used as autoencoder l is equal to m.
+        cost: string
+            Main cost function the algorithm minimizes. examples are
+            'self.mse' or 'self.cross_entropy'.
+        training : bool, optional
+            Turns training on or off for optional features.
 
-            Returns:
-                loss: TensorFlow float of the complete loss function used
-                during training.
+        Returns
+        -------
+        loss : TensorFlow float
+            The value of all network losses computed during training
+
         """
         loss = cost(input_data, targets, training)
         return loss
@@ -1014,13 +1164,17 @@ class cae_model_features(object):
 
 
 def generate_random_cae_architecture():
-    """ Generates a random convolutional autoencoder based on a set of
-        predefined architectures.
-
-        inputs: None
-
-        outputs: cae_model_features class
     """
+    Generates a random convolutional autoencoder based on a set of
+    predefined architectures.
+
+    Returns
+    -------
+    cae_model_features : class
+        Class that describes the structure of a CAE.
+
+    """
+
     cnn_filters_encoder_choices = ((4, 8, 1),
                                    (4, 8, 16, 1),
                                    (4, 8, 16, 32, 1),
@@ -1122,8 +1276,8 @@ def train_earlystop(training_data,
     costfunctionerr_test.append(objective_cost['test'][-earlystop_patience])
     earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
     if verbose is True:
-        print("Test error at early stop: Objectives fctn: ",
-              "{0:.2f} Early stop fctn: {0:.2f}".format(
+        print("Test error at early stop: Objectives fctn: {0:.2f}",
+              "Early stop fctn: {0:.2f}".format(
                 float(costfunctionerr_test[-1]), float(earlystoperr_test[-1])))
 
     return costfunctionerr_test, earlystoperr_test
