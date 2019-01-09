@@ -389,6 +389,7 @@ class DNN(tf.keras.Model, BaseClass):
         self.batch_size = model_features.batch_size
         self.scaler = model_features.scaler
         output_size = model_features.output_size
+        activation_function = model_features.activation_function
         regularizer = tf.contrib.layers.l2_regularizer(
             scale=self.l2_regularization_scale)
 
@@ -399,7 +400,7 @@ class DNN(tf.keras.Model, BaseClass):
 
             self.dense_layers[str(layer)] = tf.layers.Dense(
                 nodes,
-                activation=tf.nn.relu,
+                activation=activation_function,
                 kernel_initializer=he_normal(),
                 kernel_regularizer=regularizer)
             self.drop_layers[str(layer)] = tf.layers.Dropout(
@@ -474,6 +475,7 @@ class dnn_model_features(object):
                  batch_size,
                  output_size,
                  dense_nodes,
+                 activation_function,
                  scaler
                  ):
         self.learining_rate = learining_rate
@@ -482,6 +484,7 @@ class dnn_model_features(object):
         self.batch_size = batch_size
         self.output_size = output_size
         self.dense_nodes = dense_nodes
+        self.activation_function = activation_function
         self.scaler = scaler
 
 # ##############################################################
