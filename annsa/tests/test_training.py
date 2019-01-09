@@ -50,7 +50,8 @@ def construct_dnn():
         batch_size=2**5,
         output_size=2,
         dense_nodes=[50],
-        scaler=scaler
+        scaler=scaler,
+        activation_function=tf.nn.tanh,
         )
     optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
     model = DNN(model_features)
