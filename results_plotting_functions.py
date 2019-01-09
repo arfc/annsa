@@ -16,6 +16,9 @@ def hyperparameter_efficiency_plot(accuracy):
     """
     boxplot_values = []
 
+    # remove excess values
+    accuracy = accuracy[0:np.int(2**np.floor(np.log2(len(accuracy))))]
+
     number_boxplots = int(np.log2(len(accuracy)))
 
     for plot_index in range(number_boxplots):
@@ -44,5 +47,5 @@ def hyperparameter_efficiency_plot(accuracy):
     axes.set_ylabel('Accuracy', fontsize=15)
     axes.set_xlabel('Experiment Size (number of trials)', fontsize=15)
     axes.set_xticks(np.arange(1, number_boxplots+1))
-    _ = axes.set_xticklabels(np.arange(1, number_boxplots+1))
+    _ = axes.set_xticklabels([2**n for n in np.arange(number_boxplots)])
     return fig, axes
