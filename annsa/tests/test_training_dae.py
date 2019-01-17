@@ -41,6 +41,7 @@ def load_dataset():
 
     return train_dataset, test_dataset
 
+
 def construct_dae():
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
     model_features = dae_model_features(
@@ -57,10 +58,12 @@ def construct_dae():
     optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
     model = DAE(model_features)
     return model_features, optimizer, model
-    
+
+
 def test_dae_construction():
     _, _, _ = construct_dae()
     pass
+
 
 def test_dae_training():
     """
@@ -85,4 +88,3 @@ def test_dae_training():
         earlystop_cost_fn=model.mse,
         data_augmentation=model.default_data_augmentation,)
     pass
-
