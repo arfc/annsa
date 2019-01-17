@@ -57,7 +57,6 @@ class BaseClass(object):
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
-        target : narray, int
             [nxl] matrix of target outputs. n is number of samples,
             same as n in input. l is the number of elements in each
             output . If using one-hot encoding l is equal to number
@@ -155,6 +154,40 @@ class BaseClass(object):
                                   average='micro')
         return f1_error
 
+    def default_data_augmentation(self, x):
+        """
+        Default data augmentation is identity function.
+
+        Parameters
+        ----------
+        x : list, float
+            Input data
+
+        Returns
+        -------
+        x : list, float
+            Input data
+
+        """
+        return x
+
+    def poisson_data_augmentation(self, x):
+        """
+        Returns input data with poisson noise for data augmentation.
+
+        Parameters
+        ----------
+        x : list, float
+            Input data
+
+        Returns
+        -------
+        x : list, float
+            Poisson sampled input data
+
+        """
+        return np.random.poisson(x)
+
     def grads_fn(self, input_data, target, cost):
         """
         Dynamically computes the gradients of the loss value
@@ -191,6 +224,7 @@ class BaseClass(object):
                     obj_cost,
                     optimizer,
                     data_augmentation):
+
         """
         Trains model on a single epoch using mini-batch training.
 
@@ -255,6 +289,8 @@ class BaseClass(object):
                   print_errors=True,
                   earlystop_patience=0,
                   max_time=300,
+                  not_learning_patience=0,
+                  not_learning_threshold=0,
                   obj_cost=None,
                   earlystop_cost_fn=None,
                   data_augmentation=None):
@@ -285,6 +321,12 @@ class BaseClass(object):
             If 0, training will run until max_time or num_epochs is passed.
         max_time : int, optional
             Max time in seconds training is allowed to run.
+        not_learning_patience: int, optional
+            Max number of epochs to wait before checking if model is not
+            learning.
+        not_learning_threshold: float, optional
+            If error at epoch ``not_learning_patience`` is above this, training
+            stops.
         earlystop_cost_fctn : function
             Cost function used for early stopping. Examples are
             ``self.f1_error``, ``self.mse``, and ``self.cross_entropy``.
@@ -296,6 +338,11 @@ class BaseClass(object):
         [objective_cost, earlystop_cost]: list of dictionaries
             If true will end training. If false training continues.
         """
+        if not_learning_patience > earlystop_patience:
+            print('Early stop patience must be greater than not learning'
+                  'patience. Setting not learning patience to early stop')
+            not_learning_patience = earlystop_patience
+
         earlystop_cost = {'train': [], 'test': []}
         objective_cost = {'train': [], 'test': []}
 
@@ -345,11 +392,16 @@ class BaseClass(object):
                           objective_cost['test'][-1],
                           earlystop_cost['train'][-1],
                           earlystop_cost['test'][-1]))
-            # Apply early stopping
+            # Apply early stopping with patience
             if (earlystop_patience and
                 (epoch > earlystop_patience) and
                 self.check_earlystop(earlystop_cost['test'],
                                      earlystop_patience)):
+                break
+            # Apply early stopping if not learning
+            if (not_learning_patience and
+               (epoch > not_learning_patience) and
+               (earlystop_cost['test'][-1] > not_learning_threshold)):
                 break
 
         return [objective_cost, earlystop_cost]
@@ -655,7 +707,9 @@ class cnn1d_model_features(object):
         self.activation_function = activation_function
 
 
-def generate_random_cnn1d_architecture():
+def generate_random_cnn1d_architecture(cnn_filters_choices,
+                                       cnn_kernel_choices,
+                                       pool_size_choices):
     """
     Generates a random 1d convolutional neural network based on a set of
     predefined architectures.
@@ -666,21 +720,7 @@ def generate_random_cnn1d_architecture():
         Class that describes the structure of a 1D convolution neural network.
 
     """
-    cnn_filters_choices = ((4, 8, 1),
-                           (4, 8, 16, 1),
-                           (4, 8, 16, 32, 1),
-                           (8, 16, 1),
-                           (8, 16, 32, 1),
-                           (8, 16, 32, 64, 1),
-                           (16, 32, 1),
-                           (16, 32, 64, 1),
-                           (16, 32, 64, 128, 1))
-    # cnn_filters_choices = ((4, 1),
-    #                        (8, 1),
-    #                        (16, 1),
-    #                        (32, 1))
-    cnn_kernel_choices = ((2,), (4,), (8,), (16,))
-    pool_size_choices = ((2,), (4,), (8,), (16,))
+
     cnn_filters_choice = np.random.randint(
         len(cnn_filters_choices))
     cnn_kernel_choice = np.random.randint(
@@ -1166,11 +1206,21 @@ class cae_model_features(object):
         self.cnn_strides_decoder = cnn_strides_decoder
 
 
-def generate_random_cae_architecture():
+def generate_random_cae_architecture(cnn_filters_encoder_choices,
+                                     cnn_kernel_encoder_choices,
+                                     pool_size_encoder_choices):
     """
-    Generates a random convolutional autoencoder based on a set of
-    predefined architectures.
+    Generates a random convolutional autoencoder based on given architecture
+    choices.
 
+    Parameters
+    ----------
+    cnn_filters_encoder_choices : list, int
+        List of lists containing number of filters in each layer.
+    cnn_kernel_encoder_choices: list, int
+        Kernel sizes
+    pool_size_encoder_choices: list, int
+        Pooling sizes
     Returns
     -------
     cae_model_features : class
@@ -1178,21 +1228,6 @@ def generate_random_cae_architecture():
 
     """
 
-    cnn_filters_encoder_choices = ((4, 8, 1),
-                                   (4, 8, 16, 1),
-                                   (4, 8, 16, 32, 1),
-                                   (8, 16, 1),
-                                   (8, 16, 32, 1),
-                                   (8, 16, 32, 64, 1),
-                                   (16, 32, 1),
-                                   (16, 32, 64, 1),
-                                   (16, 32, 64, 128, 1))
-    # cnn_filters_encoder_choices = ((4, 1),
-    #                                (8, 1),
-    #                                (16, 1),
-    #                                (32, 1))
-    cnn_kernel_encoder_choices = ((2,), (4,), (8,), (16,))
-    pool_size_encoder_choices = ((2,), (4,), (8,), (16,))
     cnn_filters_encoder_choice = np.random.randint(
         len(cnn_filters_encoder_choices))
     cnn_kernel_encoder_choice = np.random.randint(
@@ -1258,6 +1293,8 @@ def train_earlystop(training_data,
                     earlystop_cost_fn,
                     earlystop_patience,
                     data_augmentation,
+                    not_learning_patience=0,
+                    not_learning_threshold=0,
                     verbose=True,
                     fit_batch_verbose=5):
 
@@ -1273,15 +1310,17 @@ def train_earlystop(training_data,
         obj_cost=obj_cost,
         earlystop_cost_fn=earlystop_cost_fn,
         earlystop_patience=earlystop_patience,
+        not_learning_patience=not_learning_patience,
+        not_learning_threshold=not_learning_threshold,
         data_augmentation=data_augmentation,
         print_errors=True)
 
     costfunctionerr_test.append(objective_cost['test'][-earlystop_patience])
     earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
     if verbose is True:
-        print("Test error at early stop: Objectives fctn: {0:.2f}",
-              "Early stop fctn: {0:.2f}".format(
-                float(costfunctionerr_test[-1]), float(earlystoperr_test[-1])))
+        print("Test error at early stop: Objectives fctn: {0:.2f} Early stop"
+              "fctn: {0:.2f}".format(float(costfunctionerr_test[-1]),
+                                     float(earlystoperr_test[-1])))
 
     return costfunctionerr_test, earlystoperr_test
 
