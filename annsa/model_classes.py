@@ -107,7 +107,7 @@ class BaseClass(object):
         model_predictions = self.forward_pass(input_data, training=training)
         return tf.losses.mean_squared_error(targets_scaled, model_predictions)
 
-    def f1_error(self, input_data, targets, training=False, average='micro'):        
+    def f1_error(self, input_data, targets, training=False, average='micro'):
         """
         Computes the f1 score on some data and target.
 
@@ -140,13 +140,13 @@ class BaseClass(object):
         training : bool, optional
             Turns training on or off for optional features.
         average : string, optional
-            Type of averaging used by sklearns f1 score function. 
+            Type of averaging used by sklearns f1 score function.
 
         Returns
         -------
         f1_error: float
-            The f1_score of the model  on some data implemented using sklearn. 
-            
+            The f1_score of the model  on some data implemented using sklearn.
+
         """
         class_predictions = self.predict_class(input_data, training)
         class_truth = tf.argmax(targets, axis=1)
@@ -188,7 +188,7 @@ class BaseClass(object):
 
         """
         return np.random.poisson(x)
-    
+
     def grads_fn(self, input_data, target, cost):
         """
         Dynamically computes the gradients of the loss value
@@ -225,7 +225,7 @@ class BaseClass(object):
                     obj_cost,
                     optimizer,
                     data_augmentation):
-        
+
         """
         Trains model on a single epoch using mini-batch training.
 
@@ -245,7 +245,7 @@ class BaseClass(object):
 
         Returns
         -------
-        None 
+        None
         """
         for (input_data, target) in tfe.Iterator(
                 train_dataset_tensor.shuffle(1e8).batch(self.batch_size)):
@@ -256,7 +256,7 @@ class BaseClass(object):
                 optimizer.apply_gradients(zip(grads, self.variables))
         return None
 
-    def check_earlystop(self, earlystop_cost, earlystop_patience):        
+    def check_earlystop(self, earlystop_cost, earlystop_patience):
         """
         Checks if early stop condition is met and either continues or
             stops training.
@@ -280,7 +280,6 @@ class BaseClass(object):
         if (argmin_error_in_patience_range == 0):
             earlystop_flag = 1
         return earlystop_flag
-
 
     def fit_batch(self,
                   train_dataset,
@@ -353,10 +352,10 @@ class BaseClass(object):
                              obj_cost,
                              optimizer,
                              data_augmentation)
-            
+
             training_data_aug = data_augmentation(train_dataset[0])
             testing_data_aug = data_augmentation(test_dataset[0])
-            
+
             # Record errors at each epoch
             if earlystop_patience:
                 earlystop_cost['train'].append(
@@ -397,8 +396,8 @@ class BaseClass(object):
                 break
             # Apply early stopping if not learning
             if (not_learning_patience and
-                (epoch > not_learning_patience) and
-                (earlystop_cost['test'][-1] > not_learning_threshold)):
+               (epoch > not_learning_patience) and
+               (earlystop_cost['test'][-1] > not_learning_threshold)):
                 break
 
         return [objective_cost, earlystop_cost]
@@ -428,7 +427,8 @@ class DNN(tf.keras.Model, BaseClass):
         """
         super(DNN, self).__init__()
         """
-        Define here the layers used during the forward-pass of the neural network.
+        Define here the layers used during the forward-pass of the neural
+        network.
 
         """
         self.l2_regularization_scale = model_features.l2_regularization_scale
@@ -460,7 +460,7 @@ class DNN(tf.keras.Model, BaseClass):
 
         Parameters
         ----------
-        input_data : 2D tensor, float 
+        input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
         training : bool, optional
@@ -487,7 +487,7 @@ class DNN(tf.keras.Model, BaseClass):
 
         Parameters
         ----------
-        input_data : 2D tensor, float 
+        input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
         target: narray, int
@@ -545,7 +545,8 @@ class CNN1D(tf.keras.Model, BaseClass):
     def __init__(self, model_features):
         super(CNN1D, self).__init__()
         """
-        Define here the layers used during the forward-pass of the neural network.
+        Define here the layers used during the forward-pass of the neural
+        network.
 
         """
         self.batch_size = model_features.batch_size
@@ -605,7 +606,7 @@ class CNN1D(tf.keras.Model, BaseClass):
 
         Parameters
         ----------
-        input_data : 2D tensor, float 
+        input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
         target: narray, int
@@ -772,7 +773,8 @@ class DAE(tf.keras.Model, BaseClass):
     def __init__(self, model_features):
         super(DAE, self).__init__()
         """
-        Define here the layers used during the forward-pass of the neural network.
+        Define here the layers used during the forward-pass of the neural
+        network.
 
         """
         self.batch_size = model_features.batch_size
@@ -821,7 +823,7 @@ class DAE(tf.keras.Model, BaseClass):
 
         Parameters
         ----------
-        input_data : 2D tensor, float 
+        input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
         training : bool, optional
@@ -848,7 +850,7 @@ class DAE(tf.keras.Model, BaseClass):
 
         Parameters
         ----------
-        encoding : 2D tensor, float 
+        encoding : 2D tensor, float
             Input tensor of shape (n_samples, size_encoding).
         training : bool, optional
             Turns training on or off for optional features.
@@ -867,7 +869,7 @@ class DAE(tf.keras.Model, BaseClass):
         return decoding
 
     def total_activity(self, input_data, training=False):
-        """ Calculates the total network activity (l1 activation) on 
+        """ Calculates the total network activity (l1 activation) on
             some input data.
             Args:
                 input_data: 2D tensor of shape (n_samples, n_features).
@@ -895,7 +897,7 @@ class DAE(tf.keras.Model, BaseClass):
 
         Parameters
         ----------
-        input_data : 2D tensor, float 
+        input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
         training : bool, optional
@@ -918,7 +920,7 @@ class DAE(tf.keras.Model, BaseClass):
 
         Parameters
         ----------
-        input_data : 2D tensor, float 
+        input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
         target: narray, int
@@ -941,6 +943,7 @@ class DAE(tf.keras.Model, BaseClass):
         loss = cost(input_data, targets, training)
         loss += self.l1_regularization_scale * self.total_activity(input_data)
         return loss
+
 
 class dae_model_features(object):
 
@@ -977,12 +980,13 @@ class dae_model_features(object):
 class CAE(tf.keras.Model, BaseClass):
     """
     Class info
-    
+
     """
     def __init__(self, model_features):
         super(CAE, self).__init__()
         """
-        Define here the layers used during the forward-pass of the neural network.
+        Define here the layers used during the forward-pass of the neural
+        network.
 
         """
         self.batch_size = model_features.batch_size
@@ -1051,7 +1055,7 @@ class CAE(tf.keras.Model, BaseClass):
 
         Parameters
         ----------
-        input_data : 2D tensor, float 
+        input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
         training : bool, optional
@@ -1081,7 +1085,7 @@ class CAE(tf.keras.Model, BaseClass):
 
         Parameters
         ----------
-        encoding : 2D tensor, float 
+        encoding : 2D tensor, float
             Input tensor of shape (n_samples, size_encoding).
         training : bool, optional
             Turns training on or off for optional features.
@@ -1112,7 +1116,7 @@ class CAE(tf.keras.Model, BaseClass):
 
         Parameters
         ----------
-        input_data : 2D tensor, float 
+        input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
         training : bool, optional
@@ -1135,7 +1139,7 @@ class CAE(tf.keras.Model, BaseClass):
 
         Parameters
         ----------
-        input_data : 2D tensor, float 
+        input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
         target: narray, int
@@ -1216,7 +1220,7 @@ def generate_random_cae_architecture(cnn_filters_encoder_choices,
         Class that describes the structure of a CAE.
 
     """
-    
+
     cnn_filters_encoder_choice = np.random.randint(
         len(cnn_filters_encoder_choices))
     cnn_kernel_encoder_choice = np.random.randint(
@@ -1307,9 +1311,10 @@ def train_earlystop(training_data,
     costfunctionerr_test.append(objective_cost['test'][-earlystop_patience])
     earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
     if verbose is True:
-        print("Test error at early stop: Objectives fctn: {0:.2f} Early stop fctn: {0:.2f}".format(
-            float(costfunctionerr_test[-1]), float(earlystoperr_test[-1])))
-    
+        print("Test error at early stop: Objectives fctn: {0:.2f} Early stop",
+              "fctn: {0:.2f}".format(float(costfunctionerr_test[-1]),
+                                     float(earlystoperr_test[-1])))
+
     return costfunctionerr_test, earlystoperr_test
 
 
@@ -1355,9 +1360,6 @@ def load_model(model_folder,
     saver.restore('./'+model_folder+'/'+model_id)
 
     return model, new_model_features.scaler
-
-
-
 
 class_isotopes = ['Am241',
                   'Ba133',
