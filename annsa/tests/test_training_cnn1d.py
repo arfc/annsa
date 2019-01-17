@@ -42,11 +42,12 @@ def load_dataset():
 
     return train_dataset, test_dataset
 
+
 def construct_cnn1d():
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
-    model_features = generate_random_cnn1d_architecture(((4, 1),(8, 1)),
-                                                        ((8,),(4,)),
-                                                        ((8,),(4,)),)
+    model_features = generate_random_cnn1d_architecture(((4, 1), (8, 1)),
+                                                        ((8,), (4,)),
+                                                        ((8,), (4,)),)
     model_features.learining_rate = 1e-1
     model_features.trainable = True
     model_features.batch_size = 2**5
@@ -61,10 +62,12 @@ def construct_cnn1d():
     optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
     model = CNN1D(model_features)
     return model_features, optimizer, model
-    
+
+
 def test_cnn1d_construction():
     _, _, _ = construct_cnn1d()
     pass
+
 
 def test_cnn1d_training():
     """
@@ -89,4 +92,3 @@ def test_cnn1d_training():
         earlystop_cost_fn=model.f1_error,
         data_augmentation=model.default_data_augmentation,)
     pass
-
