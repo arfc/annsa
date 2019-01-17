@@ -41,9 +41,10 @@ def load_dataset():
 
     return train_dataset, test_dataset
 
+
 def construct_dnn():
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
-    
+
     model_features = dnn_model_features(
         learining_rate=1e-1,
         l2_regularization_scale=1e-1,
@@ -57,10 +58,12 @@ def construct_dnn():
     optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
     model = DNN(model_features)
     return model_features, optimizer, model
-    
+
+
 def test_dnn_construction():
     _, _, _ = construct_dnn()
     pass
+
 
 def test_dnn_training():
     """
@@ -85,4 +88,3 @@ def test_dnn_training():
         earlystop_cost_fn=model.f1_error,
         data_augmentation=model.default_data_augmentation,)
     pass
-
