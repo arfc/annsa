@@ -42,11 +42,12 @@ def load_dataset():
 
     return train_dataset, test_dataset
 
+
 def construct_cae():
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
-    model_features = generate_random_cae_architecture(((4, 1),(8, 1)),
-                                                        ((8,),(4,)),
-                                                        ((8,),(4,)),)
+    model_features = generate_random_cae_architecture(((4, 1), (8, 1)),
+                                                      ((8,), (4,)),
+                                                      ((8,), (4,)),)
     model_features.encoder_trainable = True
     model_features.learining_rate = 1e-1
     model_features.batch_size = 2**5
@@ -58,10 +59,12 @@ def construct_cae():
     optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
     model = CAE(model_features)
     return model_features, optimizer, model
-    
+
+
 def test_cae_construction():
     _, _, _ = construct_cae()
     pass
+
 
 def test_cae_training():
     """
@@ -86,4 +89,3 @@ def test_cae_training():
         earlystop_cost_fn=model.mse,
         data_augmentation=model.default_data_augmentation,)
     pass
-
