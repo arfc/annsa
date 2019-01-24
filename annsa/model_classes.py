@@ -789,6 +789,7 @@ class DAE(tf.keras.Model, BaseClass):
         dropout_probability = model_features.dropout_probability
         activation_function = model_features.activation_function
         output_function = model_features.output_function
+        output_size = model_features.output_size
 
         self.l1_regularization_scale = model_features.l1_regularization_scale
         self.regularizer = tf.contrib.layers.l1_regularizer(
@@ -821,7 +822,7 @@ class DAE(tf.keras.Model, BaseClass):
                 dropout_probability)
 
         # Output layer. No activation.
-        self.output_layer = tf.layers.Dense(1024, activation=output_function)
+        self.output_layer = tf.layers.Dense(output_size, activation=output_function)
 
     def encoder(self, input_data, training=True):
         """
@@ -964,6 +965,7 @@ class dae_model_features(object):
                  scaler,
                  activation_function,
                  output_function,
+                 output_size,
                  ):
         self.learining_rate = learining_rate
         self.l1_regularization_scale = l1_regularization_scale
@@ -974,6 +976,7 @@ class dae_model_features(object):
         self.scaler = scaler
         self.activation_function = activation_function
         self.output_function = output_function
+        self.output_size = output_size
 
 
 # ##############################################################
