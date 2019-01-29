@@ -1,0 +1,194 @@
+\documentclass[thesis,tocnosub,noragright,centerchapter,12pt]{uiucecethesis09}
+
+% Use draftthesis for notes and date markings on every page.  Useful when you
+%   have multiple copies floating around.
+% Use offcenter for the extra .5 inch on the left side. Needed with fullpage and fancy.
+% Use mixcasechap for compatibility with hyperref package, which does NOT like all caps default
+% Use edeposit for the adviser/committee on the title page.
+% Use tocnosub to suppress subsection and lower entries in the TOC.
+% PhD candidates use "proquest" for the proquest abstract.
+
+\makeatletter
+
+%%%%%%%%%%%%%%%
+% MK Added to make bib work
+% MK removed on 1/8/19
+% \bstctlcite{IEEEexample:BSTcontrol}
+
+% MK added to highlight stuff
+\usepackage{color,soul}
+
+% MK added so figures can use the [H] option and be put where I want them.
+\usepackage{float}
+
+% MK added so algorithms work
+\usepackage{algorithm}
+
+%%%%%%%%%%%%%%%
+
+\setcounter{secnumdepth}{5} % to make subsubsections work
+\usepackage{setspace}
+\usepackage{epsfig}  % for figures
+\usepackage{graphicx}  % another package that works for figures
+\usepackage{subfigure}  % for subfigures
+\usepackage{amsmath}  % for math spacing
+\usepackage{amssymb}  % for math spacing
+%\usepackage{url}  % Hyphenation of URLs.
+\usepackage{lscape}  % Useful for wide tables or figures.
+\usepackage[justification=raggedright]{caption}	% makes captions ragged right - thanks to Bryce Lobdell
+
+
+\DeclareMathOperator*{\argminA}{arg\,min} % Jan Hlavacek
+
+% Uncomment the appropriate one of the following four lines:
+%\msthesis
+\phdthesis
+%\otherdoctorate[abbrev]{Title of Degree}
+%\othermasters[abbrev]{Title of Degree}
+
+\title{Automated Isotope Identification Algorithm Using Artificial Neural Networks}
+\author{Mark Kamuda}
+\department{Nuclear Plasma and Radiological Engineering}
+%\department{\mbox{Nuclear, Plasma, and Radiological Engineering}}
+\degreeyear{2019}
+
+% Advisor name is required for
+% - doctoral students for the ProQuest abstract
+% - master's students who do not have a master's committee
+% \advisor{Assistant Professor Clair J. Sullivan}
+
+% Uncomment the \committee command for
+% - all doctoral students
+% - master's students who have a master's committee
+\committee{Kathryn Huff, Adviser\\
+        Rizwan Uddin\\
+        Tomasz Kozlowski\\
+        Clair Sullivan\\
+        Mark Hasagawa-Johnson}
+
+
+
+
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% COPYRIGHT
+%
+%\copyrightpage
+%\blankpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% TITLE %%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\maketitle
+%\raggedright
+\parindent 1em%
+\frontmatter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%% ABSTRACT %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+\input{abs}
+\end{abstract}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%% DEDICATION %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{dedication}
+%To my parents, for their love and support.
+%\end{dedication}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% ACKNOWLEDGMENTS %%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{acknowledgments}
+\input{ack}
+\end{acknowledgments}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%% TABLE OF CONTENTS %%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% LIST OF TABLES %%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The List of Tables is not strictly necessary. Omitting the List of Tables will
+% simplify the thesis check and reduce the number of corrections.
+\listoftables
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% LIST OF FIGURES %%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The List of Figures is not strictly necessary. Omitting the List of Figures will
+% simplify the thesis check and reduce the number of corrections.
+\listoffigures
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% LIST OF ABBREVIATIONS %%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The List of Abbreviations is not strictly necessary.
+%\chapter{LIST OF ABBREVIATIONS}
+
+%\begin{symbollist*}
+%\item[DNN] Dense Neural Network
+%\item[CNN] Convolution Neural Network
+%\end{symbollist*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%% LIST OF SYMBOLS %%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\begin{symbollist}[0.7in]
+%\item[$\tau$] Time taken to drink one cup of coffee.
+%\end{symbollist}
+
+\mainmatter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% THESIS BODY %%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\include{intro}
+
+
+\include{theory}
+
+
+\include{model_choices_hyperparameter_results}
+% More or less Methods
+
+\include{urban_source_search_res_disc}
+
+
+\include{uranium_enrichment_res_disc}
+
+
+\include{conc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%% APPENDIX %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+%\include{apx}
+
+\backmatter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% BIBLIOGRAPHY %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{IEEEtran} % Dunno what format they want this!!! -MK 9/19/16
+\bibliography{refs.bib}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
+\endinput
