@@ -3,15 +3,30 @@
 \section{General Conclusions}
 
 
+\section{Steps Towards Practical Application}
+
+For this model to be applied in the real world, a few things need to be added. Overall, a larger more thorough validation dataset must be created to ensure certain isotope combinations do not present as adversarial. That is, a validation dataset must be used to ensure a threat isotope is not commonly identified as benign. Additional hyperparameter tests need to be preformed with more intelligent hyperparameter ranges. Additional network architectures and hyperparameters should be explored. These can include inception networks and batch normalization.
+
+Generalization performance must also be more thoroughly measured and improved. To increase generalization, a wider range of scattering environments needs to be added to the spectral templates. More detector parameters need to be varied and their effect on performance must be measured. 
+
+
+
 \section{Suggested Future Works}
 
 % 80%+ Wish list 
+Siamese networks for SNM identification. Step 1, train a siamese network on simulated SNM with realistic missile shielding. Step 2, take a random warhead and call it 'golden'. Compare all other warheads to this, using only the spectrum as input. Boom, got a zero-knowledge verification alg.
+% Differentiate different enrichments of uranium? 
+% Use it as a feature extractor!!!!!
 
 Treating dataset expansion methods [calibration, signal-to-total ratio] as random data augmentation instead of sampling them discreetly. Compare asymptotic performance of this 'extreme data augmentation model' on template dataset to performance of 'dataset expansion models' at expansion levels sufficient for learning curve asymptote. 
 
 Create training datasets composed of isotope mixtures. How to sample these mixtures? Exhaustive? Latin hypercube (this is my preference)? Uniform random? See how this works on single- and multi-isotope identification.
 
+For the autoencoder, compare performance of a model using cross-entropy loss on data log-normalized and squished on [0,1] to a model using mean-squared-error loss on data log-normalized and data sqrt-normalized.
+
 % True future work
+
+ 
 
 Much of the gamma-ray spectrum has no information in it, there are no peaks in certain regions. You can apply different preprocessing techniques to shrink these sections (similar to what RSL has done). What is the effect of these re-calibrations on performance?
 
@@ -20,3 +35,12 @@ See how well kernel SVM, boosted trees, random forests work on features extracte
 Autoencoder that takes spectrum as input, output is peak positions. Use this as a feature extractor. 
 
 Can you address background identification errors by adding a higher penalizing term to the cost of mislabeling background? How does this play with precision/recall/F1 score as you change the decision threshold?
+
+A simulated training set also allows the same ANN creation process to be applied to different detector materials. This is because different gamma-ray detector materials, such as CZT or HPGe, create spectra with different features.
+
+Construct a dataset to detect obscured sources. For example, make a dataset with different (theoretically identifiable) amounts of HEU hidden by industrial and medical sources. 
+
+Can you create a dataset to perform online uranium enrichment using NaI for fuel fabrication plants? Need to incorporate centrifuge wall thickness, can possibly use time-series data to identify when things change? May need to worry more about calibration drift due to temperature or electronics drift.
+
+
+

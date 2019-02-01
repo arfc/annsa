@@ -3,14 +3,39 @@
 \section{Gamma-ray Spectroscopy}
 
 
-\subsection{Background effects}
 
+\subsection{Detector Efficiency}
+
+The following sections describe intrinsic mechanisms that remove counts from the full-energy peak. Absolute efficiency is also affected by shielding material and source-to-detector distance.
+
+\subsubsection{Compton Scattering}
+
+\subsubsection{Photoelectric effect}
+
+\subsubsection{Pair Production}
+
+
+
+\subsection{Energy Resolution}
 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\linewidth]{images/USGS_absorbed_dose_map}
-\caption{Temperature vs relative photopeak position for an ORTEC Model 905-3 2x2 NaI detector \cite{CASANOVAS2012588}.}
+\includegraphics[width=0.95\linewidth]{images/Ba133_spectrum_different_detector_materials_Market_Survey_Report}
+\caption{Ba133 spectrum measured using different detector materials \cite{RIIDMarketSurveyReport}.}
+\label{fig:uranium_concentration}
+\end{figure}
+
+
+\subsection{Background Effects}
+
+
+% Air Survey on Background Gradients https://www-sciencedirect-com.proxy2.library.illinois.edu/science/article/pii/S0265931X13002373
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\linewidth]{images/temp_vs_relative_peak_position_CASANOVAS2012588}
+\caption{Map of uranium concentrations in the United States.}
 \label{fig:uranium_concentration}
 \end{figure}
 
@@ -23,7 +48,7 @@
 \subsection{Affect of Temperature Change on Calibration}
 
 
-Figure \ref{fig:CASANOVAS2012588} shows how relative peak position shifts with respect to changes in temperature of an ORTEC Model 905-3 2x2 NaI detector. 
+Figure \ref{fig:CASANOVAS2012588} shows how relative peak position shifts with respect to changes in temperature of an ORTEC Model 905-3 2x2 NaI detector. Gain stabilization methods rely on 
 
 \begin{figure}[H]
 \centering
@@ -37,20 +62,7 @@ Figure \ref{fig:CASANOVAS2012588} shows how relative peak position shifts with r
 
 \section{Machine Learning}
 
-
-\subsection{Convolution Neural Networks}
-
-Convolution neural networks (CNNs) use convolutional filters instead of weights. They have been used in image processing. 
-
-One of the first CNN architectures was LeNet-5 \cite{Lecun1998}. LeNet-5 classified 32x32 images of handwritten digits using two convolution-average pooling layers followed by two dense layers and an output. 
-
-AlexNet \cite{Krizhevsky2012} was the first exploration into wider and deeper CNNs. 
-
-Much more work has been done furthering CNNs. VGG \cite{Simonyan2014} showed that smaller filter sizes are good. 
-
-
-
-
+In this section, neural network architectures and parameters that effect training will be described. Neural network architectures will include DNN, CNN, and the autoencoder. 
 
 \subsection{Neural Network Architecture}
 
@@ -250,6 +262,51 @@ Early stopping has the benefit of preventing overfitting and encouraging general
 	\caption{Ideal training and testing error curves.}
 	\label{fig:training_testing_error}
 \end{figure}
+
+\subsection{Convolution Neural Networks}
+
+Convolution neural networks (CNNs) use convolutional filters instead of weights. They have been used in image processing. 
+
+One of the first CNN architectures was LeNet-5 \cite{Lecun1998}. LeNet-5 classified 32x32 images of handwritten digits using two convolution-average pooling layers followed by two dense layers and an output. 
+
+AlexNet \cite{Krizhevsky2012} was the first exploration into wider and deeper CNNs. 
+
+Much more work has been done furthering CNNs. VGG \cite{Simonyan2014} showed that smaller filter sizes are good. 
+
+\section{Autoencoders} \label{Autoencoders}
+% \cite{CHARTE2018} is a practical guide to autoencoders. Great resource.
+
+Autoencoders were introduced by Hinton \cite{Hinton2006}. They can be used as a method to pre-train networks or as feature extractors \cite{CHARTE2018}.
+
+Other feature extraction methods exist. Principal component analysis (PCA) attempts to reduce the dimensionality of a dataset into linearly uncorrelated variables \cite{Jolliffe2002}. Using a few of these principle components, the data may be represented in a reduced space that contains most of the information present in the original data. Another linear feature extraction method is called linear discriminant analysis (LDA). LDA is a supervised feature extraction method that finds linear combinations of features that can be used to separate classes. Non-linear feature extraction methods, such as kernel PCA, also exist. Kernel PCA applies a non-linear transform to the input space and applies PCA to the data in this transformed space. For kernel PCA to perform well, the correct kernel must be chosen for a given problem, which is a non-trivial task.
+
+Denoising was suggested as a method of extracting useful features from an autoencoder \cite{Vincent2008, Vincent2010}.
+
+\cite{Masci2011} demonstrated that stacking convolution layers made a good autoencoder.
+
+% While autoencoders were touched on in the uranium enrichment work, they have not been explored thoroughly. There is some evidence that the autoencoder was overtrained to the A special case of denoising autoencoders will be explored for the ANSI dataset. 
+
+An autoencoder is an ANN whose goal is to learn a representation of the input. This is accomplished by simultaneously training an encoding ANN and a decoding ANN. An example of this can be seen in Figure \ref{fig:Autoencoder_structure}. As seen in this figure, the encoding ANN reduces an $n-$dimension input signal, $X$, to a $m-$dimension signal, $z$, where $m < n$. The decoding ANN takes the encoded signal, $z$, and outputs a reproduction of the input signal, $X'$.
+
+Without an autoencoder, a single ANN has to learn multiple tasks to identify isotopes. An ANN would have to simultaneously identify the detector calibration, background signal, and possible source signal. By training an autoencoder to reconstruct a background-subtracted and correctly calibrated spectrum, the task of isotope identification is simplified for the ANN. This may result in more accurate identifications. To test this, for each dataset a single autoencoder and three ANNs will be trained. The first will be trained without an autoencoder. The second will be trained using the encoder as input. The third will be trained using the full autoencoder as input. A random hyperparameter search will be used to find an appropriately structured autoencoder. The testing and validation error for these ANNs will be compared for each respective dataset.
+
+% is local spatial structure too much jargon? 
+In addition to using fully connected autoencoders, a 1-D convolutional autoencoder will also be explored. A DNN does not assume the input has local spatial structure, while a CNN does. Because gamma-ray spectra have local spatial structure in the form of photopeaks and Compton continua, it may be better to use a CNN over a DNN \cite{CHARTE2018}. To test this, the experiment described above will be repeated using a 1-D convolutional autoencoder.
+
+% Or I might just use the 1D convolutional autoencoder because it makes more sense
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{images/Autoencoder_structure}
+\caption{An example of an autoencoder \cite{wiki:AutoencoderStructure}.}
+\label{fig:Autoencoder_structure}
+\end{figure}
+
+
+% Fully connected ANNs do not assume there is local spatial structure in a signal, so the fully connected ANN would need to learn that there is local structure. Convolutional ANNs assume there is local structure, and the extent of this structure can be changed by changing the length of the convolutional ANNs filters.
+
+% Once the autoencoder is trained, the hidden layer and output layer (representing the reconstructed spectrum) will be used to train a separate ANN for isotope identification and quantification. The performance of these ANNs will be compared.
+
 
 
 \subsection{Hyperparameters}
