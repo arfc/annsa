@@ -53,6 +53,7 @@ def construct_dae():
         dense_nodes_decoder=[],
         scaler=scaler,
         activation_function=tf.nn.relu,
+        output_size=1024,
         output_function=None)
 
     optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
