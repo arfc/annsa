@@ -91,13 +91,16 @@ def apply_LLD(spectrum, LLD=10):
     return spectrum
 
 
-def make_random_spectrum(source_spectrum,
+
+
+def make_random_spectrum(source_data,
                          background_dataset,
                          background_cps=120.0,
                          integration_time=600.0,
                          signal_to_background=1.0,
                          calibration=[0, 1.0, 0],
-                         LLD=10):
+                         LLD=10,
+                         **kwargs,):
     '''
     inputs:
         source_spectrum : vector
@@ -110,6 +113,75 @@ def make_random_spectrum(source_spectrum,
         background_spectrum : vector
             The 1024 length background spectrum
     '''
+    a = calibration[0]
+    b = calibration[1]
+    c = calibration[2]
+
+    # Make source spectrum
+    source_counts = background_cps*integration_time*signal_to_background
+    if type(source_data) == np.ndarray:
+        source_data = tf.convert_to_tensor(source_data)
+    if tf.contrib.framework.is_tensor(source_data):
+        # if single spectrum
+        source_spectrum = source_data
+        fwhm = source_spectrum.numpy()[0]
+        source_spectrum = source_spectrum.numpy()[1:]
+        if np.count_nonzero(source_spectrum) > 0:
+            source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
+            source_spectrum = apply_LLD(source_spectrum, LLD)
+            source_spectrum /= np.sum(source_spectrum)
+            source_spectrum *= source_counts
+        else:
+            source_spectrum = source_spectrum[:1024]
+    else:
+        # if dataset of spectra
+        for key, value in kwargs.items():
+                source_data = source_data[source_data[key] == value]
+
+        #if (source_data['isotope'] != 'background' and
+        #    np.count_nonzero(source_spectrum) == 1024):
+        #    # resample if template is non-background and empty
+        source_spectrum = source_data.sample().values[0][6:]
+        source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
+        source_spectrum = apply_LLD(source_spectrum, LLD)
+        source_spectrum /= np.sum(source_spectrum)
+        source_spectrum *= source_counts
+        if 'fwhm' in kwargs:
+            fwhm = kwargs['fwhm']
+
+    # Make background spectrum
+    background_spectrum = random_background_template_with_FWHM(
+        background_dataset,
+        fwhm,
+        cosmic=0)
+    background_counts = background_cps*integration_time
+    background_spectrum = rebin_spectrum(background_spectrum, a, b, c)
+    background_spectrum = apply_LLD(background_spectrum, LLD)
+    background_spectrum /= np.sum(background_spectrum)
+    background_spectrum *= background_counts
+
+    return source_spectrum, background_spectrum
+
+'''
+def make_random_spectrum(source_spectrum,
+                         background_dataset,
+                         background_cps=120.0,
+                         integration_time=600.0,
+                         signal_to_background=1.0,
+                         calibration=[0, 1.0, 0],
+                         LLD=10):
+    ''
+    inputs:
+        source_spectrum : vector
+            Vector containing the FWHM and spectrum for
+        background_dataset :
+            bla
+    returns:
+        source_spectrum : vector
+            The 1024 length source spectrum
+        background_spectrum : vector
+            The 1024 length background spectrum
+    ''
     a = calibration[0]
     b = calibration[1]
     c = calibration[2]
@@ -143,7 +215,7 @@ def make_random_spectrum(source_spectrum,
     background_spectrum *= background_counts
 
     return source_spectrum, background_spectrum
-
+'''
 
 def online_data_augmentation_vanilla(background_dataset,
                                      background_cps,
