@@ -249,6 +249,10 @@ class BaseClass(object):
         for (input_data, target) in tfe.Iterator(
                 train_dataset_tensor.shuffle(1e8).batch(self.batch_size)):
                 input_data = data_augmentation(input_data)
+                # check if data_augmentation returns separate source and background
+                if input_data.shape[1] == 2:
+                    target = input_data[:,1]
+                    input_data = input_data[:,0]
                 grads = self.grads_fn(input_data,
                                       target,
                                       obj_cost)
@@ -293,7 +297,9 @@ class BaseClass(object):
                   not_learning_threshold=0,
                   obj_cost=None,
                   earlystop_cost_fn=None,
-                  data_augmentation=None):
+                  data_augmentation=None,
+                  augment_testing_data=False,
+                  record_train_errors=False,):
         """
         Function used to train the model.
 
@@ -356,31 +362,52 @@ class BaseClass(object):
                              obj_cost,
                              optimizer,
                              data_augmentation)
+            if record_train_errors:
+                training_data_aug = data_augmentation(train_dataset[0])
+            if augment_testing_data:
+                testing_data_aug = data_augmentation(test_dataset[0])
+            else:
+                testing_data_aug = test_dataset[0]
 
-            training_data_aug = data_augmentation(train_dataset[0])
-            testing_data_aug = data_augmentation(test_dataset[0])
+            training_key = train_dataset[1]
+            testing_key = test_dataset[1]
+            
+            # check if data_augmentation returns separate source and background
+            if record_train_errors:
+                if training_data_aug.shape[1] == 2:
+                    training_key = training_data_aug[:,1]
+                    training_data_aug = training_data_aug[:,0]
+            if testing_data_aug.shape[1] == 2:
+                testing_key = testing_data_aug[:,1]
+                testing_data_aug = testing_data_aug[:,0]
 
             # Record errors at each epoch
             if earlystop_patience:
-                earlystop_cost['train'].append(
-                    earlystop_cost_fn(training_data_aug,
-                                      train_dataset[1],
-                                      training=False))
+                if record_train_errors:
+                    earlystop_cost['train'].append(
+                        earlystop_cost_fn(training_data_aug,
+                                          training_key,
+                                          training=False))
+                else:
+                    earlystop_cost['train'].append(0)
                 earlystop_cost['test'].append(
                     earlystop_cost_fn(testing_data_aug,
-                                      test_dataset[1],
+                                      testing_key,
                                       training=False))
             else:
                 earlystop_cost['train'].append(0)
                 earlystop_cost['test'].append(0)
-            objective_cost['train'].append(
-                self.loss_fn(training_data_aug,
-                             train_dataset[1],
-                             obj_cost,
-                             training=False))
+            if record_train_errors:
+                objective_cost['train'].append(
+                    self.loss_fn(training_data_aug,
+                                 training_key,
+                                 obj_cost,
+                                 training=False))
+            else:
+                objective_cost['train'].append(0)
             objective_cost['test'].append(
                 self.loss_fn(testing_data_aug,
-                             test_dataset[1],
+                             testing_key,
                              obj_cost,
                              training=False))
             # Print erros at end of epoch
@@ -978,7 +1005,6 @@ class dae_model_features(object):
         self.output_function = output_function
         self.output_size = output_size
 
-
 # ##############################################################
 # ##############################################################
 # ##############################################################
@@ -1299,7 +1325,9 @@ def train_earlystop(training_data,
                     not_learning_patience=0,
                     not_learning_threshold=0,
                     verbose=True,
-                    fit_batch_verbose=5):
+                    augment_testing_data=False,
+                    fit_batch_verbose=5,
+                    record_train_errors=False,):
 
     costfunctionerr_test, earlystoperr_test = [], []
 
@@ -1316,10 +1344,17 @@ def train_earlystop(training_data,
         not_learning_patience=not_learning_patience,
         not_learning_threshold=not_learning_threshold,
         data_augmentation=data_augmentation,
-        print_errors=True)
+        augment_testing_data=augment_testing_data,
+        print_errors=True,
+        record_train_errors=False,)
 
-    costfunctionerr_test.append(objective_cost['test'][-earlystop_patience])
-    earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
+    # if length less than earlystop_patience, not_learning_patience was caught
+    if len(objective_cost['test']) < earlystop_patience:
+        costfunctionerr_test.append(objective_cost['test'][-1])
+        earlystoperr_test.append(earlystop_cost['test'][-1])
+    else:
+        costfunctionerr_test.append(objective_cost['test'][-earlystop_patience])
+        earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
     if verbose is True:
         print("Test error at early stop: Objectives fctn: {0:.2f} Early stop"
               "fctn: {0:.2f}".format(float(costfunctionerr_test[-1]),
