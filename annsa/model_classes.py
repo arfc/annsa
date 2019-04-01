@@ -6,7 +6,7 @@ import tensorflow.contrib.eager as tfe
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
 from tensorflow.image import resize_images
-from tensorflow.keras.initializers import he_normal
+from tensorflow.keras.initializers import he_normal, glorot_normal
 import time
 
 # ##############################################################
@@ -472,6 +472,11 @@ class DNN(tf.keras.Model, BaseClass):
         regularizer = tf.contrib.layers.l2_regularizer(
             scale=self.l2_regularization_scale)
 
+        if activation_function == tf.nn.relu:
+            kernel_initializer = he_normal()
+        else:
+            kernel_initializer = glorot_normal()
+        
         # Define hidden layers.
         self.dense_layers = {}
         self.drop_layers = {}
@@ -480,7 +485,7 @@ class DNN(tf.keras.Model, BaseClass):
             self.dense_layers[str(layer)] = tf.layers.Dense(
                 nodes,
                 activation=activation_function,
-                kernel_initializer=he_normal(),
+                kernel_initializer=kernel_initializer,
                 kernel_regularizer=regularizer)
             self.drop_layers[str(layer)] = tf.layers.Dropout(
                 dropout_probability)
@@ -603,6 +608,11 @@ class CNN1D(tf.keras.Model, BaseClass):
         regularizer = tf.contrib.layers.l2_regularizer(
             scale=self.l2_regularization_scale)
 
+        if activation_function == tf.nn.relu:
+            kernel_initializer = he_normal()
+        else:
+            kernel_initializer = glorot_normal()
+
         # Define hidden layers for encoder
         self.conv_layers = {}
         self.pool_layers = {}
@@ -612,7 +622,7 @@ class CNN1D(tf.keras.Model, BaseClass):
                 kernel_size=cnn_kernel[layer],
                 strides=1,
                 padding='same',
-                kernel_initializer=he_normal(),
+                kernel_initializer=kernel_initializer,
                 activation=activation_function,
                 trainable=trainable)
             self.pool_layers[str(layer)] = Pooling(
@@ -625,8 +635,8 @@ class CNN1D(tf.keras.Model, BaseClass):
         for layer in range(len(dense_nodes)):
             self.dense_layers[str(layer)] = tf.layers.Dense(
                 dense_nodes[layer],
-                activation=tf.nn.relu,
-                kernel_initializer=he_normal(),
+                activation=activation_function,
+                kernel_initializer=kernel_initializer,
                 kernel_regularizer=regularizer)
             self.drop_layers[str(layer)] = tf.layers.Dropout(
                 dropout_probability)
@@ -824,6 +834,11 @@ class DAE(tf.keras.Model, BaseClass):
         self.dense_nodes_encoder = model_features.dense_nodes_encoder
         self.dense_nodes_decoder = model_features.dense_nodes_decoder
 
+        if activation_function == tf.nn.relu:
+            kernel_initializer = he_normal()
+        else:
+            kernel_initializer = glorot_normal()
+
         # Define Hidden layers for encoder
         self.dense_layers_encoder = {}
         self.dropout_layers_encoder = {}
@@ -831,7 +846,7 @@ class DAE(tf.keras.Model, BaseClass):
             self.dense_layers_encoder[str(layer)] = tf.layers.Dense(
                 nodes,
                 activation=activation_function,
-                kernel_initializer=he_normal(),
+                kernel_initializer=kernel_initializer,
                 kernel_regularizer=self.regularizer)
             self.dropout_layers_encoder[str(layer)] = tf.layers.Dropout(
                 dropout_probability)
@@ -843,7 +858,7 @@ class DAE(tf.keras.Model, BaseClass):
             self.dense_layers_decoder[str(layer)] = tf.layers.Dense(
                 nodes,
                 activation=activation_function,
-                kernel_initializer=he_normal(),
+                kernel_initializer=kernel_initializer,
                 kernel_regularizer=self.regularizer)
             self.dropout_layers_decoder[str(layer)] = tf.layers.Dropout(
                 dropout_probability)
@@ -1040,6 +1055,11 @@ class CAE(tf.keras.Model, BaseClass):
         cnn_strides_decoder = model_features.cnn_strides_decoder
         Pooling = model_features.Pooling
 
+        if activation_function == tf.nn.relu:
+            kernel_initializer = he_normal()
+        else:
+            kernel_initializer = glorot_normal()
+
         # Define hidden layers for encoder
         self.conv_layers_encoder = {}
         self.pool_layers_encoder = {}
@@ -1049,7 +1069,7 @@ class CAE(tf.keras.Model, BaseClass):
                 kernel_size=cnn_kernel_encoder[layer],
                 strides=1,
                 padding='same',
-                kernel_initializer=he_normal(),
+                kernel_initializer=kernel_initializer,
                 activation=activation_function,
                 trainable=encoder_trainable)
             self.pool_layers_encoder[str(layer)] = Pooling(
@@ -1074,7 +1094,7 @@ class CAE(tf.keras.Model, BaseClass):
                 kernel_size=cnn_kernel_decoder[layer],
                 strides=cnn_strides_decoder[layer],
                 padding='same',
-                kernel_initializer=he_normal(),
+                kernel_initializer=kernel_initializer,
                 activation=activation_function)
         self.conv_layers_decoder[str(layer+1)] = tf.layers.Conv1D(
             filters=cnn_filters_decoder[-1],
