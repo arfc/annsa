@@ -758,26 +758,19 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
 
     """
 
-    cnn_filters_choice = np.random.randint(
-        len(cnn_filters_choices))
-    cnn_kernel_choice = np.random.randint(
-        len(cnn_kernel_choices))
-    pool_size_choice = np.random.randint(
-        len(pool_size_choices))
+    cnn_filters = choice(cnn_filters_choices)
+    cnn_kernel_choice = choice(cnn_kernel_choices)
+    pool_size_choice = choice(pool_size_choices)
 
-    cnn_filters = cnn_filters_choices[
-        cnn_filters_choice]
-    cnn_kernel = cnn_kernel_choices[
-        cnn_kernel_choice]*(len(cnn_filters_choices))
-    cnn_strides = (1,)*(len(cnn_filters_choices))
-    pool_size = pool_size_choices[pool_size_choice]*(
-        len(cnn_filters_choices))
-    pool_strides = (2,)*(len(cnn_filters_choices))
+    cnn_kernel = cnn_kernel_choice*(len(cnn_filters))
+    cnn_strides = (1,)*(len(cnn_filters))
+    pool_size = pool_size_choice*(len(cnn_filters))
+    pool_strides = (2,)*(len(cnn_filters))
 
     number_layers = np.random.randint(1, 4)
     dense_nodes = (10**np.random.uniform(1,
                                          np.log10(1024/(2**len(
-                                             cnn_filters_choices))),
+                                             cnn_filters))),
                                          number_layers)).astype('int')
     dense_nodes = np.sort(dense_nodes)
     dense_nodes = np.flipud(dense_nodes)
