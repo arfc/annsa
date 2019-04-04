@@ -91,8 +91,6 @@ def apply_LLD(spectrum, LLD=10):
     return spectrum
 
 
-
-
 def make_random_spectrum(source_data,
                          background_dataset,
                          background_cps=120.0,
@@ -138,7 +136,7 @@ def make_random_spectrum(source_data,
         for key, value in kwargs.items():
                 source_data = source_data[source_data[key] == value]
 
-        #if (source_data['isotope'] != 'background' and
+        # if (source_data['isotope'] != 'background' and
         #    np.count_nonzero(source_spectrum) == 1024):
         #    # resample if template is non-background and empty
         source_spectrum = source_data.sample().values[0][6:]
@@ -216,6 +214,7 @@ def make_random_spectrum(source_spectrum,
 
     return source_spectrum, background_spectrum
 '''
+
 
 def online_data_augmentation_vanilla(background_dataset,
                                      background_cps,

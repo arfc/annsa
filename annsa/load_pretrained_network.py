@@ -43,7 +43,7 @@ def load_features(filename):
     '''
 
     with open(filename, "rb") as f:
-            model_features = pickle.load(f)
+        model_features = pickle.load(f)
     return model_features
 
 
