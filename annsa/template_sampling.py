@@ -134,7 +134,7 @@ def make_random_spectrum(source_data,
     else:
         # if dataset of spectra
         for key, value in kwargs.items():
-                source_data = source_data[source_data[key] == value]
+            source_data = source_data[source_data[key] == value]
 
         # if (source_data['isotope'] != 'background' and
         #    np.count_nonzero(source_spectrum) == 1024):
@@ -159,6 +159,7 @@ def make_random_spectrum(source_data,
     background_spectrum *= background_counts
 
     return source_spectrum, background_spectrum
+
 
 '''
 def make_random_spectrum(source_spectrum,
