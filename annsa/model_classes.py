@@ -250,10 +250,11 @@ class BaseClass(object):
         for (input_data, target) in tfe.Iterator(
                 train_dataset_tensor.shuffle(int(1e8)).batch(self.batch_size)):
                 input_data = data_augmentation(input_data)
-                # check if data_augmentation returns separate source and background
+                # check if data_augmentation returns separate source and
+                # background
                 if input_data.shape[1] == 2:
-                    target = input_data[:,1]
-                    input_data = input_data[:,0]
+                    target = input_data[:, 1]
+                    input_data = input_data[:, 0]
                 grads = self.grads_fn(input_data,
                                       target,
                                       obj_cost)
@@ -372,15 +373,15 @@ class BaseClass(object):
 
             training_key = train_dataset[1]
             testing_key = test_dataset[1]
-            
+
             # check if data_augmentation returns separate source and background
             if record_train_errors:
                 if training_data_aug.shape[1] == 2:
-                    training_key = training_data_aug[:,1]
-                    training_data_aug = training_data_aug[:,0]
+                    training_key = training_data_aug[:, 1]
+                    training_data_aug = training_data_aug[:, 0]
             if testing_data_aug.shape[1] == 2:
-                testing_key = testing_data_aug[:,1]
-                testing_data_aug = testing_data_aug[:,0]
+                testing_key = testing_data_aug[:, 1]
+                testing_data_aug = testing_data_aug[:, 0]
 
             # Record errors at each epoch
             if earlystop_patience:
@@ -477,7 +478,7 @@ class DNN(tf.keras.Model, BaseClass):
             kernel_initializer = he_normal()
         else:
             kernel_initializer = glorot_normal()
-        
+
         # Define hidden layers.
         self.dense_layers = {}
         self.drop_layers = {}
@@ -858,7 +859,8 @@ class DAE(tf.keras.Model, BaseClass):
                 dropout_probability)
 
         # Output layer. No activation.
-        self.output_layer = tf.layers.Dense(output_size, activation=output_function)
+        self.output_layer = tf.layers.Dense(output_size,
+                                            activation=output_function)
 
     def encoder(self, input_data, training=True):
         """
@@ -1021,6 +1023,7 @@ class dae_model_features(object):
 # ##############################################################
 # ##############################################################
 # ##############################################################
+
 
 class CAE(tf.keras.Model, BaseClass):
     """
@@ -1367,7 +1370,8 @@ def train_earlystop(training_data,
         costfunctionerr_test.append(objective_cost['test'][-1])
         earlystoperr_test.append(earlystop_cost['test'][-1])
     else:
-        costfunctionerr_test.append(objective_cost['test'][-earlystop_patience])
+        costfunctionerr_test.append(
+            objective_cost['test'][-earlystop_patience])
         earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
     if verbose is True:
         print("Test error at early stop: Objectives fctn: {0:.2f} Early stop"

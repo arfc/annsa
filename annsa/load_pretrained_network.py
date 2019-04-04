@@ -1,3 +1,4 @@
+from __future__ import print_function
 import tensorflow as tf
 import pickle
 import numpy as np
@@ -8,14 +9,14 @@ from sklearn.preprocessing import FunctionTransformer
 from annsa.model_classes import (cnn1d_model_features,
                                  CNN1D,
                                  CAE,
-                                )
+                                 )
 
 
 def save_features(model_features,
                   filename):
     '''
     Saves model features to a pickled file
-    
+
     inputs:
         model_features : model features class
             The class containing the model features
@@ -25,14 +26,14 @@ def save_features(model_features,
         None
     '''
     with open(filename, 'wb+') as f:
-        pickle.dump(model_features,f)
+        pickle.dump(model_features, f)
     return None
 
 
 def load_features(filename):
     '''
     Loads model features from a pickled file
-    
+
     inputs:
         filename : str
             The location of the pickled file
@@ -41,22 +42,20 @@ def load_features(filename):
             The class containing the model features
     '''
 
-    with open(filename,"rb") as f:
+    with open(filename, "rb") as f:
             model_features = pickle.load(f)
     return model_features
 
 
-
-
 def load_pretrained_cae_into_cnn(cae_features_filename,
-                        cae_weights_filename,
-                        cnn_dense_nodes=[128],
-                        learining_rate=1e-4,
-                        batch_size=32,
-                        output_size=30,
-                        activation_function=tf.nn.tanh,
-                        l2_regularization_scale=0.0,
-                        dropout_probability=0.0):
+                                 cae_weights_filename,
+                                 cnn_dense_nodes=[128],
+                                 learining_rate=1e-4,
+                                 batch_size=32,
+                                 output_size=30,
+                                 activation_function=tf.nn.tanh,
+                                 l2_regularization_scale=0.0,
+                                 dropout_probability=0.0):
     '''
     Initialized a CNN with a pretrained CAE for fine-tuning.
 
@@ -122,16 +121,3 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         CNN_model.layers[i].set_weights(CAE_model.layers[i].get_weights())
 
     return CNN_model, model_features_CNN
-    
-    
-
-
-
-
-
-
-
-
-
-
-
