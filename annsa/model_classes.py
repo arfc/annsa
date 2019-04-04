@@ -8,6 +8,7 @@ from sklearn.metrics import f1_score
 from tensorflow.image import resize_images
 from tensorflow.keras.initializers import he_normal, glorot_normal
 import time
+from random import choice
 
 # ##############################################################
 # ##############################################################
