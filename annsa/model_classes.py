@@ -248,7 +248,7 @@ class BaseClass(object):
         None
         """
         for (input_data, target) in tfe.Iterator(
-                train_dataset_tensor.shuffle(1e8).batch(self.batch_size)):
+                train_dataset_tensor.shuffle(int(1e8)).batch(self.batch_size)):
                 input_data = data_augmentation(input_data)
                 # check if data_augmentation returns separate source and background
                 if input_data.shape[1] == 2:
