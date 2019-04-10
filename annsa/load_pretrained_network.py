@@ -79,8 +79,10 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         dropout_probability : float (optional)
             The dropout probability for the dense layer
     outputs:
-        model_features : model features class
-            The class containing the model features
+        CNN_model : Keras model class
+            The class containing the keras model with pretrained weights
+        model_features_CNN : model features class
+            The class containing the model features.
     '''
 
     cae_features = load_features(cae_features_filename)
