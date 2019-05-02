@@ -84,7 +84,7 @@ def read_spectrum(filename):
     '''
     spectrum = np.empty(1024)
 
-    with open(filename) as f:
+    with open(filename, 'rb') as f:
 
         content = f.readlines()
 
