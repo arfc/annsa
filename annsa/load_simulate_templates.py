@@ -16,17 +16,18 @@ background_locations = ['albuquerque',
 def load_template_spectra_from_folder(parent_folder,
                                       spectrum_identifier,
                                       normalization=None):
-    '''
+    """
     inputs: partent_folder, spectrum_identifier
     output: dictionary containing all template spectra from a folder.
 
     Load template spectrum data into a dictionary. This allows templates from
     different folders to be loaded into different dictionaries.
-    '''
+    """
 
     temp_dict = {}
 
     def normalize_spectrum(ID):
+        #DOCSTRING
         temp_spectrum = an.read_spectrum(
             parent_folder + ID + spectrum_identifier)
         if np.max(temp_spectrum) == 0:
@@ -48,7 +49,7 @@ def load_templates(template_settings,
                    templates_folder,
                    normalization='normalarea',
                    spectrum_identifier="_10uC_spectrum.spe"
-                   ):
+                   ): #DOCSTRING
     spectral_templates = {}
 
     for setting in template_settings:
@@ -58,6 +59,7 @@ def load_templates(template_settings,
             normalization)
 
     def normalize_spectrum(location, normalization=None):
+            #DOCSTRING
             temp_spectrum = an.read_spectrum(
                 templates_folder +
                 '/background/background-' +
@@ -93,7 +95,7 @@ def simulate_template_dataset(isotope_list,
                               spectral_template_settings,
                               spectral_templates,
                               template_parameters,
-                              output_separate_background=False):
+                              output_separate_background=False): #DOCSTRING
 
     integration_times = template_parameters['integration_times']
     signal_to_backgrounds = template_parameters['signal_to_backgrounds']
@@ -186,7 +188,7 @@ def create_template_parameters(
         calibration_range,
         calibration_division,
         print_divisions=False,
-        division_offset=False):
+        division_offset=False): #DOCSTRING
 
     integration_times = np.logspace(
         np.log10(integration_time_range[0]),

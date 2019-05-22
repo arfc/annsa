@@ -15,13 +15,13 @@ background_locations = ['albuquerque',
 def load_template_spectra_from_folder(parent_folder,
                                       spectrum_identifier,
                                       normalization=None):
-    '''
+    """
     inputs: partent_folder, spectrum_identifier
     output: dictionary containing all template spectra from a folder.
 
     Load template spectrum data into a dictionary. This allows templates from
     different folders to be loaded into different dictionaries.
-    '''
+    """
 
     temp_dict = {}
 
@@ -45,7 +45,7 @@ def load_template_spectra_from_folder(parent_folder,
     return temp_dict
 
 
-def load_templates(normalization=None):
+def load_templates(normalization=None): #DOCSTRING
     spectral_templates = {}
 
     spectrum_identifier = "_10uC_spectrum.spe"
@@ -113,7 +113,7 @@ def load_templates(normalization=None):
 
     spectral_templates['background'] = {}
 
-    def normalize_spectrum(location, normalization=None):
+    def normalize_spectrum(location, normalization=None): #DOCSTRING
             temp_spectrum = an.read_spectrum(
                 './templates/background/background-'+location+'.spe')
             if np.max(temp_spectrum) == 0:

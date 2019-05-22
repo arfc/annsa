@@ -18,7 +18,6 @@ from random import choice
 # ##############################################################
 # ##############################################################
 
-#Adding a line to test the github functionality 
 
 class BaseClass(object):
     def __init__(self):
@@ -555,7 +554,7 @@ class DNN(tf.keras.Model, BaseClass):
         return loss
 
 
-class dnn_model_features(object):
+class dnn_model_features(object): #DOCSTRING
     def __init__(self, learining_rate,
                  l2_regularization_scale,
                  dropout_probability,
@@ -729,6 +728,7 @@ class cnn1d_model_features(object):
                  dense_nodes,
                  activation_function,
                  ):
+    	#DOCSTRING 
         self.learining_rate = learining_rate
         self.trainable = trainable
         self.batch_size = batch_size
@@ -1006,6 +1006,7 @@ class dae_model_features(object):
                  output_function,
                  output_size,
                  ):
+    	#DOCSTRING
         self.learining_rate = learining_rate
         self.l1_regularization_scale = l1_regularization_scale
         self.dropout_probability = dropout_probability
@@ -1026,10 +1027,10 @@ class dae_model_features(object):
 # ##############################################################
 
 
-class CAE(tf.keras.Model, BaseClass):
+class CAE(tf.keras.Model, BaseClass): #DOCSTRING
     """
     Class info
-
+	
     """
     def __init__(self, model_features):
         super(CAE, self).__init__()
@@ -1236,6 +1237,7 @@ class cae_model_features(object):
                  cnn_kernel_decoder,
                  cnn_strides_decoder
                  ):
+    	#DOCSTRING
         self.learining_rate = learining_rate
         self.encoder_trainable = encoder_trainable
         self.batch_size = batch_size
@@ -1346,6 +1348,7 @@ def train_earlystop(training_data,
                     augment_testing_data=False,
                     fit_batch_verbose=5,
                     record_train_errors=False,):
+	#DOCSTRING
 
     costfunctionerr_test, earlystoperr_test = [], []
 
@@ -1382,7 +1385,7 @@ def train_earlystop(training_data,
     return costfunctionerr_test, earlystoperr_test
 
 
-def save_model(folder_name, model_id, model, model_features):
+def save_model(folder_name, model_id, model, model_features): #DOCSTRING
     saver = tfe.Saver(model.variables)
     saver.save(folder_name+'/'+model_id)
     with open(folder_name+'/'+model_id+'_features', 'w') as f:
@@ -1394,7 +1397,7 @@ def load_model(model_folder,
                model_class,
                training_data_length=1024,
                training_key_length=57):
-
+	#DOCSTRING
     # load model features (number of layers, nodes)
     with open('./'+model_folder+'/'+model_id+'_features') as f:
         new_model_features = pickle.load(f)

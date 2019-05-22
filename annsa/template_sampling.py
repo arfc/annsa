@@ -223,9 +223,10 @@ def online_data_augmentation_vanilla(background_dataset,
                                      signal_to_background,
                                      calibration,):
     '''
-
+    #DOCSTRING
     '''
     def online_data_augmentation(input_data):
+        #DOCSTRING
         output_data = []
         for source_data in input_data:
             if type(source_data) == 'numpy.ndarray':
@@ -253,9 +254,10 @@ def online_data_augmentation_ae(background_dataset,
                                 calibration,
                                 background_subtracting=True):
     '''
-
+    #DOCSTRING
     '''
     def online_data_augmentation(input_data):
+        #DOCSTRING
         output_data = []
         for source_data in input_data:
             if type(source_data) == 'numpy.ndarray':
