@@ -120,7 +120,7 @@ class BaseClass(object):
 
             'weighted' calculates metrics for each label, and find their
             average weighted by support (the number of true instances for
-            each label). This alters ‘macro’ to account for label imbalance; it
+            each label). This alters macro to account for label imbalance; it
             can result in an F-score that is not between precision and recall.
 
             'samples' calculates metrics for each instance, and find their
@@ -438,7 +438,7 @@ class BaseClass(object):
 # ##############################################################
 # ##############################################################
 # ##############################################################
-# ##################### Dense Archetecture #####################
+# ##################### Dense Architecture #####################
 # ##############################################################
 # ##############################################################
 # ##############################################################
@@ -555,7 +555,7 @@ class DNN(tf.keras.Model, BaseClass):
 
 
 class dnn_model_features(object): #DOCSTRING
-    def __init__(self, learining_rate,
+    def __init__(self, learning_rate,
                  l2_regularization_scale,
                  dropout_probability,
                  batch_size,
@@ -564,7 +564,7 @@ class dnn_model_features(object): #DOCSTRING
                  activation_function,
                  scaler
                  ):
-        self.learining_rate = learining_rate
+        self.learning_rate = learning_rate
         self.l2_regularization_scale = l2_regularization_scale
         self.dropout_probability = dropout_probability
         self.batch_size = batch_size
@@ -576,7 +576,7 @@ class dnn_model_features(object): #DOCSTRING
 # ##############################################################
 # ##############################################################
 # ##############################################################
-# ################# Convolutional Archetecture #################
+# ################# Convolutional Architecture #################
 # ##############################################################
 # ##############################################################
 # ##############################################################
@@ -590,6 +590,18 @@ class CNN1D(tf.keras.Model, BaseClass):
         network.
 
         """
+
+        #=========================Notes======================#
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #================Delete this section later===========#
+        
         self.batch_size = model_features.batch_size
         output_size = model_features.output_size
         self.scaler = model_features.scaler
@@ -711,7 +723,7 @@ class CNN1D(tf.keras.Model, BaseClass):
 class cnn1d_model_features(object):
 
     def __init__(self,
-                 learining_rate,
+                 learning_rate,
                  trainable,
                  batch_size,
                  output_size,
@@ -729,7 +741,7 @@ class cnn1d_model_features(object):
                  activation_function,
                  ):
     	#DOCSTRING 
-        self.learining_rate = learining_rate
+        self.learning_rate = learning_rate
         self.trainable = trainable
         self.batch_size = batch_size
         self.output_size = output_size
@@ -780,7 +792,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
 
     model_features = cnn1d_model_features(
             trainable=None,
-            learining_rate=None,
+            learning_rate=None,
             batch_size=None,
             output_size=None,
             scaler=None,
@@ -995,7 +1007,7 @@ class DAE(tf.keras.Model, BaseClass):
 class dae_model_features(object):
 
     def __init__(self,
-                 learining_rate,
+                 learning_rate,
                  l1_regularization_scale,
                  dropout_probability,
                  batch_size,
@@ -1007,7 +1019,7 @@ class dae_model_features(object):
                  output_size,
                  ):
     	#DOCSTRING
-        self.learining_rate = learining_rate
+        self.learning_rate = learning_rate
         self.l1_regularization_scale = l1_regularization_scale
         self.dropout_probability = dropout_probability
         self.batch_size = batch_size
@@ -1221,7 +1233,7 @@ class CAE(tf.keras.Model, BaseClass): #DOCSTRING
 class cae_model_features(object):
 
     def __init__(self,
-                 learining_rate,
+                 learning_rate,
                  encoder_trainable,
                  batch_size,
                  scaler,
@@ -1238,7 +1250,7 @@ class cae_model_features(object):
                  cnn_strides_decoder
                  ):
     	#DOCSTRING
-        self.learining_rate = learining_rate
+        self.learning_rate = learning_rate
         self.encoder_trainable = encoder_trainable
         self.batch_size = batch_size
         self.scaler = scaler
@@ -1305,7 +1317,7 @@ def generate_random_cae_architecture(cnn_filters_encoder_choices,
 
     model_features = cae_model_features(
             encoder_trainable=None,
-            learining_rate=None,
+            learning_rate=None,
             batch_size=None,
             scaler=None,
             activation_function=None,
@@ -1404,7 +1416,7 @@ def load_model(model_folder,
 
     # Initialize variables by running a single training iteration
     tf.reset_default_graph()
-    optimizer = tf.train.AdamOptimizer(new_model_features.learining_rate)
+    optimizer = tf.train.AdamOptimizer(new_model_features.learning_rate)
     model = model_class(new_model_features)
 
     dummy_data = np.ones([10, training_data_length])
