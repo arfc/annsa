@@ -46,7 +46,7 @@ def construct_dnn():
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
 
     model_features = dnn_model_features(
-        learining_rate=1e-1,
+        learning_rate=1e-1,
         l2_regularization_scale=1e-1,
         dropout_probability=0.5,
         batch_size=2**5,
@@ -55,7 +55,7 @@ def construct_dnn():
         activation_function=tf.nn.relu,
         scaler=scaler)
 
-    optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
+    optimizer = tf.train.AdamOptimizer(model_features.learning_rate)
     model = DNN(model_features)
     return model_features, optimizer, model
 

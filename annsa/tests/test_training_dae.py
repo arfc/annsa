@@ -45,7 +45,7 @@ def load_dataset():
 def construct_dae():
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
     model_features = dae_model_features(
-        learining_rate=1e-1,
+        learning_rate=1e-1,
         l1_regularization_scale=1e-1,
         dropout_probability=0.5,
         batch_size=2**5,
@@ -56,7 +56,7 @@ def construct_dae():
         output_size=1024,
         output_function=None)
 
-    optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
+    optimizer = tf.train.AdamOptimizer(model_features.learning_rate)
     model = DAE(model_features)
     return model_features, optimizer, model
 

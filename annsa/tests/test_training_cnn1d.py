@@ -48,7 +48,7 @@ def construct_cnn1d():
     model_features = generate_random_cnn1d_architecture(((4, 1), (8, 1)),
                                                         ((8,), (4,)),
                                                         ((8,), (4,)),)
-    model_features.learining_rate = 1e-1
+    model_features.learning_rate = 1e-1
     model_features.trainable = True
     model_features.batch_size = 2**5
     model_features.output_size = 2
@@ -59,7 +59,7 @@ def construct_cnn1d():
     model_features.Pooling = tf.layers.MaxPooling1D
     model_features.activation_function = tf.nn.relu
 
-    optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
+    optimizer = tf.train.AdamOptimizer(model_features.learning_rate)
     model = CNN1D(model_features)
     return model_features, optimizer, model
 

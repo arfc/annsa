@@ -49,14 +49,14 @@ def construct_cae():
                                                       ((8,), (4,)),
                                                       ((8,), (4,)),)
     model_features.encoder_trainable = True
-    model_features.learining_rate = 1e-1
+    model_features.learning_rate = 1e-1
     model_features.batch_size = 2**5
     model_features.scaler = scaler
     model_features.activation_function = tf.nn.relu
     model_features.output_function = None
     model_features.Pooling = tf.layers.MaxPooling1D
 
-    optimizer = tf.train.AdamOptimizer(model_features.learining_rate)
+    optimizer = tf.train.AdamOptimizer(model_features.learning_rate)
     model = CAE(model_features)
     return model_features, optimizer, model
 
