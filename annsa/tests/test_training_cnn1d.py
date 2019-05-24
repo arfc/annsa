@@ -71,7 +71,7 @@ def test_cnn1d_construction():
 
 def test_cnn1d_training():
     """
-    Testing the dense neural network class and training function.
+    Testing the convolutional neural network class and training function.
     """
 
     tf.reset_default_graph()
