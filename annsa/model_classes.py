@@ -555,6 +555,23 @@ class DNN(tf.keras.Model, BaseClass):
 
 
 class dnn_model_features(object): #DOCSTRING
+	"""
+	Defines the features for the dense neural network.
+
+	Parameters
+	----------
+	learning_rate : float
+		How much the weights update due to back propagation of the 
+		error/loss function. 
+	l2_regularization_scale : 
+	
+	dropout_probability : float
+		The probability that any neuron will be temporarily turned 
+		off during training. Example: dropout_probability = 0.4 
+		means there is a 40% probability of the neuron turning off. 
+
+	"""
+
     def __init__(self, learning_rate,
                  l2_regularization_scale,
                  dropout_probability,
