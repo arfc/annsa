@@ -557,20 +557,8 @@ class DNN(tf.keras.Model, BaseClass):
 class dnn_model_features(object): #DOCSTRING
 	"""
 	Defines the features for the dense neural network.
-
-	Parameters
-	----------
-	learning_rate : float
-		How much the weights update due to back propagation of the 
-		error/loss function. 
-	l2_regularization_scale : 
-	
-	dropout_probability : float
-		The probability that any neuron will be temporarily turned 
-		off during training. Example: dropout_probability = 0.4 
-		means there is a 40% probability of the neuron turning off. 
-
 	"""
+
 
     def __init__(self, learning_rate,
                  l2_regularization_scale,
@@ -581,6 +569,36 @@ class dnn_model_features(object): #DOCSTRING
                  activation_function,
                  scaler
                  ):
+
+		"""
+		Parameters
+		----------
+		learning_rate : float
+			How much the weights update due to back propagation of the 
+			error/loss function. 
+		l2_regularization_scale : float
+			The loss penalty for regularization type l2. If the model 
+			attempts to increase the weights, it will only be accepted
+			if there is an equal or greater decrease in the error 
+			function.
+		dropout_probability : float
+			The probability that any neuron will be temporarily turned 
+			off during training. Example: dropout_probability = 0.4 
+			means there is a 40% probability of the neuron turning off. 
+		batch_size : int 
+			'batch_size' is the number of spectra/images being passed 
+			through the network at once. For reference, one epoch is 
+			the size of all training data. 
+		output_size : Array/Tuple
+			The desired dimensions of your output, typically [nx1]
+		dense_nodes : int
+			The desired number of nodes in a dense layer. 
+		activation_function : str
+			Accepted values: 
+				"relu" : rectified linear unit. 
+		scaler : 
+
+		"""
         self.learning_rate = learning_rate
         self.l2_regularization_scale = l2_regularization_scale
         self.dropout_probability = dropout_probability
@@ -739,6 +757,10 @@ class CNN1D(tf.keras.Model, BaseClass):
 
 class cnn1d_model_features(object):
 
+	"""
+	Defines the features of a CNN model. 
+	"""
+
     def __init__(self,
                  learning_rate,
                  trainable,
@@ -758,6 +780,59 @@ class cnn1d_model_features(object):
                  activation_function,
                  ):
     	#DOCSTRING 
+
+    	"""
+		Parameters
+		----------
+		learning_rate : float
+			How much the weights update due to back propagation of the 
+			error/loss function. 
+		trainable : boolean
+			If true, optimization will be applied and weights will be
+			updated. 
+			False is used for prediction. 
+		output_function : 
+
+		l2_regularization_scale : float
+			The loss penalty for regularization type l2. If the model 
+			attempts to increase the weights, it will only be accepted
+			if there is an equal or greater decrease in the error 
+			function.
+		dropout_probability : float
+			The probability that any neuron will be temporarily turned 
+			off during training. Example: dropout_probability = 0.4 
+			means there is a 40% probability of the neuron turning off. 
+		scaler :
+
+		batch_size : int 
+			'batch_size' is the number of spectra/images being passed 
+			through the network at once. For reference, one epoch is 
+			the size of all training data. 
+		Pooling : str
+			What kind of pooling is applied. Can be "max" or "average"
+		cnn_filters : int
+			The number of filters in a convolutional layer.
+		cnn_strides: int
+			The stride size of each filter. How far it shifts per 
+			iteration. Typically stride size is one. 
+		pool_size : int or array/tuple
+			'int'
+				Creates a square pool. 
+			'array' or 'tuple'
+				Creates a pool the size of elements in your tuple.
+		pool_strides : int
+			How much the pool shifts per iteration. Typically stride
+			is 2.
+		output_size : Array/Tuple
+			The desired dimensions of your output, typically [nx1]
+		dense_nodes : int
+			The desired number of nodes in a dense layer. 
+		activation_function : str
+			Accepted values: 
+				"relu" : rectified linear unit. 
+
+
+		"""
         self.learning_rate = learning_rate
         self.trainable = trainable
         self.batch_size = batch_size
@@ -782,6 +857,9 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     """
     Generates a random 1d convolutional neural network based on a set of
     predefined architectures.
+
+    cnn_filters_choices : 1-D array-like or int
+   		
 
     Returns
     -------

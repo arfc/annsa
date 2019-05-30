@@ -44,6 +44,18 @@ def load_dataset():
 
 
 def construct_cnn1d():
+    """
+    Constructs a convolutional neural network and tests construction
+    functions. 
+    1. Tests that scaler works appropriately by initializing scaler
+    2. Tests that 'generate_random_cnn1d_architecture' works 
+        by calling it and passing some arguments.
+    3. Tests that the attributes of the class can be changed 
+    4. Tests that optimizer can be initialized. 
+    Finally,
+    5. Tests the construction of a full convolutional neural network
+        by passing the model features object to a CNN1D
+    """
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
     model_features = generate_random_cnn1d_architecture(((4, 1), (8, 1)),
                                                         ((8,), (4,)),
