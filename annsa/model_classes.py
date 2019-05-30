@@ -571,6 +571,8 @@ class dnn_model_features(object): #DOCSTRING
                  ):
 
 		"""
+		@author: Sam Dotson
+
 		Parameters
 		----------
 		learning_rate : float
@@ -782,6 +784,8 @@ class cnn1d_model_features(object):
     	#DOCSTRING 
 
     	"""
+    	@Author: Sam Dotson
+
 		Parameters
 		----------
 		learning_rate : float
@@ -858,13 +862,21 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     Generates a random 1d convolutional neural network based on a set of
     predefined architectures.
 
-    cnn_filters_choices : 1-D array-like or int
-   		
+
+	@author: Sam Dotson
+	
+	Parameters: 
+    	cnn_filters_choices : 1-D array-like or int
+
+    	cnn_kernel_choices : 1-D array-like or int
+
+    	pool_size_choices : 1-D array-like or int
+
 
     Returns
     -------
     model_features : class
-        Class that describes the structure of a 1D convolution neural network.
+        Class that contains the features of a 1D convolution neural network.
 
     """
 

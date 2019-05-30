@@ -16,6 +16,15 @@ tf.enable_eager_execution()
 
 
 def load_dataset():
+    """
+    Loads training data and testing data.
+
+    Returns: 
+        train_dataset : 
+
+        test_dataset : 
+    """
+
     training_dataset = make_classification(n_samples=100,
                                            n_features=1024,
                                            n_informative=200,
@@ -47,14 +56,20 @@ def construct_cnn1d():
     """
     Constructs a convolutional neural network and tests construction
     functions. 
-    1. Tests that scaler works appropriately by initializing scaler
-    2. Tests that 'generate_random_cnn1d_architecture' works 
-        by calling it and passing some arguments.
-    3. Tests that the attributes of the class can be changed 
-    4. Tests that optimizer can be initialized. 
-    Finally,
-    5. Tests the construction of a full convolutional neural network
-        by passing the model features object to a CNN1D
+
+    Returns:
+
+        model_features : class cnn1d_model_features
+            Contains all features of the CNN1D model
+
+        optimizer : 
+        An Operation that updates the variables in var_list. 
+        If global_step was not None, that operation also increments
+        global_step. See documentation for tf.train.Optimizer
+
+        model : Class CNN1D
+            A convolution neural network for finding one dimensional
+            features.
     """
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
     model_features = generate_random_cnn1d_architecture(((4, 1), (8, 1)),
@@ -77,6 +92,14 @@ def construct_cnn1d():
 
 
 def test_cnn1d_construction():
+    """
+    Tests the construction of a convolution neural network.
+
+    Returns: Nothing
+
+    Note: _ = something --> Initializes 'something', but does not 
+                            store anything in memory.
+    """
     _, _, _ = construct_cnn1d()
     pass
 
