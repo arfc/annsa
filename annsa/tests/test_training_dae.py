@@ -15,6 +15,20 @@ tf.enable_eager_execution()
 
 
 def load_dataset():
+
+    """
+    Generates dummy data using 'sklearn.datasets.make_classification()'. 
+    See 'make_classification' documentation for more details.
+
+    Returns:
+    -------
+    train_dataset : tuple of [train_data, training_keys_binarized]
+        Contains the training data and the labels in a binarized
+        format.
+    test_dataset : tuple of [test_data, testing_keys_binarized]
+        Contains the testing data and the labels in a binarized
+        format.
+    """
     training_dataset = make_classification(n_samples=100,
                                            n_features=1024,
                                            n_informative=200,
@@ -43,6 +57,22 @@ def load_dataset():
 
 
 def construct_dae():
+
+    """
+    Constructs a dense autoencoder.
+
+    Returns:
+    --------
+    model_features : class dae_model_features
+        Contains all features of the DAE model
+
+    optimizer : 
+    An Operation that updates the variables in var_list. 
+    If global_step was not None, that operation also increments
+    global_step. See documentation for tf.train.Optimizer
+
+    model : Class DAE
+    """
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
     model_features = dae_model_features(
         learning_rate=1e-1,

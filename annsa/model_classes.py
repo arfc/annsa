@@ -806,14 +806,12 @@ class cnn1d_model_features(object):
 			The probability that any neuron will be temporarily turned 
 			off during training. Example: dropout_probability = 0.4 
 			means there is a 40% probability of the neuron turning off. 
-		scaler :
-
+		scaler : Tensorflow scaling function
 		batch_size : int 
 			'batch_size' is the number of spectra/images being passed 
 			through the network at once. For reference, one epoch is 
 			the size of all training data. 
-		Pooling : str
-			What kind of pooling is applied. Can be "max" or "average"
+		Pooling : Tensorflow pooling function
 		cnn_filters : int
 			The number of filters in a convolutional layer.
 		cnn_strides: int
@@ -831,9 +829,8 @@ class cnn1d_model_features(object):
 			The desired dimensions of your output, typically [nx1]
 		dense_nodes : int
 			The desired number of nodes in a dense layer. 
-		activation_function : str
-			Accepted values: 
-				"relu" : rectified linear unit. 
+		activation_function : Tensorflow activation function
+			Example: tf.nn.relu
 
 
 		"""
@@ -864,7 +861,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
 
 
 	@author: Sam Dotson
-	
+
 	Parameters: 
     	cnn_filters_choices : 1-D array-like or int
 
