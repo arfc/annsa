@@ -103,7 +103,9 @@ class BaseClass(object):
             The mean squared error between the model's prediction given
             the inputs and the ground-truth target.
         """
-        targets_scaled = self.scaler.transform(targets)
+        # check if targets are a spectrum
+        if targets.shape[1] > 1:
+            targets_scaled = self.scaler.transform(targets)
         model_predictions = self.forward_pass(input_data, training=training)
         return tf.losses.mean_squared_error(targets_scaled, model_predictions)
 

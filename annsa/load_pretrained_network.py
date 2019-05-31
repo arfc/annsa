@@ -47,6 +47,39 @@ def load_features(filename):
     return model_features
 
 
+def load_trained_model(model_class,
+                       features_filename,
+                       weights_filename,
+                       ):
+    '''
+    Loads a trained model.
+
+    inputs:
+        model_class : Keras model class
+            The keras model class for the features
+        features_filename : str
+            Filname location of the pickle file containing the model features
+        weights_filename : str
+            Filname location of the file containing the pretrained weights
+
+    outputs:
+        model : Keras model class
+            The class containing the keras model with pretrained weights
+        model_features : model features class
+            The class containing the model features.
+    '''
+
+    model_features = load_features(features_filename)
+    trained_model = model_class(model_features)
+    trained_model.load_weights(weights_filename)
+
+    # need to do a forward pass to initialize weights
+    dummy_data = np.zeros(1024)
+    _ = trained_model.predict_class([dummy_data])
+
+    return trained_model, model_features
+
+
 def load_pretrained_cae_into_cnn(cae_features_filename,
                                  cae_weights_filename,
                                  cnn_dense_nodes=[128],
@@ -79,13 +112,16 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         dropout_probability : float (optional)
             The dropout probability for the dense layer
     outputs:
-        model_features : model features class
-            The class containing the model features
+        CNN_model : Keras model class
+            The class containing the keras model with pretrained weights
+        model_features_CNN : model features class
+            The class containing the model features.
     '''
 
     cae_features = load_features(cae_features_filename)
     CAE_model = CAE(cae_features)
-    CAE_model.load_weights(cae_weights_filename)
+    if cae_weights_filename:
+        CAE_model.load_weights(cae_weights_filename)
 
     # need to do a forward pass to initialize weights
     dummy_data = np.zeros(1024)
@@ -99,7 +135,7 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         output_function=None,
         l2_regularization_scale=l2_regularization_scale,
         dropout_probability=dropout_probability,
-        scaler=make_pipeline(FunctionTransformer(np.log1p, validate=True)),
+        scaler=CAE_model.scaler,
         Pooling=tf.layers.MaxPooling1D,
         cnn_filters=cae_features.cnn_filters_encoder,
         cnn_kernel=cae_features.cnn_kernel_encoder,
@@ -121,3 +157,4 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         CNN_model.layers[i].set_weights(CAE_model.layers[i].get_weights())
 
     return CNN_model, model_features_CNN
+
