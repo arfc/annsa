@@ -135,7 +135,7 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         output_function=None,
         l2_regularization_scale=l2_regularization_scale,
         dropout_probability=dropout_probability,
-        scaler=make_pipeline(FunctionTransformer(np.log1p, validate=True)),
+        scaler=CAE_model.scaler,
         Pooling=tf.layers.MaxPooling1D,
         cnn_filters=cae_features.cnn_filters_encoder,
         cnn_kernel=cae_features.cnn_kernel_encoder,
@@ -157,3 +157,4 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         CNN_model.layers[i].set_weights(CAE_model.layers[i].get_weights())
 
     return CNN_model, model_features_CNN
+
