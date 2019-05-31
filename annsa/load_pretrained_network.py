@@ -120,7 +120,8 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
 
     cae_features = load_features(cae_features_filename)
     CAE_model = CAE(cae_features)
-    CAE_model.load_weights(cae_weights_filename)
+    if cae_weights_filename:
+        CAE_model.load_weights(cae_weights_filename)
 
     # need to do a forward pass to initialize weights
     dummy_data = np.zeros(1024)
