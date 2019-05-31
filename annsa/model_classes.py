@@ -72,6 +72,8 @@ class BaseClass(object):
             model's prediction given the inputs and the ground-truth
             target.
         """
+        if targets.shape[1] > 1:
+            targets = self.scaler.transform(targets)
 
         logits = self.forward_pass(input_data, training=training)
         cross_entropy_loss = tf.reduce_mean(
@@ -105,9 +107,9 @@ class BaseClass(object):
         """
         # check if targets are a spectrum
         if targets.shape[1] > 1:
-            targets_scaled = self.scaler.transform(targets)
+            targets = self.scaler.transform(targets)
         model_predictions = self.forward_pass(input_data, training=training)
-        return tf.losses.mean_squared_error(targets_scaled, model_predictions)
+        return tf.losses.mean_squared_error(targets, model_predictions)
 
     def f1_error(self, input_data, targets, training=False, average='micro'):
         """
@@ -472,6 +474,7 @@ class DNN(tf.keras.Model, BaseClass):
         self.batch_size = model_features.batch_size
         self.scaler = model_features.scaler
         output_size = model_features.output_size
+        output_function = model_features.output_function
         activation_function = model_features.activation_function
         regularizer = tf.contrib.layers.l2_regularizer(
             scale=self.l2_regularization_scale)
@@ -493,7 +496,7 @@ class DNN(tf.keras.Model, BaseClass):
                 kernel_regularizer=regularizer)
             self.drop_layers[str(layer)] = tf.layers.Dropout(
                 dropout_probability)
-        self.output_layer = tf.layers.Dense(output_size, activation=None)
+        self.output_layer = tf.layers.Dense(output_size, activation=output_function)
 
     def forward_pass(self, input_data, training):
         """
@@ -562,6 +565,7 @@ class dnn_model_features(object):
                  dropout_probability,
                  batch_size,
                  output_size,
+                 output_function,
                  dense_nodes,
                  activation_function,
                  scaler
@@ -571,6 +575,7 @@ class dnn_model_features(object):
         self.dropout_probability = dropout_probability
         self.batch_size = batch_size
         self.output_size = output_size
+        self.output_function = output_function
         self.dense_nodes = dense_nodes
         self.activation_function = activation_function
         self.scaler = scaler
@@ -1160,9 +1165,9 @@ class CAE(tf.keras.Model, BaseClass):
             x = resize_images(x, [x.shape[1]*2, 1])
             x = tf.reshape(x, (x.shape[0], x.shape[1], x.shape[2]))
             x = self.conv_layers_decoder[str(layer)](x)
-            'decoder conv ' + str(x.shape)
+            # 'decoder conv ' + str(x.shape)
         decoding = tf.reshape(x, (x.shape[0], x.shape[1]))
-        'decoder FINAL ' + str(x.shape)
+        # 'decoder FINAL ' + str(x.shape)
         return decoding
 
     def forward_pass(self, input_data, training):
