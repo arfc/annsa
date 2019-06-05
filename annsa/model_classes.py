@@ -783,8 +783,6 @@ class cnn1d_model_features(object):
                  dense_nodes,
                  activation_function,
                  ):
-    	#DOCSTRING 
-
     	"""
     	@Author: Sam Dotson
 
