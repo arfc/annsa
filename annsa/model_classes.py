@@ -452,6 +452,14 @@ class DNN(tf.keras.Model, BaseClass):
 
     Under the class -- list the member functions and a short
     summary of what they do!
+
+    Functions:
+    ----------
+
+    '__init__' : constructor
+    'forward_pass' : Runs a forward pass throught the network
+    'loss_fn' : 
+
     
 
     """
@@ -560,8 +568,15 @@ class DNN(tf.keras.Model, BaseClass):
         return loss
 
 
-class dnn_model_features(object): #DOCSTRING
-    def __init__(self, learning_rate,
+class dnn_model_features(object):
+    """
+    Defines the features used in the neural network.
+
+    '__init__' : constructor
+
+    """
+    
+    def __init__(self,learning_rate,
                  l2_regularization_scale,
                  dropout_probability,
                  batch_size,
@@ -790,7 +805,7 @@ class cnn1d_model_features(object):
                  dense_nodes,
                  activation_function,
                  ):
-    	#DOCSTRING 
+        #DOCSTRING 
 
         """
         @Author: Sam Dotson
@@ -1149,7 +1164,7 @@ class dae_model_features(object):
                  output_function,
                  output_size,
                  ):
-    	#DOCSTRING
+        #DOCSTRING
         self.learning_rate = learning_rate
         self.l1_regularization_scale = l1_regularization_scale
         self.dropout_probability = dropout_probability
@@ -1176,7 +1191,7 @@ class CAE(tf.keras.Model, BaseClass): #DOCSTRING
 
     Under the class -- list the member functions and a short
     summary of what they do!
-	
+    
     """
     def __init__(self, model_features):
         super(CAE, self).__init__()
@@ -1383,7 +1398,7 @@ class cae_model_features(object):
                  cnn_kernel_decoder,
                  cnn_strides_decoder
                  ):
-    	#DOCSTRING
+        #DOCSTRING
         self.learning_rate = learning_rate
         self.encoder_trainable = encoder_trainable
         self.batch_size = batch_size
@@ -1494,7 +1509,7 @@ def train_earlystop(training_data,
                     augment_testing_data=False,
                     fit_batch_verbose=5,
                     record_train_errors=False,):
-	#DOCSTRING
+    #DOCSTRING
 
     costfunctionerr_test, earlystoperr_test = [], []
 
@@ -1543,7 +1558,7 @@ def load_model(model_folder,
                model_class,
                training_data_length=1024,
                training_key_length=57):
-	#DOCSTRING
+    #DOCSTRING
     # load model features (number of layers, nodes)
     with open('./'+model_folder+'/'+model_id+'_features') as f:
         new_model_features = pickle.load(f)
