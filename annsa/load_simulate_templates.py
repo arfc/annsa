@@ -162,7 +162,17 @@ def simulate_template_dataset(isotope_list,
     """
     Uses template to generate new training set and keys.
 
-    PARAM
+    Parameters: 
+    -----------
+    isotope_list: 1D array of type string
+
+    spectral_template_settings : 1D array of type string
+
+    spectral_templates : 1D array of type string
+
+    template_parameters : 1D array of type string
+
+    output_separate_background : boolean
 
     RET
     """

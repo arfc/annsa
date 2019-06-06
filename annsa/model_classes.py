@@ -571,11 +571,11 @@ class DNN(tf.keras.Model, BaseClass):
 
 
 class dnn_model_features(object):
-	"""
-	Defines the features for the dense neural network.
+    """
+    Defines the features for the dense neural network.
 
-	'__init__' : Constructor
-	"""
+    '__init__' : Constructor
+    """
 
 
     def __init__(self, learning_rate,
@@ -788,9 +788,9 @@ class CNN1D(tf.keras.Model, BaseClass):
 
 class cnn1d_model_features(object):
 
-	"""
-	Defines the features of a CNN model. 
-	"""
+    """
+    Defines the features of a CNN model. 
+    """
 
     def __init__(self,
                  learning_rate,
@@ -843,9 +843,9 @@ class cnn1d_model_features(object):
         cnn_filters : int
             The number of filters in a convolutional layer.
         cnn_kernel : int or 1D array of type int
-        	Passing int will assume a square filter of size int x int.
-        	The values of an array will be taken as the desired dimens-
-        	ion size of the filter.
+            Passing int will assume a square filter of size int x int.
+            The values of an array will be taken as the desired dimens-
+            ion size of the filter.
         cnn_strides: int
             The stride size of each filter. How far it shifts per 
             iteration. Typically stride size is one. 
@@ -1197,7 +1197,7 @@ class dae_model_features(object):
         dense_nodes_encoder : int
             The desired number of nodes in a dense layer of the encoder.
         dense_nodes_decoder : int
-        	The desired number of nodes in a dense layer of the decoder. 
+            The desired number of nodes in a dense layer of the decoder. 
         activation_function : Tensorflow activation function
             Example: tf.nn.relu
         """
@@ -1465,9 +1465,9 @@ class cae_model_features(object):
         cnn_filters_encoder : int
             The number of filters in a convolutional layer.
         cnn_kernel_encoder : int or 1D array of type int
-        	Passing int will assume a square filter of size int x int.
-        	The values of an array will be taken as the desired dimens-
-        	ion size of the filter.
+            Passing int will assume a square filter of size int x int.
+            The values of an array will be taken as the desired dimens-
+            ion size of the filter.
         cnn_strides_encoder: int
             The stride size of each filter. How far it shifts per 
             iteration. Typically stride size is one. 
@@ -1482,9 +1482,9 @@ class cae_model_features(object):
         cnn_filters_decoder : int
             The number of filters in a convolutional layer.
         cnn_kernel_decoder : int or 1D array of type int
-        	Passing int will assume a square filter of size int x int.
-        	The values of an array will be taken as the desired dimens-
-        	ion size of the filter.
+            Passing int will assume a square filter of size int x int.
+            The values of an array will be taken as the desired dimens-
+            ion size of the filter.
         cnn_strides_decoder : int
             The stride size of each filter. How far it shifts per 
             iteration. Typically stride size is one.
@@ -1608,9 +1608,63 @@ def train_earlystop(training_data,
     """
     Trains the model to stop early to avoid overfitting.
 
-	PARAM
-	
-	RET
+    Parameters:
+    -----------
+    training_data : numpy matrix
+        A [nxm] numpy matrix of unprocessed gamma-ray spectra
+    training_keys : tensor
+        The keys for your training data.
+    testing_data : numpy matrix
+        a [nxm] numpy matrix of unprocessed gamma-ray spectra
+    testing_keys : tensor
+        Testing keys
+    model : object
+        The model you are currently training.
+    optimizer : tensorflow optimizer in tf.train.*
+    num_epochs : int
+        Number of epochs you are training.
+    obj_cost : dictionary
+    earlystop_cost_fn : Tensorflow earlystop function
+    earlystop_patience : int, optional
+        Number of epochs training is allowed to run without improvment.
+        If 0, training will run until max_time or num_epochs is passed.
+
+==========================Delete this section later==========================
+        train_dataset : list, float, int
+            Two element list of [data, keys] where data
+            is a [nxm] numpy matrix of unprocessed gamma-ray spectra
+            and keys are a [nxl] matrix of  target outputs.
+        test_dataset : list, float, int
+            Two element list of [data, keys] where data
+            is a [nxm] numpy matrix of unprocessed gamma-ray spectra
+            and keys are a [nxl] matrix of  target outputs.
+        optimizer : TensorFlow optimizer class
+            The optimizer to use to optimize the algorithm. Choices include
+            ``tf.train.AdamOptimizer``, ``tf.train.GradientDescentOptimizer``.
+        num_epochs : int, optional
+            Total number of epochs training is allowed to run.
+        verbose : int, optional
+            Frequency that the errors are printed per iteration.
+        print_errors : bool, optional
+            If true, will print model errors after each epoch.
+        earlystop_patience : int, optional
+            Number of epochs training is allowed to run without improvment.
+            If 0, training will run until max_time or num_epochs is passed.
+        max_time : int, optional
+            Max time in seconds training is allowed to run.
+        not_learning_patience : int, optional
+            Max number of epochs to wait before checking if model is not
+            learning.
+        not_learning_threshold : float, optional
+            If error at epoch ``not_learning_patience`` is above this, training
+            stops.
+        earlystop_cost_fctn : function
+            Cost function used for early stopping. Examples are
+            ``self.f1_error``, ``self.mse``, and ``self.cross_entropy``.
+        data_augmentation : function
+            Function used to apply data augmentation each training iteration.
+===========================Delete this section later=========================
+    RET
     """
 
     costfunctionerr_test, earlystoperr_test = [], []
@@ -1649,13 +1703,23 @@ def train_earlystop(training_data,
 
 
 def save_model(folder_name, model_id, model, model_features): 
-	"""
-	Allows the model to be saved after training and uploaded for later use.
+    """
+    Allows the model to be saved after training and uploaded for later use.
 
-	PARAM
+    Parameters:
+    -----------
+    folder_name : string
+    Name of folder where the model is to be saved.
+    model_id : string
+    model identifier that will be used again when loading the model.
+    model : object
+    The variable that contains the instance of the neural network
+    that you want to save. 
+    model_features : object
+    Variable that contains all of the features of your model. 
 
-	RET
-	"""
+    RET
+    """
     saver = tfe.Saver(model.variables)
     saver.save(folder_name+'/'+model_id)
     with open(folder_name+'/'+model_id+'_features', 'w') as f:
@@ -1670,7 +1734,11 @@ def load_model(model_folder,
    """
    Loads a previously saved model. 
 
-   PARAM
+   Parameters: 
+   -----------
+   model_folder :
+       Name of folder where the model exists.
+
 
    RET
    """
