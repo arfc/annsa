@@ -17,6 +17,7 @@ tf.enable_eager_execution()
 
 def load_dataset():
     """
+    @Author: Sam Dotson
     Generates dummy data using 'sklearn.datasets.make_classification()'. 
     See 'make_classification' documentation for more details.
 
@@ -60,6 +61,7 @@ def load_dataset():
 def construct_cae():
 
     """
+    @Author: Sam Dotson
     Builds a convolutional autoencoder with a random architecture.
 
     Returns:
