@@ -94,7 +94,7 @@ def construct_dae():
 def test_dae_construction():
 
     """
-    Description
+    Tests construction of the dense autoencoder.
     """
     _, _, _ = construct_dae()
     pass

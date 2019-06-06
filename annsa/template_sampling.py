@@ -5,18 +5,20 @@ import tensorflow as tf
 
 
 def random_background_template_with_FWHM(background_dataset, FWHM, cosmic=0):
-    '''
-    inputs:
+    """
+    Parameters:
+    -----------
         background_dataset : pandas dataframe
             The spectrums template
         FWHM : float
             Desired FWHM parameter
         cosmic : bool (optional)
             Choice to include cosmic radiation
-    returns:
+    Returns:
+    --------
         random_background_spectrum : vector
             The full background spectrum
-    '''
+    """
 
     background_choices = background_dataset[
         (background_dataset['fwhm'] == FWHM) &
@@ -28,11 +30,12 @@ def random_background_template_with_FWHM(background_dataset, FWHM, cosmic=0):
 
 
 def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
-    '''
+    """
     Rebins spectrum based on quadratic rebinning. Returns a 1024 channel
     spectrum.
 
-    inputs:
+    Parameters:
+    -----------
         spectrum_template : vector (1x1194)
             The spectrums template
         a : float
@@ -41,10 +44,11 @@ def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
             Linear rebinning term
         c : float
             Quadratic rebinning term
-    returns:
+    Returns:
+    --------
         rebinned_spectrum_template : vector (1x1194)
             The rebinned spectrum template
-    '''
+    """
 
     new_bin_positions = a + b*np.arange(1194) + c*np.arange(1194)**2
 
@@ -58,16 +62,18 @@ def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
 
 
 def poisson_sample_template(template, total_counts):
-    '''
-    inputs:
+    """
+    Parameters:
+    -----------
         template : vector
             The spectrums template
         total_counts : int
             The total expected counts in a spectrum
-    returns:
+    Returns:
+    --------
         template_poiss_sampled : vector
             The poisson sampled spectrum
-    '''
+    """
 
     template_probability = template/np.sum(template)
     template_poiss_sampled = np.random.poisson(total_counts *
@@ -77,16 +83,18 @@ def poisson_sample_template(template, total_counts):
 
 
 def apply_LLD(spectrum, LLD=10):
-    '''
-    inputs:
+    """
+    Parameters:
+    -----------
         spectrum : vector
             The spectrum
         LLD : int
             The channel where the low level discriminator is applied
-    returns:
+    Returns:
+    --------
         spectrum : vector
             The spectrum with LLD channelsset to 0
-    '''
+    """
     spectrum[0:LLD] = 0
     return spectrum
 
@@ -99,18 +107,20 @@ def make_random_spectrum(source_data,
                          calibration=[0, 1.0, 0],
                          LLD=10,
                          **kwargs,):
-    '''
-    inputs:
+    """
+    Parameters:
+    -----------
         source_spectrum : vector
             Vector containing the FWHM and spectrum for
         background_dataset :
             bla
-    returns:
+    Returns:
+    --------
         source_spectrum : vector
             The 1024 length source spectrum
         background_spectrum : vector
             The 1024 length background spectrum
-    '''
+    """
     a = calibration[0]
     b = calibration[1]
     c = calibration[2]
@@ -223,7 +233,7 @@ def online_data_augmentation_vanilla(background_dataset,
                                      signal_to_background,
                                      calibration,):
     """
-    DESCRIPTION
+    Uses premade datasets to generate new ones for data augmentation.
 
     PARAM
 
@@ -231,7 +241,7 @@ def online_data_augmentation_vanilla(background_dataset,
     """
     def online_data_augmentation(input_data):
         """
-        DESCRIPTION 
+        Augments data using a template dataset.
 
         PARAM
 
@@ -264,7 +274,7 @@ def online_data_augmentation_ae(background_dataset,
                                 calibration,
                                 background_subtracting=True):
     """
-    DESCRIPTION
+    Augments datasets for autoencoders.
 
     PARAM
 
@@ -272,7 +282,7 @@ def online_data_augmentation_ae(background_dataset,
     """
     def online_data_augmentation(input_data):
         """
-        DESCRIPTION
+        Augments data using a template dataset.
 
         PARAM
 

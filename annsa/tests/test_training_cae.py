@@ -17,9 +17,17 @@ tf.enable_eager_execution()
 
 def load_dataset():
     """
-    DESCRIPTION
+    Generates dummy data using 'sklearn.datasets.make_classification()'. 
+    See 'make_classification' documentation for more details.
 
-    RET
+    Returns:
+    -------
+    train_dataset : tuple of [train_data, training_keys_binarized]
+        Contains the training data and the labels in a binarized
+        format.
+    test_dataset : tuple of [test_data, testing_keys_binarized]
+        Contains the testing data and the labels in a binarized
+        format. 
     """
 
     training_dataset = make_classification(n_samples=100,
@@ -52,9 +60,21 @@ def load_dataset():
 def construct_cae():
 
     """
-    DESCRIPTION
+    Builds a convolutional autoencoder with a random architecture.
 
-    RET
+    Returns:
+    --------
+
+    model_features : object 
+        Contains all the features of a particular model.
+
+    optimizer : tensorflow class, optimizer
+        A tensorflow function, see tf.train.AdamOptimizer for more
+        details.
+
+    model : object class CAE
+        A convolutional autoencoder that can be trained, saved, and
+        reused.
     """
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
     model_features = generate_random_cae_architecture(((4, 1), (8, 1)),
@@ -76,7 +96,7 @@ def construct_cae():
 def test_cae_construction():
 
     """
-    DESCRIPTION
+    Tests the convolutional autoencoder.
     """
     _, _, _ = construct_cae()
     pass
@@ -84,7 +104,7 @@ def test_cae_construction():
 
 def test_cae_training():
     """
-    Testing the dense neural network class and training function.
+    Testing the convolutional neural network class and training function.
     """
 
     tf.reset_default_graph()

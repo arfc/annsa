@@ -17,7 +17,8 @@ tf.enable_eager_execution()
 
 def load_dataset():
     """
-    Loads training data and testing data.
+    Generates dummy data using 'sklearn.datasets.make_classification()'. 
+    See 'make_classification' documentation for more details.
 
     Returns:
     -------

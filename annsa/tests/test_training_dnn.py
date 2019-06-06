@@ -17,11 +17,17 @@ tf.enable_eager_execution()
 def load_dataset():
 
     """
-    DESCRIPTION
+    Generates dummy data using 'sklearn.datasets.make_classification()'. 
+    See 'make_classification' documentation for more details.
 
-    PARAM
-
-    RET
+    Returns:
+    -------
+    train_dataset : tuple of [train_data, training_keys_binarized]
+        Contains the training data and the labels in a binarized
+        format.
+    test_dataset : tuple of [test_data, testing_keys_binarized]
+        Contains the testing data and the labels in a binarized
+        format.
     """
     training_dataset = make_classification(n_samples=100,
                                            n_features=1024,
@@ -52,11 +58,21 @@ def load_dataset():
 
 def construct_dnn():
     """
-    DESCRIPTION
+    Constructs a dense neural network and tests construction
+    functions. 
 
-    PARAM
+    Returns:
+    --------
+    model_features : class dnn_model_features
+        Contains all features of the DNN model
 
-    RET
+    optimizer : 
+    An Operation that updates the variables in var_list. 
+    If global_step was not None, that operation also increments
+    global_step. See documentation for tf.train.Optimizer
+
+    model : Class DNN
+        A dense neural network
     """
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
 
@@ -77,11 +93,7 @@ def construct_dnn():
 
 def test_dnn_construction():
     """
-    DESCRIPTION
-
-    PARAM
-
-    RET
+    Tests the construction of the dense neural network.
     """
     _, _, _ = construct_dnn()
     pass
@@ -90,10 +102,6 @@ def test_dnn_construction():
 def test_dnn_training():
     """
     Testing the dense neural network class and training function.
-
-    PARAM
-
-    RET
     """
 
     tf.reset_default_graph()
