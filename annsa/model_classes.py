@@ -1606,7 +1606,7 @@ def train_earlystop(training_data,
                     fit_batch_verbose=5,
                     record_train_errors=False,):
     """
-    DESCRIPTION
+    Trains the model to stop early to avoid overfitting.
 
 	PARAM
 	
@@ -1650,7 +1650,7 @@ def train_earlystop(training_data,
 
 def save_model(folder_name, model_id, model, model_features): 
 	"""
-	DESCRIPTION
+	Allows the model to be saved after training and uploaded for later use.
 
 	PARAM
 
@@ -1668,7 +1668,7 @@ def load_model(model_folder,
                training_data_length=1024,
                training_key_length=57):
    """
-   DESCRIPTION
+   Loads a previously saved model. 
 
    PARAM
 
