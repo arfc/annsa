@@ -45,7 +45,14 @@ def load_template_spectra_from_folder(parent_folder,
     return temp_dict
 
 
-def load_templates(normalization=None): #DOCSTRING
+def load_templates(normalization=None): 
+    """
+    DESCRIPTION
+
+    PARAM
+
+    RET
+    """
     spectral_templates = {}
 
     spectrum_identifier = "_10uC_spectrum.spe"
@@ -113,7 +120,14 @@ def load_templates(normalization=None): #DOCSTRING
 
     spectral_templates['background'] = {}
 
-    def normalize_spectrum(location, normalization=None): #DOCSTRING
+    def normalize_spectrum(location, normalization=None):
+        """
+        DESCRIPTION
+
+        PARAM
+
+        RET
+        """
             temp_spectrum = an.read_spectrum(
                 './templates/background/background-'+location+'.spe')
             if np.max(temp_spectrum) == 0:

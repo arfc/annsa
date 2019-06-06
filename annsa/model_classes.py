@@ -450,7 +450,7 @@ class DNN(tf.keras.Model, BaseClass):
     """
     Defines dense neural network structure, loss functions, training functions.
 
-    DOCSTRING
+    FUNCTIONS
 
     Under the class -- list the member functions and a short
     summary of what they do!
@@ -570,9 +570,11 @@ class DNN(tf.keras.Model, BaseClass):
         return loss
 
 
-class dnn_model_features(object): #DOCSTRING
+class dnn_model_features(object):
 	"""
 	Defines the features for the dense neural network.
+
+	'__init__' : Constructor
 	"""
 
 
@@ -637,8 +639,7 @@ class dnn_model_features(object): #DOCSTRING
 
 class CNN1D(tf.keras.Model, BaseClass):
     """
-    DOCSTRING
-
+    FUNCTIONS
     Under the class -- list the member functions and a short
     summary of what they do!
     """
@@ -841,6 +842,10 @@ class cnn1d_model_features(object):
         Pooling : Tensorflow pooling function
         cnn_filters : int
             The number of filters in a convolutional layer.
+        cnn_kernel : int or 1D array of type int
+        	Passing int will assume a square filter of size int x int.
+        	The values of an array will be taken as the desired dimens-
+        	ion size of the filter.
         cnn_strides: int
             The stride size of each filter. How far it shifts per 
             iteration. Typically stride size is one. 
@@ -955,7 +960,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
 
 class DAE(tf.keras.Model, BaseClass):
     """
-    DOCSTRING
+    FUNCTIONS
 
     Under the class -- list the member functions and a short
     summary of what they do!
@@ -1165,7 +1170,37 @@ class dae_model_features(object):
                  output_function,
                  output_size,
                  ):
-        #DOCSTRING
+        """
+        @author: Sam Dotson
+        Parameters
+        ----------
+        learning_rate : float
+            How much the weights update due to back propagation of the 
+            error/loss function. 
+        output_function : 
+
+        l2_regularization_scale : float
+            The loss penalty for regularization type l2. If the model 
+            attempts to increase the weights, it will only be accepted
+            if there is an equal or greater decrease in the error 
+            function.
+        dropout_probability : float
+            The probability that any neuron will be temporarily turned 
+            off during training. Example: dropout_probability = 0.4 
+            means there is a 40% probability of the neuron turning off. 
+        scaler : Tensorflow scaling function
+        batch_size : int 
+            'batch_size' is the number of spectra/images being passed 
+            through the network at once. For reference, one epoch is 
+        output_size : Array/Tuple
+            The desired dimensions of your output, typically [nx1]
+        dense_nodes_encoder : int
+            The desired number of nodes in a dense layer of the encoder.
+        dense_nodes_decoder : int
+        	The desired number of nodes in a dense layer of the decoder. 
+        activation_function : Tensorflow activation function
+            Example: tf.nn.relu
+        """
         self.learning_rate = learning_rate
         self.l1_regularization_scale = l1_regularization_scale
         self.dropout_probability = dropout_probability
@@ -1186,9 +1221,9 @@ class dae_model_features(object):
 # ##############################################################
 
 
-class CAE(tf.keras.Model, BaseClass): #DOCSTRING
+class CAE(tf.keras.Model, BaseClass): 
     """
-    DOCSTRING
+    FUNCTIONS
 
     Under the class -- list the member functions and a short
     summary of what they do!
@@ -1399,7 +1434,67 @@ class cae_model_features(object):
                  cnn_kernel_decoder,
                  cnn_strides_decoder
                  ):
-        #DOCSTRING
+        """
+        @Author: sam dotson
+        Parameters
+        ----------
+        learning_rate : float
+            How much the weights update due to back propagation of the 
+            error/loss function. 
+        encoder_trainable : boolean
+            If true, optimization will be applied and weights will be
+            updated. 
+            False is used for prediction. 
+        output_function : 
+
+        l2_regularization_scale : float
+            The loss penalty for regularization type l2. If the model 
+            attempts to increase the weights, it will only be accepted
+            if there is an equal or greater decrease in the error 
+            function.
+        dropout_probability : float
+            The probability that any neuron will be temporarily turned 
+            off during training. Example: dropout_probability = 0.4 
+            means there is a 40% probability of the neuron turning off. 
+        scaler : Tensorflow scaling function
+        batch_size : int 
+            'batch_size' is the number of spectra/images being passed 
+            through the network at once. For reference, one epoch is 
+            the size of all training data. 
+        Pooling : Tensorflow pooling function
+        cnn_filters_encoder : int
+            The number of filters in a convolutional layer.
+        cnn_kernel_encoder : int or 1D array of type int
+        	Passing int will assume a square filter of size int x int.
+        	The values of an array will be taken as the desired dimens-
+        	ion size of the filter.
+        cnn_strides_encoder: int
+            The stride size of each filter. How far it shifts per 
+            iteration. Typically stride size is one. 
+        pool_size_encoder : int or array/tuple
+            'int':
+                Creates a square pool. 
+            'array' or 'tuple':
+                Creates a pool the size of elements in your tuple.
+        pool_strides_encoder : int
+            How much the pool shifts per iteration. Typically stride
+            is 2.
+        cnn_filters_decoder : int
+            The number of filters in a convolutional layer.
+        cnn_kernel_decoder : int or 1D array of type int
+        	Passing int will assume a square filter of size int x int.
+        	The values of an array will be taken as the desired dimens-
+        	ion size of the filter.
+        cnn_strides_decoder : int
+            The stride size of each filter. How far it shifts per 
+            iteration. Typically stride size is one.
+        output_size : Array/Tuple
+            The desired dimensions of your output, typically [nx1]
+        dense_nodes : int
+            The desired number of nodes in a dense layer. 
+        activation_function : Tensorflow activation function
+            Example: tf.nn.relu
+        """
         self.learning_rate = learning_rate
         self.encoder_trainable = encoder_trainable
         self.batch_size = batch_size
@@ -1510,7 +1605,13 @@ def train_earlystop(training_data,
                     augment_testing_data=False,
                     fit_batch_verbose=5,
                     record_train_errors=False,):
-    #DOCSTRING
+    """
+    DESCRIPTION
+
+	PARAM
+	
+	RET
+    """
 
     costfunctionerr_test, earlystoperr_test = [], []
 
@@ -1547,7 +1648,14 @@ def train_earlystop(training_data,
     return costfunctionerr_test, earlystoperr_test
 
 
-def save_model(folder_name, model_id, model, model_features): #DOCSTRING
+def save_model(folder_name, model_id, model, model_features): 
+	"""
+	DESCRIPTION
+
+	PARAM
+
+	RET
+	"""
     saver = tfe.Saver(model.variables)
     saver.save(folder_name+'/'+model_id)
     with open(folder_name+'/'+model_id+'_features', 'w') as f:
@@ -1559,7 +1667,13 @@ def load_model(model_folder,
                model_class,
                training_data_length=1024,
                training_key_length=57):
-    #DOCSTRING
+   """
+   DESCRIPTION
+
+   PARAM
+
+   RET
+   """
     # load model features (number of layers, nodes)
     with open('./'+model_folder+'/'+model_id+'_features') as f:
         new_model_features = pickle.load(f)

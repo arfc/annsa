@@ -16,6 +16,12 @@ tf.enable_eager_execution()
 
 
 def load_dataset():
+    """
+    DESCRIPTION
+
+    RET
+    """
+
     training_dataset = make_classification(n_samples=100,
                                            n_features=1024,
                                            n_informative=200,
@@ -44,6 +50,12 @@ def load_dataset():
 
 
 def construct_cae():
+
+    """
+    DESCRIPTION
+
+    RET
+    """
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
     model_features = generate_random_cae_architecture(((4, 1), (8, 1)),
                                                       ((8,), (4,)),
@@ -62,6 +74,10 @@ def construct_cae():
 
 
 def test_cae_construction():
+
+    """
+    DESCRIPTION
+    """
     _, _, _ = construct_cae()
     pass
 

@@ -15,6 +15,14 @@ tf.enable_eager_execution()
 
 
 def load_dataset():
+
+    """
+    DESCRIPTION
+
+    PARAM
+
+    RET
+    """
     training_dataset = make_classification(n_samples=100,
                                            n_features=1024,
                                            n_informative=200,
@@ -43,6 +51,13 @@ def load_dataset():
 
 
 def construct_dnn():
+    """
+    DESCRIPTION
+
+    PARAM
+
+    RET
+    """
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
 
     model_features = dnn_model_features(
@@ -61,6 +76,13 @@ def construct_dnn():
 
 
 def test_dnn_construction():
+    """
+    DESCRIPTION
+
+    PARAM
+
+    RET
+    """
     _, _, _ = construct_dnn()
     pass
 
@@ -68,6 +90,10 @@ def test_dnn_construction():
 def test_dnn_training():
     """
     Testing the dense neural network class and training function.
+
+    PARAM
+
+    RET
     """
 
     tf.reset_default_graph()

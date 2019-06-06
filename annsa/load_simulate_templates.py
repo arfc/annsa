@@ -27,7 +27,13 @@ def load_template_spectra_from_folder(parent_folder,
     temp_dict = {}
 
     def normalize_spectrum(ID):
-        #DOCSTRING
+        """
+        Normalizes the spectrum data.
+
+        PARAM
+
+        RET
+        """
         temp_spectrum = an.read_spectrum(
             parent_folder + ID + spectrum_identifier)
         if np.max(temp_spectrum) == 0:
@@ -49,7 +55,16 @@ def load_templates(template_settings,
                    templates_folder,
                    normalization='normalarea',
                    spectrum_identifier="_10uC_spectrum.spe"
-                   ): #DOCSTRING
+                   ): 
+    """
+    Loads spectrum templates from a local directory to be used to simulate
+    training data.
+
+    PARAM
+
+    RET
+    """
+
     spectral_templates = {}
 
     for setting in template_settings:
@@ -59,7 +74,13 @@ def load_templates(template_settings,
             normalization)
 
     def normalize_spectrum(location, normalization=None):
-            #DOCSTRING
+            """
+            Normalizes training data.
+
+            PARAM
+
+            RET
+            """
             temp_spectrum = an.read_spectrum(
                 templates_folder +
                 '/background/background-' +
@@ -95,7 +116,16 @@ def simulate_template_dataset(isotope_list,
                               spectral_template_settings,
                               spectral_templates,
                               template_parameters,
-                              output_separate_background=False): #DOCSTRING
+                              output_separate_background=False):
+            
+
+    """
+    Uses template to generate new training set and keys.
+
+    PARAM
+
+    RET
+    """
 
     integration_times = template_parameters['integration_times']
     signal_to_backgrounds = template_parameters['signal_to_backgrounds']
@@ -188,7 +218,15 @@ def create_template_parameters(
         calibration_range,
         calibration_division,
         print_divisions=False,
-        division_offset=False): #DOCSTRING
+        division_offset=False): 
+
+    """
+    Generates a list of parameters for template.
+
+    PARAM
+
+    RET
+    """
 
     integration_times = np.logspace(
         np.log10(integration_time_range[0]),

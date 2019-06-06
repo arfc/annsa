@@ -261,7 +261,15 @@ def plot_f1_scores(dataframe,
                    indep_variable,
                    plot_label=None,
                    **kwargs
-                   ): #DOCSTRING
+                   ): 
+
+    """
+    Plots the f1 error of the model. 
+
+    PARAM
+
+    RET
+    """
 
     f1_scores = {}
     for key, value in kwargs.items():

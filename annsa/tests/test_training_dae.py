@@ -92,6 +92,10 @@ def construct_dae():
 
 
 def test_dae_construction():
+
+    """
+    Description
+    """
     _, _, _ = construct_dae()
     pass
 
