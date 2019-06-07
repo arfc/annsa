@@ -9,6 +9,9 @@ from sklearn.preprocessing import FunctionTransformer
 from annsa.model_classes import (cnn1d_model_features,
                                  CNN1D,
                                  CAE,
+                                 DNN,
+                                 DAE,
+                                 dnn_model_features,
                                  )
 
 
@@ -159,7 +162,6 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
     return CNN_model, model_features_CNN
 
 
-
 def load_pretrained_dae_into_dnn(dae_features_filename,
                                  dae_weights_filename,
                                  dnn_dense_nodes=[128],
@@ -206,9 +208,9 @@ def load_pretrained_dae_into_dnn(dae_features_filename,
     # need to do a forward pass to initialize weights
     dummy_data = np.zeros(1024)
     _ = DAE_model.encoder([dummy_data])
-    
+
     dense_nodes = DAE_model.dense_nodes_encoder + dnn_dense_nodes
-    
+
     model_features_DNN = dnn_model_features(
         learining_rate=learining_rate,
         batch_size=batch_size,

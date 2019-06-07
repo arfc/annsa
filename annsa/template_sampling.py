@@ -207,17 +207,10 @@ def online_data_augmentation_vanilla(background_dataset,
                                      background_cps,
                                      integration_time,
                                      signal_to_background,
-                                     calibration,
-                                     aug_setting = 'easy',):
+                                     calibration,):
     '''
 
     '''
-    
-    
-    if aug_setting == 'full':
-        integration_time, background_cps, signal_to_background, calibration = online_data_augmentation_full()
-    else:
-        integration_time, background_cps, signal_to_background, calibration = online_data_augmentation_easy()
     
     def online_data_augmentation(input_data):
         output_data = []
@@ -245,15 +238,10 @@ def online_data_augmentation_ae(background_dataset,
                                 integration_time,
                                 signal_to_background,
                                 calibration,
-                                background_subtracting=True,
-                                aug_setting = 'easy',):
+                                background_subtracting=True,):
     '''
 
     '''    
-    if aug_setting == 'full':
-        integration_time, background_cps, signal_to_background, calibration = online_data_augmentation_full()
-    else:
-        integration_time, background_cps, signal_to_background, calibration = online_data_augmentation_easy()
 
     def online_data_augmentation(input_data):
         output_data = []

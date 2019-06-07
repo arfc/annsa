@@ -100,3 +100,13 @@ def load_full(source_dataset, background_dataset):
     all_keys = source_dataset['isotope'].values
     
     return source_dataset, spectra_dataset, all_keys
+
+
+def dataset_to_spectrakeys(dataset):
+    '''
+    Loads a dataset into spectra and corresponding isotope keys 
+    '''
+    spectra = np.random.poisson(dataset.item()['sources']+dataset.item()['backgrounds'])
+    keys = dataset.item()['keys']
+
+    return spectra, keys
