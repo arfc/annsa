@@ -161,70 +161,64 @@ def make_random_spectrum(source_data,
     return source_spectrum, background_spectrum
 
 
-'''
-def make_random_spectrum(source_spectrum,
-                         background_dataset,
-                         background_cps=120.0,
-                         integration_time=600.0,
-                         signal_to_background=1.0,
-                         calibration=[0, 1.0, 0],
-                         LLD=10):
-    ''
-    inputs:
-        source_spectrum : vector
-            Vector containing the FWHM and spectrum for
-        background_dataset :
-            bla
-    returns:
-        source_spectrum : vector
-            The 1024 length source spectrum
-        background_spectrum : vector
-            The 1024 length background spectrum
-    ''
-    a = calibration[0]
-    b = calibration[1]
-    c = calibration[2]
+def online_data_augmentation_easy():
+    '''
+    Returns data augmentation parameters for the easy dataset setting
+    '''
+    def integration_time():
+        return 10**np.random.uniform(np.log10(60), np.log10(600))
 
-    if type(source_spectrum) == np.ndarray:
-        source_spectrum = tf.convert_to_tensor(source_spectrum)
+    def background_cps():
+        return np.random.poisson(200)
 
-    fwhm = source_spectrum.numpy()[0]
+    def signal_to_background():
+        return np.random.uniform(0.5, 2)
 
-    # Make source spectrum
-    source_spectrum = source_spectrum.numpy()[1:]
+    def calibration():
+        return [np.random.uniform(0,10),
+                np.random.uniform(2800/3000, 3200/3000),
+                0]
 
-    if np.count_nonzero(source_spectrum) > 0:
-        source_counts = background_cps*integration_time*signal_to_background
-        source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
-        source_spectrum = apply_LLD(source_spectrum, LLD)
-        source_spectrum /= np.sum(source_spectrum)
-        source_spectrum *= source_counts
-    else:
-        source_spectrum = source_spectrum[:1024]
+    return integration_time, background_cps, signal_to_background, calibration
 
-    # Make background spectrum
-    background_spectrum = random_background_template_with_FWHM(
-        background_dataset,
-        fwhm,
-        cosmic=0)
-    background_counts = background_cps*integration_time
-    background_spectrum = rebin_spectrum(background_spectrum, a, b, c)
-    background_spectrum = apply_LLD(background_spectrum, LLD)
-    background_spectrum /= np.sum(background_spectrum)
-    background_spectrum *= background_counts
 
-    return source_spectrum, background_spectrum
-'''
+def online_data_augmentation_full():
+    '''
+    Returns data augmentation parameters for the full dataset setting
+    '''
+    def integration_time():
+        return 10**np.random.uniform(np.log10(10), np.log10(3600))
+
+    def background_cps():
+        return np.random.poisson(200)
+
+    def signal_to_background():
+        return np.random.uniform(0.1, 2)
+
+    def calibration():
+        return [np.random.uniform(0, 10),
+                np.random.uniform(2500/3000, 3500/3000),
+                0]
+
+    return integration_time, background_cps, signal_to_background, calibration
 
 
 def online_data_augmentation_vanilla(background_dataset,
                                      background_cps,
                                      integration_time,
                                      signal_to_background,
-                                     calibration,):
+                                     calibration,
+                                     aug_setting = 'easy',):
     '''
 
     '''
+    
+    
+    if aug_setting == 'full':
+        integration_time, background_cps, signal_to_background, calibration = online_data_augmentation_full()
+    else:
+        integration_time, background_cps, signal_to_background, calibration = online_data_augmentation_easy()
+    
     def online_data_augmentation(input_data):
         output_data = []
         for source_data in input_data:
@@ -251,10 +245,16 @@ def online_data_augmentation_ae(background_dataset,
                                 integration_time,
                                 signal_to_background,
                                 calibration,
-                                background_subtracting=True):
+                                background_subtracting=True,
+                                aug_setting = 'easy',):
     '''
 
-    '''
+    '''    
+    if aug_setting == 'full':
+        integration_time, background_cps, signal_to_background, calibration = online_data_augmentation_full()
+    else:
+        integration_time, background_cps, signal_to_background, calibration = online_data_augmentation_easy()
+
     def online_data_augmentation(input_data):
         output_data = []
         for source_data in input_data:
