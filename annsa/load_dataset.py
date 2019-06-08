@@ -107,6 +107,6 @@ def dataset_to_spectrakeys(dataset):
     Loads a dataset into spectra and corresponding isotope keys 
     '''
     spectra = np.random.poisson(np.add(dataset.item()['sources'],dataset.item()['backgrounds']))
-    keys = dataset.item()['keys']
+    keys = np.array(dataset.item()['keys'])
 
     return spectra, keys
