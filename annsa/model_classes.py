@@ -463,7 +463,7 @@ class DNN(tf.keras.Model, BaseClass):
     'forward_pass' : Runs a forward pass throught the network
     'loss_fn' : 
 
-    
+
 
     """
     def __init__(self, model_features):
@@ -888,7 +888,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
                                        cnn_kernel_choices,
                                        pool_size_choices):
     """
-    Generates a random 1d convolutional neural network based on a 
+    Generates a random 1d convolutional neural network based on a
     set of predefined architectures.
 
     @author: Sam Dotson
@@ -907,7 +907,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     Returns:
     --------
     model_features : class
-        Class that describes the structure of a 1D convolution 
+        Class that describes the structure of a 1D convolution
         neural network.
     """
 
@@ -1176,29 +1176,29 @@ class dae_model_features(object):
         Parameters
         ----------
         learning_rate : float
-            How much the weights update due to back propagation of the 
-            error/loss function. 
-        output_function : 
+            How much the weights update due to back propagation of the
+            error/loss function.
+        output_function :
 
         l2_regularization_scale : float
-            The loss penalty for regularization type l2. If the model 
+            The loss penalty for regularization type l2. If the model
             attempts to increase the weights, it will only be accepted
-            if there is an equal or greater decrease in the error 
+            if there is an equal or greater decrease in the error
             function.
         dropout_probability : float
-            The probability that any neuron will be temporarily turned 
-            off during training. Example: dropout_probability = 0.4 
-            means there is a 40% probability of the neuron turning off. 
+            The probability that any neuron will be temporarily turned
+            off during training. Example: dropout_probability = 0.4
+            means there is a 40% probability of the neuron turning off.
         scaler : Tensorflow scaling function
         batch_size : int 
-            'batch_size' is the number of spectra/images being passed 
-            through the network at once. For reference, one epoch is 
+            'batch_size' is the number of spectra/images being passed
+            through the network at once. For reference, one epoch is
         output_size : Array/Tuple
             The desired dimensions of your output, typically [nx1]
         dense_nodes_encoder : int
             The desired number of nodes in a dense layer of the encoder.
         dense_nodes_decoder : int
-            The desired number of nodes in a dense layer of the decoder. 
+            The desired number of nodes in a dense layer of the decoder.
         activation_function : Tensorflow activation function
             Example: tf.nn.relu
         """
@@ -1440,27 +1440,27 @@ class cae_model_features(object):
         Parameters
         ----------
         learning_rate : float
-            How much the weights update due to back propagation of the 
-            error/loss function. 
+            How much the weights update due to back propagation of the
+            error/loss function.
         encoder_trainable : boolean
             If true, optimization will be applied and weights will be
             updated. 
-            False is used for prediction. 
-        output_function : 
+            False is used for prediction.
+        output_function :
 
         l2_regularization_scale : float
-            The loss penalty for regularization type l2. If the model 
+            The loss penalty for regularization type l2. If the model
             attempts to increase the weights, it will only be accepted
-            if there is an equal or greater decrease in the error 
+            if there is an equal or greater decrease in the error
             function.
         dropout_probability : float
-            The probability that any neuron will be temporarily turned 
-            off during training. Example: dropout_probability = 0.4 
-            means there is a 40% probability of the neuron turning off. 
+            The probability that any neuron will be temporarily turned
+            off during training. Example: dropout_probability = 0.4
+            means there is a 40% probability of the neuron turning off.
         scaler : Tensorflow scaling function
         batch_size : int 
-            'batch_size' is the number of spectra/images being passed 
-            through the network at once. For reference, one epoch is 
+            'batch_size' is the number of spectra/images being passed
+            through the network at once. For reference, one epoch is
             the size of all training data. 
         Pooling : Tensorflow pooling function
         cnn_filters_encoder : int
@@ -1470,7 +1470,7 @@ class cae_model_features(object):
             The values of an array will be taken as the desired dimens-
             ion size of the filter.
         cnn_strides_encoder: int
-            The stride size of each filter. How far it shifts per 
+            The stride size of each filter. How far it shifts per
             iteration. Typically stride size is one. 
         pool_size_encoder : int or array/tuple
             'int':
@@ -1487,12 +1487,12 @@ class cae_model_features(object):
             The values of an array will be taken as the desired dimens-
             ion size of the filter.
         cnn_strides_decoder : int
-            The stride size of each filter. How far it shifts per 
+            The stride size of each filter. How far it shifts per
             iteration. Typically stride size is one.
         output_size : Array/Tuple
             The desired dimensions of your output, typically [nx1]
         dense_nodes : int
-            The desired number of nodes in a dense layer. 
+            The desired number of nodes in a dense layer.
         activation_function : Tensorflow activation function
             Example: tf.nn.relu
         """
@@ -1653,9 +1653,9 @@ def train_earlystop(training_data,
 
     Returns:
     --------
-    costfunctionerr_test : 
+    costfunctionerr_test :
 
-    earlystoperr_test : 
+    earlystoperr_test :
     """
 
     costfunctionerr_test, earlystoperr_test = [], []
@@ -1693,7 +1693,7 @@ def train_earlystop(training_data,
     return costfunctionerr_test, earlystoperr_test
 
 
-def save_model(folder_name, model_id, model, model_features): 
+def save_model(folder_name, model_id, model, model_features):
     """
     @Author: Sam Dotson
     Allows the model to be saved after training and uploaded for later use.
@@ -1706,13 +1706,13 @@ def save_model(folder_name, model_id, model, model_features):
     model identifier that will be used again when loading the model.
     model : object
     The variable that contains the instance of the neural network
-    that you want to save. 
+    that you want to save.
     model_features : object
     Variable that contains all of the features of your model. 
 
     Returns:
     --------
-    Nothing. This function simply saves the model. 
+    Nothing. This function simply saves the model.
     """
     saver = tfe.Saver(model.variables)
     saver.save(folder_name+'/'+model_id)
@@ -1727,9 +1727,9 @@ def load_model(model_folder,
                training_key_length=57):
     """
     @Author: Sam Dotson
-    Loads a previously saved model. 
+    Loads a previously saved model.
 
-    Parameters: 
+    Parameters:
     -----------
     model_folder : string
         Name of folder where the model exists.
@@ -1738,7 +1738,7 @@ def load_model(model_folder,
     Returns:
     --------
     model : object
-        The model that you have previously trained. 
+        The model that you have previously trained.
     new_model_features.scaler : tensorflow scaling function
     """
     # load model features (number of layers, nodes)

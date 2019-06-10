@@ -264,7 +264,7 @@ def plot_f1_scores(dataframe,
                    ): 
 
     """
-    Plots the f1 error of the model. 
+    Plots the f1 error of the model.
 
     Parameters:
     -----------
@@ -273,13 +273,13 @@ def plot_f1_scores(dataframe,
         dictionary containing all dataframes
     indep_variable : key
         the key for accessing the data column
-        that contains the independent variable 
+        that contains the independent variable
         data.
     plot_labl : string
 
     Returns:
     --------
-    Nothing. This function generates a plot only. 
+    Nothing. This function generates a plot only.
     """
 
     f1_scores = {}

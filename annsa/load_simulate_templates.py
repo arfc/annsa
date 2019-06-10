@@ -74,7 +74,7 @@ def load_templates(template_settings,
                    templates_folder,
                    normalization='normalarea',
                    spectrum_identifier="_10uC_spectrum.spe"
-                   ): 
+                   ):
     """
     Loads spectrum templates from a local directory to be used to simulate
     training data.
@@ -82,10 +82,10 @@ def load_templates(template_settings,
     Parameters:
     -----------
     template_settings : 1D array of type string
-        Contains information about the detector settings used in locating 
-        the dataset.  
+        Contains information about the detector settings used in locating
+        the dataset.
     templates_folder : string
-        Name of the parent folder or path to the dataset you want. 
+        Name of the parent folder or path to the dataset you want.
     normalization: type string or None
         Default = 'normalarea' 
         Accepts: 'normalheight', 'normalarea', None
@@ -160,6 +160,7 @@ def simulate_template_dataset(isotope_list,
             
 
     """
+    @Author: Sam Dotson
     Uses template to generate new training set and keys.
 
     Parameters: 
@@ -280,11 +281,12 @@ def create_template_parameters(
         division_offset=False): 
 
     """
+    @Author: Sam Dotson
     Generates a list of parameters for template.
 
     Parameters:
     -----------
-    integration_time_range : list, tuple, float, int   
+    integration_time_range : list, tuple, float, int
         A list of two floats that give the start and end points.
     integration_time_division : int
         Number of divisions for the integration time. dt.
@@ -294,19 +296,19 @@ def create_template_parameters(
         Number of divisions for the signal_to_background.
     calibration_range : list, tuple, float, int
         A list of two floats that give the start and end points.
-    calibration_division : 
+    calibration_division :
         Number of divisions for the calibration.
     print_divisions : Boolean, optional
         If true, prints the divisions. Default is false.
     division_offset : Boolean, optional
         If true, offsets all divisions by removing the last element
-        of the spaces defined by the range and divisions, and 
-        adding to it a list of np.diff(x)/2.0 
+        of the spaces defined by the range and divisions, and
+        adding to it a list of np.diff(x)/2.0
 
     Returns:
     --------
     template_parameters : dictionary
-        Returns a dictionary containing the parameters needed to 
+        Returns a dictionary containing the parameters needed to
         generate a data template.
     """
 

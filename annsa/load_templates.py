@@ -22,7 +22,7 @@ def load_template_spectra_from_folder(parent_folder,
     Parameters:
     -----------
     parent_folder : string
-        Name of folder or path 
+        Name of folder or path
     spectrum_identifier : string
         Radioactive source identifier. Ex: 'aluminum20pct'
     normalization : string or boolean
@@ -66,7 +66,7 @@ def load_template_spectra_from_folder(parent_folder,
 
 def load_templates(normalization=None): 
     """
-    Automatically loads a series of templates from pre-determined directories. 
+    Automatically loads a series of templates from pre-determined directories.
     Deprecated.
 
     Parameters:

@@ -137,7 +137,7 @@ def make_random_spectrum(source_data,
             [a,b,c]; a = constant, b = linear, c = quadratic
             Default is [0, 1.0, 0].
         LLD : int, optional
-            Specifies the channel number for a low level discriminator (LLD). 
+            Specifies the channel number for a low level discriminator (LLD).
             Default is 10.
 
     Returns:
@@ -329,7 +329,7 @@ def online_data_augmentation_ae(background_dataset,
     background_dataset : numpy array 
         contains the background template data
     background_cps : int
-        the number of counts per second due to background 
+        the number of counts per second due to background
         radiation.
     integration_time : float
 
