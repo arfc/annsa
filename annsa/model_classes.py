@@ -1695,6 +1695,7 @@ def train_earlystop(training_data,
 
 def save_model(folder_name, model_id, model, model_features): 
     """
+    @Author: Sam Dotson
     Allows the model to be saved after training and uploaded for later use.
 
     Parameters:
@@ -1709,7 +1710,9 @@ def save_model(folder_name, model_id, model, model_features):
     model_features : object
     Variable that contains all of the features of your model. 
 
-    RET
+    Returns:
+    --------
+    Nothing. This function simply saves the model. 
     """
     saver = tfe.Saver(model.variables)
     saver.save(folder_name+'/'+model_id)
@@ -1723,6 +1726,7 @@ def load_model(model_folder,
                training_data_length=1024,
                training_key_length=57):
     """
+    @Author: Sam Dotson
     Loads a previously saved model. 
 
     Parameters: 

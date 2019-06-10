@@ -165,16 +165,25 @@ def simulate_template_dataset(isotope_list,
     Parameters: 
     -----------
     isotope_list: 1D array of type string
+        A list of the names of each isotope in the spectra.
+    spectral_template_settings : dictionary
+        A dictionary containing the settings for template creation.
+    spectral_templates : dictionary
+        Contains source and background data.
+    template_parameters : dictionary
+        contains the parameters for generating a template.
+    output_separate_background : boolean, optional
+        Decides whether to output the background spectra, separately. 
+        Default is False.
 
-    spectral_template_settings : 1D array of type string
-
-    spectral_templates : 1D array of type string
-
-    template_parameters : 1D array of type string
-
-    output_separate_background : boolean
-
-    RET
+    Returns:
+    --------
+    all_source_spectra : list
+        A list containing all the source spectra.
+    all_background_spectra : list, optional
+        If output_separate_background is set to True, this is not output.
+    all_keys : list
+        Contains a list of all keys corresponding to the each spectrum. 
     """
 
     integration_times = template_parameters['integration_times']
@@ -294,7 +303,11 @@ def create_template_parameters(
         of the spaces defined by the range and divisions, and 
         adding to it a list of np.diff(x)/2.0 
 
-    RET
+    Returns:
+    --------
+    template_parameters : dictionary
+        Returns a dictionary containing the parameters needed to 
+        generate a data template.
     """
 
     integration_times = np.logspace(

@@ -84,6 +84,8 @@ def poisson_sample_template(template, total_counts):
 
 def apply_LLD(spectrum, LLD=10):
     """
+    Applies a low level discriminator (LLD) to a channel.
+
     Parameters:
     -----------
         spectrum : vector
@@ -108,12 +110,36 @@ def make_random_spectrum(source_data,
                          LLD=10,
                          **kwargs,):
     """
+    @Author: Sam Dotson
+    This function uses source data and background data to generate
+    a random spectrum drawn from a statistical distribution.
+
     Parameters:
     -----------
         source_spectrum : vector
-            Vector containing the FWHM and spectrum for
-        background_dataset :
-            bla
+            Vector containing the FWHM and spectrum from the main
+            radiation source.
+        background_dataset : vector
+            Contains the FWHM and spectrum for background radiation.
+        background_cps : float, optional
+            Determines the statistics for background radiation. 
+            Default is 120 counts per second (cps)
+        integration_time : float, optional
+            Sets the integration time for a simulated detector in 
+            seconds.
+            Default is 600 seconds
+        signal_to_background : float, optional
+            The ratio of signal to background. Determines the amount
+            of noise in the spectrum that will be produced. 
+        calibration : list, optional
+            A list of parameters used for rebinning the data according
+            to a quadratic.
+            [a,b,c]; a = constant, b = linear, c = quadratic
+            Default is [0, 1.0, 0].
+        LLD : int, optional
+            Specifies the channel number for a low level discriminator (LLD). 
+            Default is 10.
+
     Returns:
     --------
         source_spectrum : vector
