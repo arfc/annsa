@@ -273,7 +273,26 @@ def create_template_parameters(
     """
     Generates a list of parameters for template.
 
-    PARAM
+    Parameters:
+    -----------
+    integration_time_range : list, tuple, float, int   
+        A list of two floats that give the start and end points.
+    integration_time_division : int
+        Number of divisions for the integration time. dt.
+    signal_to_background_range : list, tuple, float, int
+        A list of two floats that give the start and end points.
+    signal_to_background_division : int
+        Number of divisions for the signal_to_background.
+    calibration_range : list, tuple, float, int
+        A list of two floats that give the start and end points.
+    calibration_division : 
+        Number of divisions for the calibration.
+    print_divisions : Boolean, optional
+        If true, prints the divisions. Default is false.
+    division_offset : Boolean, optional
+        If true, offsets all divisions by removing the last element
+        of the spaces defined by the range and divisions, and 
+        adding to it a list of np.diff(x)/2.0 
 
     RET
     """

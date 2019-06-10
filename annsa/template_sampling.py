@@ -233,19 +233,40 @@ def online_data_augmentation_vanilla(background_dataset,
                                      signal_to_background,
                                      calibration,):
     """
+    @Author: sam Dotson
     Uses premade datasets to generate new ones for data augmentation.
 
-    PARAM
+    Parameters:
+    -----------
+    background_dataset : numpy array 
+        contains the background template data
+    background_cps : int
+        the number of counts per second due to background 
+        radiation.
+    integration_time : float
 
-    RET
+    signal_to_background : float
+
+    calibration : list, float
+        The calibration used for quadratic rebinning. 
+        [a,b,c]; a = constant, b = linear, c = quadratic
+
+    Returns:
+    --------
+    online_data_augmentation : tensorflow Tensor
     """
     def online_data_augmentation(input_data):
         """
         Augments data using a template dataset.
 
-        PARAM
+        Parameters:
+        -----------
+        input_data : numpy matrix
+            [nxm] matrix containing all datasets.
 
-        RET
+        Returns:
+        --------
+        output_data : tensorflow Tensor
         """
         output_data = []
         for source_data in input_data:
@@ -274,19 +295,44 @@ def online_data_augmentation_ae(background_dataset,
                                 calibration,
                                 background_subtracting=True):
     """
+    @Author: Sam Dotson
     Augments datasets for autoencoders.
 
-    PARAM
+    Parameters:
+    -----------
+    background_dataset : numpy array 
+        contains the background template data
+    background_cps : int
+        the number of counts per second due to background 
+        radiation.
+    integration_time : float
 
-    RET
+    signal_to_background : float
+
+    calibration : list, float
+        The calibration used for quadratic rebinning. 
+        [a,b,c]; a = constant, b = linear, c = quadratic
+    background_subtracting : boolean, optional
+        Subtracts background from signal. Default is True.
+
+
+    Returns:
+    --------
+    online_data_augmentation : tensorflow Tensor
+        can be used as input data for model. 
     """
     def online_data_augmentation(input_data):
         """
         Augments data using a template dataset.
 
-        PARAM
+        Parameters:
+        -----------
+        input_data : numpy matrix
+            [nxm] matrix containing all datasets.
 
-        RET
+        Returns:
+        --------
+        output_data : tensorflow Tensor
         """
         output_data = []
         for source_data in input_data:

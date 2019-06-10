@@ -337,6 +337,7 @@ class BaseClass(object):
         not_learning_threshold : float, optional
             If error at epoch ``not_learning_patience`` is above this, training
             stops.
+        obj_cost : function
         earlystop_cost_fctn : function
             Cost function used for early stopping. Examples are
             ``self.f1_error``, ``self.mse``, and ``self.cross_entropy``.
@@ -414,7 +415,7 @@ class BaseClass(object):
                              testing_key,
                              obj_cost,
                              training=False))
-            # Print erros at end of epoch
+            # Print errors at end of epoch
             if (print_errors and ((epoch+1) % verbose == 0)) is True:
                 print('Epoch %d: CostFunc loss: %3.2f %3.2f, '
                       'EarlyStop loss: %3.2f %3.2f' % (
@@ -1606,65 +1607,55 @@ def train_earlystop(training_data,
                     fit_batch_verbose=5,
                     record_train_errors=False,):
     """
+    @Author: Sam Dotson
     Trains the model to stop early to avoid overfitting.
 
     Parameters:
     -----------
-    training_data : numpy matrix
-        A [nxm] numpy matrix of unprocessed gamma-ray spectra
-    training_keys : tensor
-        The keys for your training data.
+    training_data : numpy matrix, float
+        Data is a [nxm] numpy matrix of unprocessed gamma-ray spectra
+    training_keys : list
+        [nx1] list of keys that correspond to your training data.
     testing_data : numpy matrix
-        a [nxm] numpy matrix of unprocessed gamma-ray spectra
-    testing_keys : tensor
-        Testing keys
+        Data is a [nxm] numpy matrix of unprocessed gamma-ray spectra
+    testing_keys : list
+        [nx1] list of keys that correspond to your testing data.
     model : object
         The model you are currently training.
     optimizer : tensorflow optimizer in tf.train.*
     num_epochs : int
-        Number of epochs you are training.
-    obj_cost : dictionary
+        Total number of epochs training is allowed to run.
+    obj_cost : string
+        Main cost function the algorithm minimizes. examples are
+        'self.mse' or 'self.cross_entropy'.
     earlystop_cost_fn : Tensorflow earlystop function
+        Cost function used for early stopping. Examples are
+        ``self.f1_error``, ``self.mse``, and ``self.cross_entropy``.
     earlystop_patience : int, optional
         Number of epochs training is allowed to run without improvment.
         If 0, training will run until max_time or num_epochs is passed.
-
-==========================Delete this section later==========================
-        train_dataset : list, float, int
-            Two element list of [data, keys] where data
-            is a [nxm] numpy matrix of unprocessed gamma-ray spectra
-            and keys are a [nxl] matrix of  target outputs.
-        test_dataset : list, float, int
-            Two element list of [data, keys] where data
-            is a [nxm] numpy matrix of unprocessed gamma-ray spectra
-            and keys are a [nxl] matrix of  target outputs.
-        optimizer : TensorFlow optimizer class
-            The optimizer to use to optimize the algorithm. Choices include
-            ``tf.train.AdamOptimizer``, ``tf.train.GradientDescentOptimizer``.
-        num_epochs : int, optional
-            Total number of epochs training is allowed to run.
-        verbose : int, optional
-            Frequency that the errors are printed per iteration.
-        print_errors : bool, optional
-            If true, will print model errors after each epoch.
-        earlystop_patience : int, optional
-            Number of epochs training is allowed to run without improvment.
-            If 0, training will run until max_time or num_epochs is passed.
-        max_time : int, optional
-            Max time in seconds training is allowed to run.
-        not_learning_patience : int, optional
-            Max number of epochs to wait before checking if model is not
-            learning.
-        not_learning_threshold : float, optional
-            If error at epoch ``not_learning_patience`` is above this, training
-            stops.
-        earlystop_cost_fctn : function
-            Cost function used for early stopping. Examples are
-            ``self.f1_error``, ``self.mse``, and ``self.cross_entropy``.
-        data_augmentation : function
+    data_augmentation : function
             Function used to apply data augmentation each training iteration.
-===========================Delete this section later=========================
-    RET
+    not_learning_patience : int, optional
+        Max number of epochs to wait before checking if model is not
+        learning.
+    not_learning_threshold : float, optional
+        If error at epoch ``not_learning_patience`` is above this, training
+    verbose : int, optional
+        Frequency that the errors are printed per iteration.
+    augment_testing_data : boolean, optional
+        Decides whether to augment testing data. Default is False.
+    fit_batch_verbose : int, optional
+        The frequency that the output of fit_batch is printed. 
+    record_train_errors : boolean, optional
+        Decides whether to record training error. Default is False.
+        If True, will print model errors after each epoch.
+
+    Returns:
+    --------
+    costfunctionerr_test : 
+
+    earlystoperr_test : 
     """
 
     costfunctionerr_test, earlystoperr_test = [], []
@@ -1731,17 +1722,21 @@ def load_model(model_folder,
                model_class,
                training_data_length=1024,
                training_key_length=57):
-   """
-   Loads a previously saved model. 
+    """
+    Loads a previously saved model. 
 
-   Parameters: 
-   -----------
-   model_folder :
-       Name of folder where the model exists.
+    Parameters: 
+    -----------
+    model_folder : string
+        Name of folder where the model exists.
 
 
-   RET
-   """
+    Returns:
+    --------
+    model : object
+        The model that you have previously trained. 
+    new_model_features.scaler : tensorflow scaling function
+    """
     # load model features (number of layers, nodes)
     with open('./'+model_folder+'/'+model_id+'_features') as f:
         new_model_features = pickle.load(f)
