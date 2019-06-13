@@ -10,50 +10,9 @@ from sklearn.pipeline import make_pipeline
 
 from annsa.model_classes import (dnn_model_features,
                                  DNN)
+from annsa.load_dataset import load_dataset
 
 tf.enable_eager_execution()
-
-
-def load_dataset():
-
-    """
-    Generates dummy data using 'sklearn.datasets.make_classification()'. 
-    See 'make_classification' documentation for more details.
-
-    Returns:
-    -------
-    train_dataset : tuple of [train_data, training_keys_binarized]
-        Contains the training data and the labels in a binarized
-        format.
-    test_dataset : tuple of [test_data, testing_keys_binarized]
-        Contains the testing data and the labels in a binarized
-        format.
-    """
-    training_dataset = make_classification(n_samples=100,
-                                           n_features=1024,
-                                           n_informative=200,
-                                           n_classes=2)
-
-    testing_dataset = make_classification(n_samples=100,
-                                          n_features=1024,
-                                          n_informative=200,
-                                          n_classes=2)
-
-    mlb = LabelBinarizer()
-
-    training_data = np.abs(training_dataset[0])
-    training_keys = training_dataset[1]
-    training_keys_binarized = mlb.fit_transform(
-        training_keys.reshape([training_data.shape[0], 1]))
-    train_dataset = [training_data, training_keys_binarized]
-
-    testing_data = np.abs(testing_dataset[0])
-    testing_keys = testing_dataset[1]
-    testing_keys_binarized = mlb.transform(
-        testing_keys.reshape([testing_data.shape[0], 1]))
-    test_dataset = [testing_data, testing_keys_binarized]
-
-    return train_dataset, test_dataset
 
 
 def construct_dnn():

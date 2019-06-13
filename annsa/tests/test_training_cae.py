@@ -11,51 +11,9 @@ from sklearn.pipeline import make_pipeline
 from annsa.model_classes import (cae_model_features,
                                  generate_random_cae_architecture,
                                  CAE)
+from annsa.load_dataset import load_dataset
 
 tf.enable_eager_execution()
-
-
-def load_dataset():
-    """
-    @Author: Sam Dotson
-    Generates dummy data using 'sklearn.datasets.make_classification()'. 
-    See 'make_classification' documentation for more details.
-
-    Returns:
-    -------
-    train_dataset : tuple of [train_data, training_keys_binarized]
-        Contains the training data and the labels in a binarized
-        format.
-    test_dataset : tuple of [test_data, testing_keys_binarized]
-        Contains the testing data and the labels in a binarized
-        format. 
-    """
-
-    training_dataset = make_classification(n_samples=100,
-                                           n_features=1024,
-                                           n_informative=200,
-                                           n_classes=2)
-
-    testing_dataset = make_classification(n_samples=100,
-                                          n_features=1024,
-                                          n_informative=200,
-                                          n_classes=2)
-
-    mlb = LabelBinarizer()
-
-    training_data = np.abs(training_dataset[0])
-    training_keys = training_dataset[1]
-    training_keys_binarized = mlb.fit_transform(
-        training_keys.reshape([training_data.shape[0], 1]))
-    train_dataset = [training_data, training_data]
-
-    testing_data = np.abs(testing_dataset[0])
-    testing_keys = testing_dataset[1]
-    testing_keys_binarized = mlb.transform(
-        testing_keys.reshape([testing_data.shape[0], 1]))
-    test_dataset = [testing_data, testing_data]
-
-    return train_dataset, test_dataset
 
 
 def construct_cae():
@@ -111,7 +69,7 @@ def test_cae_training():
 
     tf.reset_default_graph()
     model_features, optimizer, model = construct_cae()
-    train_dataset, test_dataset = load_dataset()
+    train_dataset, test_dataset = load_dataset(kind='ae') #this should fail a test
     model_features.scaler.fit(train_dataset[0])
 
     all_loss_train, all_loss_test = model.fit_batch(
@@ -127,3 +85,4 @@ def test_cae_training():
         earlystop_cost_fn=model.mse,
         data_augmentation=model.default_data_augmentation,)
     pass
+
