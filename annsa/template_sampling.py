@@ -8,8 +8,8 @@ def random_background_template_with_FWHM(background_dataset, FWHM, cosmic=0):
     """
     Parameters:
     -----------
-        background_dataset : pandas dataframe
-            The spectrums template
+        background_dataset : dataframe
+            contains the background template data
         FWHM : float
             Desired FWHM parameter
         cosmic : bool (optional)
@@ -110,17 +110,16 @@ def make_random_spectrum(source_data,
                          LLD=10,
                          **kwargs,):
     """
-    @Author: Sam Dotson
     This function uses source data and background data to generate
     a random spectrum drawn from a statistical distribution.
 
     Parameters:
     -----------
-        source_spectrum : vector
+        source_data : vector
             Vector containing the FWHM and spectrum from the main
             radiation source.
-        background_dataset : vector
-            Contains the FWHM and spectrum for background radiation.
+        background_dataset : dataframe
+            contains the background template data
         background_cps : float, optional
             Determines the statistics for background radiation. 
             Default is 120 counts per second (cps)
@@ -196,74 +195,17 @@ def make_random_spectrum(source_data,
     return source_spectrum, background_spectrum
 
 
-'''
-def make_random_spectrum(source_spectrum,
-                         background_dataset,
-                         background_cps=120.0,
-                         integration_time=600.0,
-                         signal_to_background=1.0,
-                         calibration=[0, 1.0, 0],
-                         LLD=10):
-    ''
-    inputs:
-        source_spectrum : vector
-            Vector containing the FWHM and spectrum for
-        background_dataset :
-            bla
-    returns:
-        source_spectrum : vector
-            The 1024 length source spectrum
-        background_spectrum : vector
-            The 1024 length background spectrum
-    ''
-    a = calibration[0]
-    b = calibration[1]
-    c = calibration[2]
-
-    if type(source_spectrum) == np.ndarray:
-        source_spectrum = tf.convert_to_tensor(source_spectrum)
-
-    fwhm = source_spectrum.numpy()[0]
-
-    # Make source spectrum
-    source_spectrum = source_spectrum.numpy()[1:]
-
-    if np.count_nonzero(source_spectrum) > 0:
-        source_counts = background_cps*integration_time*signal_to_background
-        source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
-        source_spectrum = apply_LLD(source_spectrum, LLD)
-        source_spectrum /= np.sum(source_spectrum)
-        source_spectrum *= source_counts
-    else:
-        source_spectrum = source_spectrum[:1024]
-
-    # Make background spectrum
-    background_spectrum = random_background_template_with_FWHM(
-        background_dataset,
-        fwhm,
-        cosmic=0)
-    background_counts = background_cps*integration_time
-    background_spectrum = rebin_spectrum(background_spectrum, a, b, c)
-    background_spectrum = apply_LLD(background_spectrum, LLD)
-    background_spectrum /= np.sum(background_spectrum)
-    background_spectrum *= background_counts
-
-    return source_spectrum, background_spectrum
-'''
-
-
 def online_data_augmentation_vanilla(background_dataset,
                                      background_cps,
                                      integration_time,
                                      signal_to_background,
                                      calibration,):
     """
-    @Author: sam Dotson
-    Uses premade datasets to generate new ones for data augmentation.
+    Uses data augmentation to generate new data from a template datasets.
 
     Parameters:
     -----------
-    background_dataset : numpy array 
+    background_dataset : dataframe
         contains the background template data
     background_cps : int
         the number of counts per second due to background 
@@ -279,7 +221,7 @@ def online_data_augmentation_vanilla(background_dataset,
 
     Returns:
     --------
-    online_data_augmentation : tensorflow Tensor
+    online_data_augmentation : function
     """
     def online_data_augmentation(input_data):
         """
@@ -321,12 +263,11 @@ def online_data_augmentation_ae(background_dataset,
                                 calibration,
                                 background_subtracting=True):
     """
-    @Author: Sam Dotson
     Augments datasets for autoencoders.
 
     Parameters:
     -----------
-    background_dataset : numpy array 
+    background_dataset : dataframe
         contains the background template data
     background_cps : int
         the number of counts per second due to background
@@ -345,7 +286,7 @@ def online_data_augmentation_ae(background_dataset,
 
     Returns:
     --------
-    online_data_augmentation : tensorflow Tensor
+    online_data_augmentation : function
         can be used as input data for model. 
     """
     def online_data_augmentation(input_data):
