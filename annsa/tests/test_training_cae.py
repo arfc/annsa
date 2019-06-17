@@ -19,19 +19,16 @@ tf.enable_eager_execution()
 def construct_cae():
 
     """
-    @Author: Sam Dotson
     Builds a convolutional autoencoder with a random architecture.
 
     Returns:
     --------
 
-    model_features : object 
+    model_features : dictionary
         Contains all the features of a particular model.
-
     optimizer : tensorflow class, optimizer
         A tensorflow function, see tf.train.AdamOptimizer for more
         details.
-
     model : object class CAE
         A convolutional autoencoder that can be trained, saved, and
         reused.
