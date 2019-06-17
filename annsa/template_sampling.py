@@ -31,8 +31,8 @@ def random_background_template_with_FWHM(background_dataset, FWHM, cosmic=0):
 
 def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
     """
-    Rebins spectrum based on quadratic rebinning. Returns a 1024 channel
-    spectrum.
+    Rebins spectrum based on second order polynomial rebinning. Returns a 1024
+    channel spectrum.
 
     Parameters:
     -----------
