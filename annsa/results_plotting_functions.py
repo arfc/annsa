@@ -269,10 +269,12 @@ def plot_f1_scores(dataframe,
     Parameters:
     -----------
     dataframe : pandas dataframe
+        Dataframe containing the model and f1 score
+        for some spectra dataset.
     all_models : dictionary
-        dictionary containing all dataframes
+        Dictionary containing all models
     indep_variable : key
-        the key for accessing the data column
+        The key for accessing the data column
         that contains the independent variable
         data.
     plot_labl : string

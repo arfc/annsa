@@ -31,8 +31,8 @@ def random_background_template_with_FWHM(background_dataset, FWHM, cosmic=0):
 
 def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
     """
-    Rebins spectrum based on quadratic rebinning. Returns a 1024 channel
-    spectrum.
+    Rebins spectrum based on second order polynomial rebinning. Returns a 1024
+    channel spectrum.
 
     Parameters:
     -----------
@@ -129,8 +129,7 @@ def make_random_spectrum(source_data,
             seconds.
             Default is 600 seconds
         signal_to_background : float, optional
-            The ratio of signal to background. Determines the amount
-            of noise in the spectrum that will be produced. 
+            The ratio of source signal to background signal.
         calibration : list, optional
             A list of parameters used for rebinning the data according
             to a quadratic.
@@ -269,10 +268,11 @@ def online_data_augmentation_vanilla(background_dataset,
     background_cps : int
         the number of counts per second due to background 
         radiation.
-    integration_time : float
-
-    signal_to_background : float
-
+    integration_time : float, optional
+        Sets the integration time for a simulated detector in 
+        seconds.
+    signal_to_background : float, optional
+        The ratio of source signal to background signal.
     calibration : list, float
         The calibration used for quadratic rebinning. 
         [a,b,c]; a = constant, b = linear, c = quadratic
@@ -331,10 +331,11 @@ def online_data_augmentation_ae(background_dataset,
     background_cps : int
         the number of counts per second due to background
         radiation.
-    integration_time : float
-
-    signal_to_background : float
-
+    integration_time : float, optional
+        Sets the integration time for a simulated detector in 
+        seconds.
+    signal_to_background : float, optional
+        The ratio of source signal to background signal.
     calibration : list, float
         The calibration used for quadratic rebinning. 
         [a,b,c]; a = constant, b = linear, c = quadratic

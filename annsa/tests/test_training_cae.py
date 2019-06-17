@@ -54,9 +54,8 @@ def construct_cae():
 
 
 def test_cae_construction():
-
     """
-    Tests the convolutional autoencoder.
+    Tests the convolutional autoencoder construction.
     """
     _, _, _ = construct_cae()
     pass
@@ -64,7 +63,7 @@ def test_cae_construction():
 
 def test_cae_training():
     """
-    Testing the convolutional neural network class and training function.
+    Tests the convolutional neural network class and training function.
     """
 
     tf.reset_default_graph()
