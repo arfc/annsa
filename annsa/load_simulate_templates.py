@@ -160,7 +160,6 @@ def simulate_template_dataset(isotope_list,
             
 
     """
-    @Author: Sam Dotson
     Uses template to generate new training set and keys.
 
     Parameters: 
@@ -172,7 +171,7 @@ def simulate_template_dataset(isotope_list,
     spectral_templates : dictionary
         Contains source and background data.
     template_parameters : dictionary
-        contains the parameters for generating a template.
+        contains the parameters for generating a spectrum.
     output_separate_background : boolean, optional
         Decides whether to output the background spectra, separately. 
         Default is False.
@@ -281,7 +280,6 @@ def create_template_parameters(
         division_offset=False): 
 
     """
-    @Author: Sam Dotson
     Generates a list of parameters for template.
 
     Parameters:
@@ -289,7 +287,7 @@ def create_template_parameters(
     integration_time_range : list, tuple, float, int
         A list of two floats that give the start and end points.
     integration_time_division : int
-        Number of divisions for the integration time. dt.
+        Number of divisions for the integration time.
     signal_to_background_range : list, tuple, float, int
         A list of two floats that give the start and end points.
     signal_to_background_division : int
@@ -309,7 +307,7 @@ def create_template_parameters(
     --------
     template_parameters : dictionary
         Returns a dictionary containing the parameters needed to
-        generate a data template.
+        generate a spectrum from a template.
     """
 
     integration_times = np.logspace(
