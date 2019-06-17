@@ -268,10 +268,11 @@ def online_data_augmentation_vanilla(background_dataset,
     background_cps : int
         the number of counts per second due to background 
         radiation.
-    integration_time : float
-
-    signal_to_background : float
-
+    integration_time : float, optional
+        Sets the integration time for a simulated detector in 
+        seconds.
+    signal_to_background : float, optional
+        The ratio of source signal to background signal.
     calibration : list, float
         The calibration used for quadratic rebinning. 
         [a,b,c]; a = constant, b = linear, c = quadratic
@@ -330,10 +331,11 @@ def online_data_augmentation_ae(background_dataset,
     background_cps : int
         the number of counts per second due to background
         radiation.
-    integration_time : float
-
-    signal_to_background : float
-
+    integration_time : float, optional
+        Sets the integration time for a simulated detector in 
+        seconds.
+    signal_to_background : float, optional
+        The ratio of source signal to background signal.
     calibration : list, float
         The calibration used for quadratic rebinning. 
         [a,b,c]; a = constant, b = linear, c = quadratic
