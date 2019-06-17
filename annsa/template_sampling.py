@@ -129,8 +129,7 @@ def make_random_spectrum(source_data,
             seconds.
             Default is 600 seconds
         signal_to_background : float, optional
-            The ratio of signal to background. Determines the amount
-            of noise in the spectrum that will be produced. 
+            The ratio of source signal to background signal.
         calibration : list, optional
             A list of parameters used for rebinning the data according
             to a quadratic.
