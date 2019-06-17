@@ -16,59 +16,6 @@ from annsa.load_dataset import load_dataset
 tf.enable_eager_execution()
 
 
-# def load_dataset():
-#     """
-#     Generates dummy data using 'sklearn.datasets.make_classification()'. 
-#     See 'make_classification' documentation for more details.
-
-#     Returns:
-#     -------
-#     train_dataset : tuple of [train_data, training_keys_binarized]
-#         Contains the training data and the labels in a binarized
-#         format.
-#     test_dataset : tuple of [test_data, testing_keys_binarized]
-#         Contains the testing data and the labels in a binarized
-#         format.
-#     """
-
-#     training_dataset = make_classification(n_samples=100,
-#                                            n_features=1024,
-#                                            n_informative=200,
-#                                            n_classes=2)
-
-
-#     testing_dataset = make_classification(n_samples=100,
-#                                           n_features=1024,
-#                                           n_informative=200,
-#                                           n_classes=2)
-
-#     #make_classification returns [X, y] and because two variables
-#     #are not being specified, training_dataset and testing_dataset
-#     #will be tuples of [X, y]. 
-#     #X is an array of shape [n_samples, n_features] and stores
-#     #the actual data.
-#     #y is an array of shape [n_samples] and stores the integer
-#     #labels for class membership of each sample. 
-#     #see documentation for make_classification for further details.
-
-#     mlb = LabelBinarizer()
-
-#     training_data = np.abs(training_dataset[0]) #takes the absolute value of the training data.
-#     training_keys = training_dataset[1] #takes the labels from training_dataset, which is a tuple of [X, y]
-#     training_keys_binarized = mlb.fit_transform(
-#     	training_keys.reshape([training_data.shape[0], 1]))
-#     #fit_transform gives a binary representation of all of the integer labels. 
-#     train_dataset = [training_data, training_keys_binarized]
-
-#     testing_data = np.abs(testing_dataset[0])
-#     testing_keys = testing_dataset[1]
-#     testing_keys_binarized = mlb.transform(
-#         testing_keys.reshape([testing_data.shape[0], 1]))
-#     test_dataset = [testing_data, testing_keys_binarized]
-
-#     return train_dataset, test_dataset
-
-
 def construct_cnn1d():
     """
     Constructs a convolutional neural network and tests construction
