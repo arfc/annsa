@@ -107,7 +107,6 @@ def load_full(source_dataset, background_dataset):
 
 def load_dataset(kind='nn'):
     """
-    @Author: Sam Dotson
     Generates dummy data using 'sklearn.datasets.make_classification()'. 
     See 'make_classification' documentation for more details.
 
