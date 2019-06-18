@@ -1,11 +1,8 @@
 from __future__ import absolute_import, division, print_function
-import os.path as op
 import numpy as np
 import tensorflow as tf
-import annsa as an
 
-from sklearn.datasets import make_classification
-from sklearn.preprocessing import LabelBinarizer, FunctionTransformer
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
 
 from annsa.model_classes import (dnn_model_features,
