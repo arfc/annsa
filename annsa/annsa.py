@@ -4,6 +4,7 @@ import random
 import datetime
 import os
 from scipy.ndimage.interpolation import zoom
+import matplotlib.pyplot as plt
 
 
 def write_time_and_date():
@@ -37,11 +38,11 @@ def load_template_spectra_from_folder(parent_folder,
     def normalize_spectrum(ID):
         temp_spectrum = read_spectrum(parent_folder + ID + spectrum_identifier)
         temp_spectrum[0:LLD] = 0
-        return temp_spectrum/np.max(temp_spectrum)
+        return temp_spectrum / np.max(temp_spectrum)
 
     for i in range(len(isotopes)):
         # Fixes background spectra name issue
-        if i >= len(isotopes)-3:
+        if i >= len(isotopes) - 3:
             spectrum_identifier = ''
 
         temp_dict[isotopes[i]] = normalize_spectrum(isotopes_GADRAS_ID[i])
@@ -53,7 +54,7 @@ def zoom_spectrum(spectrum, zoom_strength):
     spectrum = np.abs(zoom(spectrum, zoom_strength))
     if zoom_strength < 1.0:
         spectrum = np.lib.pad(spectrum,
-                              (0, 1024-spectrum.shape[0]),
+                              (0, 1024 - spectrum.shape[0]),
                               'constant',
                               constant_values=0)
     if zoom_strength > 1.0:
@@ -76,22 +77,22 @@ def read_spectrum(filename):
         if RepresentsInt(content[8]):
             for i in range(1024):
                 # spectra begins at index 8
-                spectrum[i] = int(content[8+i])
+                spectrum[i] = int(content[8 + i])
         else:
             for i in range(1024):
                 # spectra begins at index 12
-                spectrum[i] = int(content[12+i])
+                spectrum[i] = int(content[12 + i])
 
     return spectrum
 
 
 def create_simplex(number_samples, number_categories):
     # make an empty array
-    k = np.zeros([number_samples, number_categories+1])
+    k = np.zeros([number_samples, number_categories + 1])
     # Make a sorted array of random variables
     a = np.sort(np.random.uniform(0,
                                   1,
-                                  [number_samples, number_categories-1]),
+                                  [number_samples, number_categories - 1]),
                 axis=1)
     # Zero pad left side
     k[:, 0] = 0
@@ -106,10 +107,10 @@ def create_simplex(number_samples, number_categories):
 
 def shuffle_simplex(simplex):
     # last term from simpex is always background, by convention
-    temp = random.sample(simplex[:-1], len(simplex)-1)
+    temp = random.sample(simplex[:-1], len(simplex) - 1)
 
     # 29 here because 29 isotopes plus one background super-isotope
-    shuffled_array = np.pad(temp, [0, 29-len(temp)], 'constant')
+    shuffled_array = np.pad(temp, [0, 29 - len(temp)], 'constant')
 
     np.random.shuffle(shuffled_array)
 
@@ -174,7 +175,7 @@ isotopes = [
     'Back_Th',
     'Back_U',
     'Back_K',
-            ]
+]
 
 
 isotopes_GADRAS_ID = [
@@ -210,7 +211,7 @@ isotopes_GADRAS_ID = [
     'ThoriumInSoil.spe',
     'UraniumInSoil.spe',
     'PotassiumInSoil.spe',
-                 ]
+]
 
 
 isotopes_sources_GADRAS_ID = [
@@ -243,7 +244,7 @@ isotopes_sources_GADRAS_ID = [
     '204TL',
     '233U',
     '235U'
-                 ]
+]
 
 
 def sample_spectrum(iso_DRF, ncounts):
@@ -260,13 +261,13 @@ def sample_spectrum(iso_DRF, ncounts):
     Generate uniform random numbers to sample the cdf
     '''
 
-    pdf = iso_DRF/sum(iso_DRF)
+    pdf = iso_DRF / sum(iso_DRF)
     cdf = np.cumsum(pdf)
 
     # take random samples and generate spectrum
     t_all = np.random.rand(np.int(ncounts))
-    spec = pdf*0
+    spec = pdf * 0
     for t in t_all:
         pos = np.argmax(cdf > t)
-        spec[pos] = spec[pos]+1
+        spec[pos] = spec[pos] + 1
     return spec
