@@ -167,10 +167,11 @@ def load_templates(normalization=None):
         --------
         Normalized temp_spectrum.
         """
-        temp_spectrum = an.read_spectrum('./templates/background/background-'
-                                         + location + '.spe')
+        temp_spectrum = an.read_spectrum('./templates/' +
+                                         'background/background-' +
+                                         location + '.spe')
         if np.max(temp_spectrum) == 0:
-            print(ID + ' Contains no values')
+            print('spectrum contains no values')
         if normalization is None:
             return temp_spectrum
         elif normalization == 'normalheight':
