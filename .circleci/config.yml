@@ -33,6 +33,7 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
+            pip install -r test-requirements.txt
 
       - save_cache:
           paths:
@@ -49,6 +50,7 @@ jobs:
           command: |
             . venv/bin/activate
             py.test
+            py.test --flake8
 
       - store_artifacts:
           path: test-reports
