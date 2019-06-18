@@ -167,16 +167,16 @@ def load_templates(normalization=None):
         --------
         Normalized temp_spectrum.
         """
-            temp_spectrum = an.read_spectrum(
-                './templates/background/background-' + location + '.spe')
-            if np.max(temp_spectrum) == 0:
-                print(ID + ' Contains no values')
-            if normalization is None:
-                return temp_spectrum
-            elif normalization == 'normalheight':
-                return temp_spectrum / np.max(temp_spectrum)
-            elif normalization == 'normalarea':
-                return temp_spectrum / np.sum(temp_spectrum)
+        temp_spectrum = an.read_spectrum('./templates/background/background-'
+                                         + location + '.spe')
+        if np.max(temp_spectrum) == 0:
+            print(ID + ' Contains no values')
+        if normalization is None:
+            return temp_spectrum
+        elif normalization == 'normalheight':
+            return temp_spectrum / np.max(temp_spectrum)
+        elif normalization == 'normalarea':
+            return temp_spectrum / np.sum(temp_spectrum)
 
     for location in background_locations:
         spectral_templates['background'][location] = normalize_spectrum(
