@@ -4,5 +4,5 @@ matplotlib
 pandas
 pytest
 tensorflow
-sklearn
+scikit-learn
 pandas
