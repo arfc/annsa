@@ -211,7 +211,6 @@ def make_f1_scores_dataframe(models,
                     for combination in itertools.product(*values)]
 
     output_row = []
-    f1_scores = []
 
     columns = ['model_id', 'f1_score']
     for key, value in kwargs.items():
