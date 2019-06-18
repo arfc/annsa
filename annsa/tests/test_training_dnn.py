@@ -18,15 +18,15 @@ tf.enable_eager_execution()
 def construct_dnn():
     """
     Constructs a dense neural network and tests construction
-    functions. 
+    functions.
 
     Returns:
     --------
     model_features : class dnn_model_features
         Contains all features of the DNN model
 
-    optimizer : 
-    An Operation that updates the variables in var_list. 
+    optimizer :
+    An Operation that updates the variables in var_list.
     If global_step was not None, that operation also increments
     global_step. See documentation for tf.train.Optimizer
 
