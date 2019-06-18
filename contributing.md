@@ -67,6 +67,10 @@ source active annsa-36-test-env
 pytest annsa
 ```
 
+When a Pull Request is submitted, continuous integration will run these 
+tests. If the tests fail, the Pull Request will not be merged.
+
+
 ##### Run style tests with flake8
 
 Adherance to style checks in flake8 is encouraged though not strictly
