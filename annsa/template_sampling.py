@@ -19,7 +19,7 @@ def random_background_template_with_FWHM(background_dataset, FWHM, cosmic=0):
             The full background spectrum
     """
 
-    background_choices = background_dataset[
+    background_choices = background_dataset[ 
         (background_dataset['fwhm'] == FWHM) &
         (background_dataset['cosmic'] == cosmic)]
     random_background = background_choices.sample()

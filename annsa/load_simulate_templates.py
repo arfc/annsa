@@ -125,7 +125,7 @@ def load_templates(template_settings,
                                          '/background/background-' +
                                          location + '.spe')
         if np.max(temp_spectrum) == 0:
-            print(ID + ' Contains no values')
+            print('spectrum contains no values')
         if normalization is None:
             return temp_spectrum
         elif normalization == 'normalheight':
