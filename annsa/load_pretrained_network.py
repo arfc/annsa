@@ -144,7 +144,7 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         pool_strides=cae_features.pool_strides_encoder,
         dense_nodes=cnn_dense_nodes,
         activation_function=activation_function,
-        )
+    )
 
     CNN_model = CNN1D(model_features_CNN)
     optimizer = tf.train.AdamOptimizer(model_features_CNN.learining_rate)
@@ -157,4 +157,3 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         CNN_model.layers[i].set_weights(CAE_model.layers[i].get_weights())
 
     return CNN_model, model_features_CNN
-
