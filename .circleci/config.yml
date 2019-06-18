@@ -50,7 +50,7 @@ jobs:
           command: |
             . venv/bin/activate
             py.test
-            py.test --flake8
+            py.test --flake8 annsa
 
       - store_artifacts:
           path: test-reports
