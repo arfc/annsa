@@ -17,7 +17,6 @@ tf.enable_eager_execution()
 
 
 def construct_cae():
-
     """
     Builds a convolutional autoencoder with a random architecture.
 
@@ -65,7 +64,8 @@ def test_cae_training():
 
     tf.reset_default_graph()
     model_features, optimizer, model = construct_cae()
-    train_dataset, test_dataset = load_dataset(kind='ae') #this should fail a test
+    train_dataset, test_dataset = load_dataset(
+        kind='ae')  # this should fail a test
     model_features.scaler.fit(train_dataset[0])
 
     all_loss_train, all_loss_test = model.fit_batch(
@@ -81,4 +81,3 @@ def test_cae_training():
         earlystop_cost_fn=model.mse,
         data_augmentation=model.default_data_augmentation,)
     pass
-
