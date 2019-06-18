@@ -34,23 +34,23 @@ def hyperparameter_efficiency_plot(accuracy):
 
     fig, axes = plt.subplots(figsize=(8, 4))
     _ = axes.boxplot(boxplot_values[:-2],
-                     positions=np.arange(1, len(boxplot_values)-1))
+                     positions=np.arange(1, len(boxplot_values) - 1))
 
     # plot last two experiments of size 4 and 2 as scatter plots
-    axes.scatter([number_boxplots-1, ]*4,
+    axes.scatter([number_boxplots - 1, ] * 4,
                  boxplot_values[-2],
                  s=50,
                  color='r',
                  marker='+')
-    axes.scatter([number_boxplots, ]*2,
+    axes.scatter([number_boxplots, ] * 2,
                  boxplot_values[-1],
                  s=50,
                  color='r',
                  marker='+')
-    axes.set_xlim(0, number_boxplots+1)
+    axes.set_xlim(0, number_boxplots + 1)
     axes.set_ylabel('Accuracy', fontsize=15)
     axes.set_xlabel('Experiment Size (number of trials)', fontsize=15)
-    axes.set_xticks(np.arange(1, number_boxplots+1))
+    axes.set_xticks(np.arange(1, number_boxplots + 1))
     _ = axes.set_xticklabels([2**n for n in np.arange(number_boxplots)])
     return fig, axes
 
@@ -83,7 +83,7 @@ def make_f1_scores(all_models, all_spectra, all_keys):
         f1_error_tmp = all_models[key].f1_error(
             all_spectra,
             all_keys)
-        f1_score_tmp = 1.0-f1_error_tmp
+        f1_score_tmp = 1.0 - f1_error_tmp
         f1_scores[key].append(f1_score_tmp)
 
     return f1_scores
@@ -218,7 +218,7 @@ def make_f1_scores_dataframe(models,
         columns.append(key)
 
     for i, combination in enumerate(combinations):
-        print('combo ' + str(i+1) + ' of ' + str(len(combinations)))
+        print('combo ' + str(i + 1) + ' of ' + str(len(combinations)))
         all_spectra, all_keys = make_dataset(
             source_dataset,
             background_dataset,
@@ -261,8 +261,7 @@ def plot_f1_scores(dataframe,
                    indep_variable,
                    plot_label=None,
                    **kwargs
-                   ): 
-
+                   ):
     """
     Plots the f1 error of the model.
 
@@ -300,7 +299,7 @@ def plot_f1_scores(dataframe,
 
     for key, errors in f1_scores.items():
         if plot_label:
-            plt.plot(errors, label=key+' '+plot_label)
+            plt.plot(errors, label=key + ' ' + plot_label)
         else:
             plt.plot(errors, label=key)
 
