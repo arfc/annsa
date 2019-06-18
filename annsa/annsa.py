@@ -1,13 +1,9 @@
 from __future__ import print_function
 import numpy as np
-from numpy import genfromtxt
 import random
-from scipy import signal
 import datetime
 import os
 from scipy.ndimage.interpolation import zoom
-import tensorflow as tf
-import tensorflow.contrib.eager as tfe
 
 
 def write_time_and_date():
@@ -51,17 +47,6 @@ def load_template_spectra_from_folder(parent_folder,
         temp_dict[isotopes[i]] = normalize_spectrum(isotopes_GADRAS_ID[i])
 
     return temp_dict
-
-
-def RepresentsInt(s):
-    '''
-    Helper funtion to see if a string represents an integer
-    '''
-    try:
-        int(s)
-        return True
-    except ValueError:
-        return False
 
 
 def zoom_spectrum(spectrum, zoom_strength):
