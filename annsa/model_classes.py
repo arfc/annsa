@@ -3,7 +3,6 @@ import pickle
 import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.eager as tfe
-from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
 from tensorflow.image import resize_images
 from tensorflow.keras.initializers import he_normal, glorot_normal
@@ -359,7 +358,6 @@ class BaseClass(object):
         train_dataset_tensor = tf.data.Dataset.from_tensor_slices(
             (tf.constant(train_dataset[0]), tf.constant(train_dataset[1])))
 
-        time_start = time.time()
         for epoch in range(num_epochs):
             # Train through one epoch
             self.train_epoch(train_dataset_tensor,
@@ -658,7 +656,6 @@ class CNN1D(tf.keras.Model, BaseClass):
         output_function = model_features.output_function
         cnn_filters = model_features.cnn_filters
         cnn_kernel = model_features.cnn_kernel
-        cnn_strides = model_features.cnn_strides
         pool_size = model_features.pool_size
         pool_strides = model_features.pool_strides
         Pooling = model_features.Pooling
@@ -1229,7 +1226,6 @@ class CAE(tf.keras.Model, BaseClass):
         output_function = model_features.output_function
         cnn_filters_encoder = model_features.cnn_filters_encoder
         cnn_kernel_encoder = model_features.cnn_kernel_encoder
-        cnn_strides_encoder = model_features.cnn_strides_encoder
         pool_size_encoder = model_features.pool_size_encoder
         pool_strides_encoder = model_features.pool_strides_encoder
         cnn_filters_decoder = model_features.cnn_filters_decoder
