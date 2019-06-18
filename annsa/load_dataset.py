@@ -46,7 +46,7 @@ def load_easy(source_dataset, background_dataset):
         num_examples = source_dataset[(source_dataset['fwhm'] == fwhm) &
                                       (source_dataset['isotope'] == source_dataset['isotope'].iloc()[0])].shape[0]
         for k in range(num_examples):
-            blank_spectra_tmp = [0]*1200
+            blank_spectra_tmp = [0] * 1200
             blank_spectra_tmp[5] = fwhm
             blank_spectra_tmp[0] = 'background'
             blank_spectra_tmp[3] = 'background'
@@ -94,7 +94,7 @@ def load_full(source_dataset, background_dataset):
         num_examples = source_dataset[(source_dataset['fwhm'] == fwhm) &
                                       (source_dataset['isotope'] == source_dataset['isotope'].iloc()[0])].shape[0]
         for k in range(num_examples):
-            blank_spectra_tmp = [0]*1200
+            blank_spectra_tmp = [0] * 1200
             blank_spectra_tmp[5] = fwhm
             blank_spectra_tmp[0] = 'background'
             blank_spectra_tmp[3] = 'background'
@@ -111,14 +111,14 @@ def load_full(source_dataset, background_dataset):
 
 def load_dataset(kind='nn'):
     """
-    Generates dummy data using 'sklearn.datasets.make_classification()'. 
+    Generates dummy data using 'sklearn.datasets.make_classification()'.
     See 'make_classification' documentation for more details.
 
     Parameters:
     kind : string, optional
         A string describing what kind of neural network this dataset
         will be used for. Default is 'nn.'
-        Accepts: 
+        Accepts:
         'nn' (standard convolution or dense neural networks)
         'ae' (autoencoder)
 
@@ -130,7 +130,7 @@ def load_dataset(kind='nn'):
         format.
     test_dataset : tuple of [test_data, testing_keys_binarized]
         Contains the testing data and the labels in a binarized
-        format. 
+        format.
     """
 
     training_dataset = make_classification(n_samples=100,
