@@ -650,18 +650,6 @@ class CNN1D(tf.keras.Model, BaseClass):
         network.
 
         """
-
-        #=========================Notes======================#
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #================Delete this section later===========#
-
         self.batch_size = model_features.batch_size
         output_size = model_features.output_size
         self.scaler = model_features.scaler
