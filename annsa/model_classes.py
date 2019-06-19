@@ -379,11 +379,15 @@ class BaseClass(object):
             (tf.constant(train_dataset[0]), tf.constant(train_dataset[1])))
 
         for epoch in range(num_epochs):
+
+            #============================================================
             # Train through one epoch
             self.train_epoch(train_dataset_tensor,
                              obj_cost,
                              optimizer,
                              data_augmentation)
+            #============================================================
+
             if record_train_errors:
                 training_data_aug = data_augmentation(train_dataset[0])
             if augment_testing_data:
@@ -404,6 +408,8 @@ class BaseClass(object):
                 testing_data_aug = testing_data_aug[:, 0]
 
             # Record errors at each epoch
+            # def record_errors
+            #===============================================
             if earlystop_patience:
                 if record_train_errors:
                     earlystop_cost['train'].append(
@@ -432,7 +438,11 @@ class BaseClass(object):
                              testing_key,
                              obj_cost,
                              training=False))
+            #==============================================
+
             # Print errors at end of epoch
+            #def print_errors
+            #==============================================
             if (print_errors and ((epoch+1) % verbose == 0)) is True:
                 print('Epoch %d: CostFunc loss: %3.2f %3.2f, '
                       'EarlyStop loss: %3.2f %3.2f' % (
@@ -441,7 +451,13 @@ class BaseClass(object):
                           objective_cost['test'][-1],
                           earlystop_cost['train'][-1],
                           earlystop_cost['test'][-1]))
+
+            #==============================================
+
+
             # Apply early stopping with patience
+            #def stop_early
+            #================================ ==============
             if (earlystop_patience and
                 (epoch > earlystop_patience) and
                 self.check_earlystop(earlystop_cost['test'],
@@ -452,6 +468,8 @@ class BaseClass(object):
                (epoch > not_learning_patience) and
                (earlystop_cost['test'][-1] > not_learning_threshold)):
                 break
+            #==============================================
+
 
         return [objective_cost, earlystop_cost]
 
