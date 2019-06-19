@@ -88,7 +88,6 @@ def test_cnn1d_training():
         earlystop_patience=0,
         verbose=1,
         print_errors=0,
-        max_time=3600,
         obj_cost=model.cross_entropy,
         earlystop_cost_fn=model.f1_error,
         data_augmentation=model.default_data_augmentation,)

@@ -7,7 +7,6 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
 from tensorflow.image import resize_images
 from tensorflow.keras.initializers import he_normal, glorot_normal
-import time
 from random import choice
 
 # ##############################################################
@@ -274,7 +273,6 @@ class BaseClass(object):
             Array of cost values for each iteration used for early stopping.
         earlystop_patience : int
             Number of epochs training is allowed to run without improvment.
-            If 0, training will run until max_time or num_epochs is passed.
 
         Returns:
         -------
@@ -296,7 +294,6 @@ class BaseClass(object):
                   verbose=50,
                   print_errors=True,
                   earlystop_patience=0,
-                  max_time=300,
                   not_learning_patience=0,
                   not_learning_threshold=0,
                   obj_cost=None,
@@ -381,7 +378,6 @@ class BaseClass(object):
         train_dataset_tensor = tf.data.Dataset.from_tensor_slices(
             (tf.constant(train_dataset[0]), tf.constant(train_dataset[1])))
 
-        time_start = time.time()
         for epoch in range(num_epochs):
             # Train through one epoch
             self.train_epoch(train_dataset_tensor,
@@ -1654,7 +1650,6 @@ def train_earlystop(training_data,
         ``self.f1_error``, ``self.mse``, and ``self.cross_entropy``.
     earlystop_patience : int, optional
         Number of epochs training is allowed to run without improvment.
-        If 0, training will run until max_time or num_epochs is passed.
     data_augmentation : function
             Function used to apply data augmentation each training iteration.
     not_learning_patience : int, optional

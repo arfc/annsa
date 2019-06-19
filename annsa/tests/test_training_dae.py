@@ -77,7 +77,6 @@ def test_dae_training():
         earlystop_patience=0,
         verbose=1,
         print_errors=0,
-        max_time=3600,
         obj_cost=model.mse,
         earlystop_cost_fn=model.mse,
         data_augmentation=model.default_data_augmentation,)
