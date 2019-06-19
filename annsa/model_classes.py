@@ -310,33 +310,43 @@ class BaseClass(object):
         Parameters:
         ----------
         train_dataset : list, float, int
-            Two element list of [data, keys] where data
-            is a [nxm] numpy matrix of unprocessed gamma-ray spectra
-            and keys are a [nxl] matrix of  target outputs.
+            Two element list of [data, keys]. 
+            Data is an [nxm] numpy matrix of unprocessed gamma-ray spectra. 
+            (n = number of spectra, m = number of channels)
+            Keys is a [nxk] matrix of  target outputs.
+            (n = number of spectra, k = number of possible sources)
+            E.g. suppose there are two possible sources
+            [[[spectrum1],[spectrum2],[spectrum-n]],[[0, 1],[1,0]]]
+            You can have an arbitrary number of unclassified spectra, but if
+            there are only two possible sources, keys will be [nx2].
         test_dataset : list, float, int
-            Two element list of [data, keys] where data
-            is a [nxm] numpy matrix of unprocessed gamma-ray spectra
-            and keys are a [nxl] matrix of  target outputs.
+            Two element list of [data, keys]. 
+            Data is an [nxm] numpy matrix of unprocessed gamma-ray spectra. 
+            (n = number of spectra, m = number of channels)
+            Keys is a [nxk] matrix of  target outputs.
+            (n = number of spectra, k = number of possible sources)
+            E.g. suppose there are two possible sources
+            [[[spectrum1],[spectrum2],[spectrum-n]],[[0, 1],[1,0]]]
+            You can have an arbitrary number of unclassified spectra, but if
+            there are only two possible sources, keys will be [nx2].
         optimizer : TensorFlow optimizer class
             The optimizer to use to optimize the algorithm. Choices include
             ``tf.train.AdamOptimizer``, ``tf.train.GradientDescentOptimizer``.
         num_epochs : int, optional
-            Total number of epochs training is allowed to run.
+            Total number of training epochs.
+            One epoch covers the entire training data set.
         verbose : int, optional
             Frequency that the errors are printed per iteration.
         print_errors : bool, optional
             If true, will print model errors after each epoch.
         earlystop_patience : int, optional
             Number of epochs training is allowed to run without improvment.
-            If 0, training will run until max_time or num_epochs is passed.
-        max_time : int, optional
-            Max time in seconds training is allowed to run.
         not_learning_patience : int, optional
             Max number of epochs to wait before checking if model is not
-            learning.
+            learning. Not learning is defined by the ``not_learning_threshold``.
         not_learning_threshold : float, optional
             If error at epoch ``not_learning_patience`` is above this, training
-            stops.
+            stops. I.e. the 
         obj_cost : function
         earlystop_cost_fctn : function
             Cost function used for early stopping. Examples are
@@ -347,6 +357,17 @@ class BaseClass(object):
         Returns
         -------
         [objective_cost, earlystop_cost]: list of dictionaries
+            objective_cost : dictionary
+                keys = ['train', 'test']
+                values are lists containing the recorded error values.
+                Length depends on how frequently errors are recorded and the 
+                number of epochs being run. 
+            earlystop_cost : dictionary
+                keys = ['train', 'test']
+                values are lists containing the recorded error values.
+                Length depends on how frequently errors are recorded and the 
+                number of epochs being run. 
+
             If true will end training. If false training continues.
         """
         if not_learning_patience > earlystop_patience:
