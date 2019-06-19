@@ -300,7 +300,8 @@ class BaseClass(object):
                   earlystop_cost_fn=None,
                   data_augmentation=None,
                   augment_testing_data=False,
-                  record_train_errors=False,):
+                  record_train_errors=False,
+                  nn_type='nn',):
         """
         Function used to train the model.
 
@@ -350,6 +351,10 @@ class BaseClass(object):
             ``self.f1_error``, ``self.mse``, and ``self.cross_entropy``.
         data_augmentation : function
             Function used to apply data augmentation each training iteration.
+        nn_type : string
+            Indicates the type of neural network being used.
+            Default is 'nn.'
+            Accepts: 'nn' for neural network, 'ae' for autoencoder
 
         Returns
         -------
@@ -375,8 +380,13 @@ class BaseClass(object):
         earlystop_cost = {'train': [], 'test': []}
         objective_cost = {'train': [], 'test': []}
 
+        training_key = train_dataset[1]
+        testing_key = test_dataset[1]
+        training_data = train_dataset[0]
+        testing_data = test_dataset[0]
+
         train_dataset_tensor = tf.data.Dataset.from_tensor_slices(
-            (tf.constant(train_dataset[0]), tf.constant(train_dataset[1])))
+            (tf.constant(training_data), tf.constant(training_key)))
 
         for epoch in range(num_epochs):
 
@@ -389,16 +399,14 @@ class BaseClass(object):
             #============================================================
 
             if record_train_errors:
-                training_data_aug = data_augmentation(train_dataset[0])
+                training_data_aug = data_augmentation(training_data)
             if augment_testing_data:
-                testing_data_aug = data_augmentation(test_dataset[0])
+                testing_data_aug = data_augmentation(testing_data)
             else:
-                testing_data_aug = test_dataset[0]
-
-            training_key = train_dataset[1]
-            testing_key = test_dataset[1]
+                testing_data_aug = testing_data
 
             # check if data_augmentation returns separate source and background
+            # this is for autoencoders only. 
             if record_train_errors:
                 if training_data_aug.shape[1] == 2:
                     training_key = training_data_aug[:, 1]
@@ -425,6 +433,7 @@ class BaseClass(object):
             else:
                 earlystop_cost['train'].append(0)
                 earlystop_cost['test'].append(0)
+
             if record_train_errors:
                 objective_cost['train'].append(
                     self.loss_fn(training_data_aug,
@@ -441,7 +450,7 @@ class BaseClass(object):
             #==============================================
 
             # Print errors at end of epoch
-            #def print_errors
+            # def print_errors
             #==============================================
             if (print_errors and ((epoch+1) % verbose == 0)) is True:
                 print('Epoch %d: CostFunc loss: %3.2f %3.2f, '
