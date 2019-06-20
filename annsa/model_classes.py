@@ -521,12 +521,13 @@ class BaseClass(object):
             if self.check_earlystop(epoch, 
                             		earlystop_cost['test'],
                                     earlystop_patience):
-                break
+            	break
 
             if self.not_learning(epoch,
             					 earlystop_cost['test'], 
             					 not_learning_patience,
-            					 not_learning_threshold)    
+            					 not_learning_threshold): 
+            	break    
             # Apply early stopping if not learning
             # if (not_learning_patience and
             #    (epoch > not_learning_patience) and
