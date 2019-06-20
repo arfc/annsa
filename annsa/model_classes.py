@@ -307,7 +307,7 @@ class BaseClass(object):
 
     def not_learning(self,
                      epoch,
-                     cost
+                     cost,
                      not_learning_patience,
                      not_learning_threshold,):
         """
