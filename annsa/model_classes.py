@@ -262,7 +262,7 @@ class BaseClass(object):
                 optimizer.apply_gradients(zip(grads, self.variables))
         return None
 
-    def check_earlystop(self, earlystop_cost, earlystop_patience):
+    def check_earlystop(self, epoch, earlystop_cost, earlystop_patience):
         """
         Checks if early stop condition is met and either continues or
             stops training.
@@ -279,12 +279,68 @@ class BaseClass(object):
         earlystop_flag: bool
             If true will end training. If false training continues.
         """
-        earlystop_flag = 0
+        # earlystop_flag = 0
+
+        # np.argmin gives the location of the minimum value. 
+        # x[-patience:] gives the last several values of earlystop_cost
+        # If the minimum value of the list of length 'earlystop_patience' 
+        # is at the beginning, then it has exceeded the learning patience,
+        # and should be stopped. 
+
+
+        #Checks if earlystopping is turned on. 
+        if not earlystop_patience:
+            return False
+
+        #Checks if enough epochs have passed.
+        if earlystop > epoch: 
+            return False
+
         argmin_error_in_patience_range = np.argmin(
             earlystop_cost[-earlystop_patience:])
+        #Checks if our patience has been exceeded.
         if (argmin_error_in_patience_range == 0):
-            earlystop_flag = 1
-        return earlystop_flag
+            return True
+        else: 
+        	return False
+        # return earlystop_flag
+
+    def not_learning(self,
+                     epoch,
+                     cost
+                     not_learning_patience,
+                     not_learning_threshold,):
+        """
+        Checks if the model is not learning properly.
+
+        Parameters:
+        ----------
+        cost : narray, float
+            Array of cost values for each iteration used for early stopping.
+                not_learning_patience : int
+        not_learning_patience : int
+            Max number of epochs to wait before checking if model is not
+            learning. Not learning is defined by the ``not_learning_threshold``.
+        not_learning_threshold : float
+            If error at epoch ``not_learning_patience`` is above this, training
+            stops.
+
+        Returns:
+        -------
+        Boolean
+			If true will end training. If false training continues. 
+        """
+
+        if not not_learning_patience:
+        	return False
+
+        if (epoch < not_learning_patience):
+        	return False 
+
+        if (cost[-1] > not_learning_threshold):
+        	return True
+        else: 
+        	return False
 
     def fit_batch(self,
                   train_dataset,
@@ -316,6 +372,9 @@ class BaseClass(object):
             [[[spectrum1],[spectrum2],[spectrum-n]],[[0, 1],[1,0]]]
             You can have an arbitrary number of unclassified spectra, but if
             there are only two possible sources, keys will be [nx2].
+
+            If data is being trained on an autoencoder, keys will be a list
+            of two matrices 
         test_dataset : list, float, int
             Two element list of [data, keys]. 
             Data is an [nxm] numpy matrix of unprocessed gamma-ray spectra. 
@@ -375,8 +434,13 @@ class BaseClass(object):
         earlystop_cost = {'train': [], 'test': []}
         objective_cost = {'train': [], 'test': []}
 
+        training_key = train_dataset[1]
+        testing_key = test_dataset[1]
+        training_data = train_dataset[0]
+        testing_data = test_dataset[0]
+
         train_dataset_tensor = tf.data.Dataset.from_tensor_slices(
-            (tf.constant(train_dataset[0]), tf.constant(train_dataset[1])))
+            (tf.constant(training_data), tf.constant(training_key)))
 
         for epoch in range(num_epochs):
 
@@ -389,23 +453,20 @@ class BaseClass(object):
             #============================================================
 
             if record_train_errors:
-                training_data_aug = data_augmentation(train_dataset[0])
-            if augment_testing_data:
-                testing_data_aug = data_augmentation(test_dataset[0])
-            else:
-                testing_data_aug = test_dataset[0]
+                training_data_aug = data_augmentation(training_data)
 
-            training_key = train_dataset[1]
-            testing_key = test_dataset[1]
 
             # check if data_augmentation returns separate source and background
+            # this conditional is only used for autoencoders.
+            # NOTE: Autoencoder keys will have shape == 2
             if record_train_errors:
                 if training_data_aug.shape[1] == 2:
                     training_key = training_data_aug[:, 1]
                     training_data_aug = training_data_aug[:, 0]
-            if testing_data_aug.shape[1] == 2:
-                testing_key = testing_data_aug[:, 1]
-                testing_data_aug = testing_data_aug[:, 0]
+
+            if testing_data.shape[1] == 2:
+                testing_key = testing_data[:, 1]
+                testing_data = testing_data[:, 0]
 
             # Record errors at each epoch
             # def record_errors
@@ -419,7 +480,7 @@ class BaseClass(object):
                 else:
                     earlystop_cost['train'].append(0)
                 earlystop_cost['test'].append(
-                    earlystop_cost_fn(testing_data_aug,
+                    earlystop_cost_fn(testing_data,
                                       testing_key,
                                       training=False))
             else:
@@ -434,14 +495,14 @@ class BaseClass(object):
             else:
                 objective_cost['train'].append(0)
             objective_cost['test'].append(
-                self.loss_fn(testing_data_aug,
+                self.loss_fn(testing_data,
                              testing_key,
                              obj_cost,
                              training=False))
             #==============================================
 
             # Print errors at end of epoch
-            #def print_errors
+            # def print_errors
             #==============================================
             if (print_errors and ((epoch+1) % verbose == 0)) is True:
                 print('Epoch %d: CostFunc loss: %3.2f %3.2f, '
@@ -454,25 +515,26 @@ class BaseClass(object):
 
             #==============================================
 
-
             # Apply early stopping with patience
-            #def stop_early
+            # def stop_early
             #================================ ==============
-            if (earlystop_patience and
-                (epoch > earlystop_patience) and
-                self.check_earlystop(earlystop_cost['test'],
-                                     earlystop_patience)):
+            if self.check_earlystop(epoch, 
+                            		earlystop_cost['test'],
+                                    earlystop_patience):
                 break
+
+            if self.not_learning(epoch,
+            					 earlystop_cost['test'], 
+            					 not_learning_patience,
+            					 not_learning_threshold)    
             # Apply early stopping if not learning
-            if (not_learning_patience and
-               (epoch > not_learning_patience) and
-               (earlystop_cost['test'][-1] > not_learning_threshold)):
-                break
+            # if (not_learning_patience and
+            #    (epoch > not_learning_patience) and
+            #    (earlystop_cost['test'][-1] > not_learning_threshold)):
+            #     break
             #==============================================
 
-
         return [objective_cost, earlystop_cost]
-
 # ##############################################################
 # ##############################################################
 # ##############################################################
