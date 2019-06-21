@@ -265,7 +265,7 @@ class BaseClass(object):
     def check_earlystop(self, epoch, earlystop_cost, earlystop_patience):
         """
         Checks if early stop condition is met and either continues or
-            stops training.
+        stops training.
 
         Parameters:
         ----------
@@ -302,10 +302,12 @@ class BaseClass(object):
                      not_learning_patience,
                      not_learning_threshold,):
         """
-        Checks if the model is not learning properly.
+        Checks if the model is learning properly.
 
         Parameters:
         ----------
+        epoch : int
+        	The current epoch.
         cost : narray, float
             Array of cost values for each iteration used for early stopping.
                 not_learning_patience : int
@@ -319,7 +321,7 @@ class BaseClass(object):
         Returns:
         -------
         Boolean
-    If true will end training. If false training continues. 
+    		If true will end training. If false training continues. 
         """
 
         if not not_learning_patience:
@@ -506,9 +508,6 @@ class BaseClass(object):
 
             #==============================================
 
-            # Apply early stopping with patience
-            # def stop_early
-            #================================ ==============
             if self.check_earlystop(epoch, 
                                 earlystop_cost['test'],
                                     earlystop_patience):
@@ -519,12 +518,6 @@ class BaseClass(object):
                  not_learning_patience,
                  not_learning_threshold): 
                 break    
-            # Apply early stopping if not learning
-            # if (not_learning_patience and
-            #    (epoch > not_learning_patience) and
-            #    (earlystop_cost['test'][-1] > not_learning_threshold)):
-            #     break
-            #==============================================
 
         return [objective_cost, earlystop_cost]
 # ##############################################################
