@@ -156,39 +156,39 @@ class BaseClass(object):
                                   average='micro')
         return f1_error
 
-    def default_data_augmentation(self, x):
+    def default_data_augmentation(self, input_data):
         """
         Default data augmentation is an identity function.
 
         Parameters:
         -----------
-        x : list, float
+        input_data: list, float
             Input data
 
         Returns:
         --------
-        x : list, float
+        input_data : list, float
             Input data
 
         """
-        return x
+        return input_data
 
-    def poisson_data_augmentation(self, x):
+    def poisson_data_augmentation(self, input_data):
         """
         Returns input data with poisson noise for data augmentation.
 
         Parameters:
         -----------
-        x : list, float
+        input_data : list, float
             Input data
 
         Returns:
         -------
-        x : list, float
+        input_data : list, float
             Poisson sampled input data
 
         """
-        return np.random.poisson(x)
+        return np.random.poisson(input_data)
 
     def grads_fn(self, input_data, target, cost):
         """
@@ -279,31 +279,22 @@ class BaseClass(object):
         earlystop_flag: bool
             If true will end training. If false training continues.
         """
-        # earlystop_flag = 0
-
-        # np.argmin gives the location of the minimum value. 
-        # x[-patience:] gives the last several values of earlystop_cost
-        # If the minimum value of the list of length 'earlystop_patience' 
-        # is at the beginning, then it has exceeded the learning patience,
-        # and should be stopped. 
-
 
         #Checks if earlystopping is turned on. 
         if not earlystop_patience:
             return False
 
         #Checks if enough epochs have passed.
-        if earlystop > epoch: 
+        if earlystop_patience > epoch: 
             return False
 
-        argmin_error_in_patience_range = np.argmin(
-            earlystop_cost[-earlystop_patience:])
+        min_error_in_patience_range = np.argmin(earlystop_cost[-earlystop_patience:])
         #Checks if our patience has been exceeded.
-        if (argmin_error_in_patience_range == 0):
-            return True
+        if (min_error_in_patience_range == 0):
+        	return True
         else: 
-        	return False
-        # return earlystop_flag
+            return False
+
 
     def not_learning(self,
                      epoch,
@@ -328,19 +319,19 @@ class BaseClass(object):
         Returns:
         -------
         Boolean
-			If true will end training. If false training continues. 
+    If true will end training. If false training continues. 
         """
 
         if not not_learning_patience:
-        	return False
+            return False
 
         if (epoch < not_learning_patience):
-        	return False 
+            return False 
 
         if (cost[-1] > not_learning_threshold):
-        	return True
+            return True
         else: 
-        	return False
+            return False
 
     def fit_batch(self,
                   train_dataset,
@@ -519,15 +510,15 @@ class BaseClass(object):
             # def stop_early
             #================================ ==============
             if self.check_earlystop(epoch, 
-                            		earlystop_cost['test'],
+                                earlystop_cost['test'],
                                     earlystop_patience):
-            	break
+                break
 
             if self.not_learning(epoch,
-            					 earlystop_cost['test'], 
-            					 not_learning_patience,
-            					 not_learning_threshold): 
-            	break    
+                 earlystop_cost['test'], 
+                 not_learning_patience,
+                 not_learning_threshold): 
+                break    
             # Apply early stopping if not learning
             # if (not_learning_patience and
             #    (epoch > not_learning_patience) and
