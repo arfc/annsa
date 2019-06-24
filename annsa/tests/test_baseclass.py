@@ -23,6 +23,22 @@ earlystop_cost = [(len(epochs)/np.sqrt(epoch) + epoch/10 - 4) for epoch in epoch
 #create class
 base = construct_baseclass()
 
+#data augmentation unit tests
+#define lamba = 1000
+#define size = 1x1024(the number of channels)
+dim = (1,1024)
+lam = 1000
+random_spectrum = np.random.poisson(lam=lam, size=dim)
+def test_default_data_augmentation():
+    data_aug = base.default_data_augmentation(random_spectrum)
+    assert(data_aug.all() == random_spectrum.all()), "Default data augmentation is not identity function."
+    pass
+
+def test_poisson_data_augmentation():
+    data_aug = base.poisson_data_augmentation(random_spectrum)
+    mean = np.mean(random_spectrum)
+    assert(abs(lam - mean)/lam < 1), "Poisson data augmentation is not poisson sampling."
+    pass
 
 #check_earlystop unit tests
 def test_check_earlystop_case1():
@@ -56,7 +72,6 @@ def test_check_earlystop_case4():
     stopped = base.check_earlystop(epoch, earlystop_cost[:epoch], earlystop_patience)
     assert (stopped==False), "Early stopping was applied too early."
     pass
-
 
 #not_learning unit tests
 def test_not_learning_case1():

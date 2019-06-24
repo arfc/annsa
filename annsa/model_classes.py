@@ -335,6 +335,25 @@ class BaseClass(object):
         else: 
             return False
 
+    def record_errors(self, earlystop, objective, record_train_errors=False):
+        """
+        Records errors at an epoch.
+        
+        Parameters:
+        -----------
+        earlystop : dictionary 
+            Contains the earlystop cost data for 'train' and 'test'
+        objective : dictionary
+            Contains the objective cost data for 'train' and 'test'
+        record_train_errors : boolean, optional
+            Decides whether training errors should be recorded. 
+
+        Returns:
+        --------
+
+        """
+        pass
+
     def fit_batch(self,
                   train_dataset,
                   test_dataset,
@@ -479,6 +498,7 @@ class BaseClass(object):
             else:
                 earlystop_cost['train'].append(0)
                 earlystop_cost['test'].append(0)
+
             if record_train_errors:
                 objective_cost['train'].append(
                     self.loss_fn(training_data_aug,
