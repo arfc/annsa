@@ -95,7 +95,7 @@ def apply_LLD(spectrum, LLD=10):
     Returns:
     --------
         spectrum : vector
-            The spectrum with LLD channelsset to 0
+            The spectrum with LLD channels set to 0
     """
     spectrum[0:LLD] = 0
     return spectrum
@@ -151,33 +151,36 @@ def make_random_spectrum(source_data,
 
     # Make source spectrum
     source_counts = background_cps*integration_time*signal_to_background
+    #verifies that the source data is a tensorflow tensor. 
     if type(source_data) == np.ndarray:
         source_data = tf.convert_to_tensor(source_data)
+
+    #Checks if a single spectrum. 
     if tf.contrib.framework.is_tensor(source_data):
-        # if single spectrum
         source_spectrum = source_data
         fwhm = source_spectrum.numpy()[0]
         source_spectrum = source_spectrum.numpy()[1:]
         if np.count_nonzero(source_spectrum) > 0:
             source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
             source_spectrum = apply_LLD(source_spectrum, LLD)
-            source_spectrum /= np.sum(source_spectrum)
-            source_spectrum *= source_counts
+            source_spectrum /= np.sum(source_spectrum) #normalizes
+            source_spectrum *= source_counts #rescales
         else:
             source_spectrum = source_spectrum[:1024]
+
+    #if the source data is a pandas dataframe.
     else:
-        # if dataset of spectra
         for key, value in kwargs.items():
             source_data = source_data[source_data[key] == value]
 
         # if (source_data['isotope'] != 'background' and
         #    np.count_nonzero(source_spectrum) == 1024):
         #    # resample if template is non-background and empty
-        source_spectrum = source_data.sample().values[0][6:]
+        source_spectrum = source_data.sample().values[0][6:] #turns the selected spectrum into a ndarray
         source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
         source_spectrum = apply_LLD(source_spectrum, LLD)
-        source_spectrum /= np.sum(source_spectrum)
-        source_spectrum *= source_counts
+        source_spectrum /= np.sum(source_spectrum) #normalizes 
+        source_spectrum *= source_counts #rescales
         if 'fwhm' in kwargs:
             fwhm = kwargs['fwhm']
 
