@@ -15,14 +15,14 @@ python setup.py install
 Ex. 
 "99MTc\_500.0\_50.0\_lead\_0.0\_2.0.spe"
 
-This is for a spectrum taken with the following parameters:
-Technetium-99, metastable\\
-500cm away from detector\\
-50cm above ground\\
-Lead shielding\\
-'Areal' density of shielding\\
-Full width half max of 2.0\\
-File type: .spe\\
+This is for a spectrum taken with the following parameters:<\br>
+Technetium-99, metastable <\br>
+500cm away from detector <\br>
+50cm above ground <\br>
+Lead shielding <\br>
+'Areal' density of shielding <\br>
+Full width half max of 2.0 <\br>
+File type: .spe <\br>
 
 
 
