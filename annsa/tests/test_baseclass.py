@@ -23,12 +23,13 @@ earlystop_cost = [(len(epochs)/np.sqrt(epoch) + epoch/10 - 4) for epoch in epoch
 #create class
 base = construct_baseclass()
 
-#data augmentation unit tests
 #define lamba = 1000
 #define size = 1x1024(the number of channels)
 dim = (1,1024)
 lam = 1000
 random_spectrum = np.random.poisson(lam=lam, size=dim)
+
+#data augmentation unit tests
 def test_default_data_augmentation():
     data_aug = base.default_data_augmentation(random_spectrum)
     assert(data_aug.all() == random_spectrum.all()), "Default data augmentation is not identity function."

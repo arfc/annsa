@@ -352,6 +352,41 @@ class BaseClass(object):
         --------
 
         """
+
+
+        if earlystop_patience:
+            if record_train_errors:
+                earlystop_cost['train'].append(
+                    earlystop_cost_fn(training_data_aug,
+                                      training_key,
+                                      training=False))
+            else:
+                earlystop_cost['train'].append(0)
+            earlystop_cost['test'].append(
+                earlystop_cost_fn(testing_data,
+                                  testing_key,
+                                  training=False))
+        else:
+            earlystop_cost['train'].append(0)
+            earlystop_cost['test'].append(0)
+
+        if record_train_errors:
+            objective_cost['train'].append(
+                self.loss_fn(training_data_aug,
+                             training_key,
+                             obj_cost,
+                             training=False))
+        else:
+            objective_cost['train'].append(0)
+        objective_cost['test'].append(
+            self.loss_fn(testing_data,
+                         testing_key,
+                         obj_cost,
+                         training=False))
+
+
+
+
         pass
 
     def fit_batch(self,
@@ -1754,9 +1789,9 @@ def train_earlystop(training_data,
 
     Returns:
     --------
-    costfunctionerr_test :
+    costfunctionerr_test : array-like
 
-    earlystoperr_test :
+    earlystoperr_test : array-like
     """
 
     costfunctionerr_test, earlystoperr_test = [], []
@@ -1786,150 +1821,13 @@ def train_earlystop(training_data,
         costfunctionerr_test.append(
             objective_cost['test'][-earlystop_patience])
         earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
+
+
+
     if verbose is True:
         print("Test error at early stop: Objectives fctn: {0:.2f} Early stop"
               "fctn: {0:.2f}".format(float(costfunctionerr_test[-1]),
                                      float(earlystoperr_test[-1])))
 
     return costfunctionerr_test, earlystoperr_test
-
-
-def save_model(folder_name, model_id, model, model_features):
-    """
-    @Author: Sam Dotson
-    Allows the model to be saved after training and uploaded for later use.
-
-    Parameters:
-    -----------
-    folder_name : string
-    Name of folder where the model is to be saved.
-    model_id : string
-    model identifier that will be used again when loading the model.
-    model : object
-    The variable that contains the instance of the neural network
-    that you want to save.
-    model_features : object
-    Variable that contains all of the features of your model. 
-
-    Returns:
-    --------
-    Nothing. This function simply saves the model.
-    """
-    saver = tfe.Saver(model.variables)
-    saver.save(folder_name+'/'+model_id)
-    with open(folder_name+'/'+model_id+'_features', 'w') as f:
-        pickle.dump(model_features, f)
-
-
-def load_model(model_folder,
-               model_id,
-               model_class,
-               training_data_length=1024,
-               training_key_length=57):
-    """
-    @Author: Sam Dotson
-    Loads a previously saved model.
-
-    Parameters:
-    -----------
-    model_folder : string
-        Name of folder where the model exists.
-
-
-    Returns:
-    --------
-    model : object
-        The model that you have previously trained.
-    new_model_features.scaler : tensorflow scaling function
-    """
-    # load model features (number of layers, nodes)
-    with open('./'+model_folder+'/'+model_id+'_features') as f:
-        new_model_features = pickle.load(f)
-
-    # Initialize variables by running a single training iteration
-    tf.reset_default_graph()
-    optimizer = tf.train.AdamOptimizer(new_model_features.learning_rate)
-    model = model_class(new_model_features)
-
-    dummy_data = np.ones([10, training_data_length])
-
-    X_tensor = tf.constant(dummy_data)
-    y_tensor = tf.constant(np.ones([10, training_key_length]))
-    dummy_train_dataset = tf.data.Dataset.from_tensor_slices((X_tensor,
-                                                              y_tensor))
-    dummy_test_dataset = (dummy_data, np.ones([10, training_key_length]))
-
-    _, _ = model.fit_batch(dummy_train_dataset,
-                           dummy_test_dataset,
-                           optimizer,
-                           num_epochs=1,
-                           verbose=1,
-                           print_errors=False)
-
-    # Restore saved variables
-    saver = tfe.Saver(model.variables)
-    saver.restore('./'+model_folder+'/'+model_id)
-
-    return model, new_model_features.scaler
-
-
-class_isotopes = ['Am241',
-                  'Ba133',
-                  'Co57',
-                  'Co60',
-                  'Cs137',
-                  'Cr51',
-                  'Eu152',
-                  'Ga67',
-                  'I123',
-                  'I125',
-                  'I131',
-                  'In111',
-                  'Ir192',
-                  'U238',
-                  'Lu177m',
-                  'Mo99',
-                  'Np237',
-                  'Pd103',
-                  'Pu239',
-                  'Pu240',
-                  'Ra226',
-                  'Se75',
-                  'Sm153',
-                  'Tc99m',
-                  'Xe133',
-                  'Tl201',
-                  'Tl204',
-                  'U233',
-                  'U235',
-                  'shielded_Am241',
-                  'shielded_Ba133',
-                  'shielded_Co57',
-                  'shielded_Co60',
-                  'shielded_Cs137',
-                  'shielded_Cr51',
-                  'shielded_Eu152',
-                  'shielded_Ga67',
-                  'shielded_I123',
-                  # 'shielded_I125',
-                  # Removed due to max gamma energy being too weak.
-                  # Any shielding fully attenuates.
-                  'shielded_I131',
-                  'shielded_In111',
-                  'shielded_Ir192',
-                  'shielded_U238',
-                  'shielded_Lu177m',
-                  'shielded_Mo99',
-                  'shielded_Np237',
-                  'shielded_Pd103',
-                  'shielded_Pu239',
-                  'shielded_Pu240',
-                  'shielded_Ra226',
-                  'shielded_Se75',
-                  'shielded_Sm153',
-                  'shielded_Tc99m',
-                  'shielded_Xe133',
-                  'shielded_Tl201',
-                  'shielded_Tl204',
-                  'shielded_U233',
-                  'shielded_U235']
+    
