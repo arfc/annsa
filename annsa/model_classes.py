@@ -826,10 +826,10 @@ class CNN1D(tf.keras.Model, BaseClass):
         else:
             kernel_initializer = glorot_normal()
 
-        # Define hidden layers for encoder
+        #creates the convolutional layers.
         self.conv_layers = {}
         self.pool_layers = {}
-        for layer in range(len(cnn_filters)):
+        for layer in range(len(cnn_filters)): #Read: for each 
             self.conv_layers[str(layer)] = tf.layers.Conv1D(
                 filters=cnn_filters[layer],
                 kernel_size=cnn_kernel[layer],
@@ -911,7 +911,7 @@ class CNN1D(tf.keras.Model, BaseClass):
             of classes. If used as autoencoder l is equal to m.
 
         """
-        x = self.scaler.transform(input_data)
+        x = self.scaler.transform(input_data) #any function in the sklearn.makepipeline has a method .transform
         x = tf.reshape(x, [-1, x.shape[1], 1])
         for layer in self.conv_layers.keys():
             x = self.conv_layers[str(layer)](x)
@@ -978,13 +978,14 @@ class cnn1d_model_features(object):
             through the network at once. For reference, one epoch is 
             the size of all training data. 
         Pooling : Tensorflow pooling function
-        cnn_filters : int
-            The number of filters in a convolutional layer.
+        cnn_filters : tuple or int
+            The number of filters in a convolutional layer. Length of 
+            `cnn_filters` gives the number of layers. 
         cnn_kernel : int or 1D array of type int
             Passing int will assume a square filter of size int x int.
             The values of an array will be taken as the desired dimens-
             ion size of the filter.
-        cnn_strides: int
+        cnn_strides: list
             The stride size of each filter. How far it shifts per 
             iteration. Typically stride size is one. 
         pool_size : int or array/tuple
@@ -1053,7 +1054,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     pool_size_choice = choice(pool_size_choices)
 
     cnn_kernel = cnn_kernel_choice*(len(cnn_filters))
-    cnn_strides = (1,)*(len(cnn_filters))
+    cnn_strides = (1,)*(len(cnn_filters)) #returns 
     pool_size = pool_size_choice*(len(cnn_filters))
     pool_strides = (2,)*(len(cnn_filters))
 
