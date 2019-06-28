@@ -75,16 +75,30 @@ def gen_poly_data(x, num_cycles = 1000):
 def create_dataframe(keys, data):
   df = pd.DataFrame({'keys':keys, 'data':data})
   return df
+
+def gen_random_data():
+  funcs = [np.cos, np.sin]
+  choice = np.random.randint(0,2)
+  func = funcs[choice]
   
+  x = np.linspace(0,2*np.pi, 100)
+  noise = np.random.uniform(0,0.5,100)
+  data = func(x)
+  
+  if choice == 0:
+    name = 'cos'
+    
+  else:
+    name = 'sin'
+    
+  return name, (data+noise)
 
-x = np.arange(0,1024,1)
-keys,data=gen_poly_data(x,1)
-df = create_dataframe(keys, data)
-print(df)
-plt.plot(x, data[0])
-plt.show()
+dataset = [[],[]]
+for x in range(1000):
+  name, data = gen_random_data()
+  dataset[0].append(name)
+  dataset[1].append(data)
+# print(dataset)
 
-
-
-
-
+df = pd.DataFrame({'function' : dataset[0], 'data' : dataset[1]})
+df.to_csv("noisy_sinusoidal_data.csv")
