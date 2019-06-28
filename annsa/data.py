@@ -1,5 +1,6 @@
 import pandas as pd
 from annsa.template_sampling import make_random_spectrum
+import os
 
 class spectrum_data(object):
 	"""docstring for spectrum_data"""
@@ -30,6 +31,7 @@ class spectrum_data(object):
 		"""
 		super(spectrum_data, self).__init__()
 
+		self.keys = ['Isotope', 'Distance', 'Height', 'Shielding', 'Areal Density', 'FWHM', 'Spectrum']
 		self.filename = filename
 		self.dataframe = pd.DataFrame()
 
@@ -45,9 +47,28 @@ class spectrum_data(object):
 		This is useful if you want to add more data to 
 		an existing dataframe.
 		"""
-		#name = 
-		#frames = [self.dataframe, row]
-		#self.dataframe = pd.concat(frames)
+		#gets the keys from the file name
+		values = parse_fname(self.filename)
+
+		#read in the data from the file
+		#...
+		#...
+
+		value.append(spectrum) #spectrum is a list
+
+		dictionary = {}
+
+		for key in self.keys:
+			i = 0
+			dictionary[key] = values[i]
+			i += 1
+
+		row = pd.DataFrame(dictionary)
+		
+		#adds the row to the bottom of the dataframe
+		frames = [self.dataframe, row]
+		self.dataframe = pd.concat(frames)
+		
 		pass
 
 	def parse_fname(self, filename):
@@ -65,16 +86,27 @@ class spectrum_data(object):
 		--------
 		parameters : list of strings
 			This list of strings will become the 
-			column headers for the dataframe. 
+			data for the preset column headers 
+			based on the standardized file naming
+			convention. 
 		"""
-		pass
+		#gets rid of the file extension
+		parameters = os.path.splitext(self.filename)[0]
+		#splits into values by '_'
+		parameters = parameters.split('_')
+		#converts strings to floats if appropriate.
+		for index in range(len(parameters)):
+			if '.' in parameters[index]:
+				parameters[index] = float(parameters[index])
+
+		return parameters
 
 	def make_dataframe(self):
 		"""
 		This function is only used when folder==True. 
 		Moves through a folder and gets the files, 
 		"""
-
+		# name = os.path.splitext(self.filename)[0]
 		pass
 
 	def sample_dataframe(self, **kwargs):
@@ -103,6 +135,9 @@ class spectrum_data(object):
 		4. scale by the number of counts. This allows you to 
 		simulate a dataset with a different number of counts
 		than the dataset you are sampling from. 
+
+
+		Can simply use import make_random_spectrum.
 		"""
 
 		pass
