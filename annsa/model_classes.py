@@ -280,7 +280,7 @@ class BaseClass(object):
             If true will end training. If false training continues.
         """
 
-        #Checks if earlystopping is turned on. 
+        # Checks if earlystopping is turned on. 
         if not earlystop_patience:
             return False
 
