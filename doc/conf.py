@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# shablona documentation build configuration file, created by
+# annsa documentation build configuration file, created by
 # sphinx-quickstart on Tue Apr 14 10:29:06 2015.
 #
 # This file is execfile()d with the current directory set to its
@@ -17,8 +17,8 @@ import sys
 import os
 
 # General information about the project.
-project = 'shablona'
-copyright = '2015, Ariel Rokem'
+project = 'annsa'
+copyright = '2019, Advanced Reactors and Fuel Cycles group'
 
 currentdir = os.path.abspath(os.path.dirname(__file__))
 ver_file = os.path.join(currentdir, '..', project, 'version.py')
@@ -76,7 +76,7 @@ sphinx_gallery_conf = {
     # path where to save gallery generated examples
     'gallery_dirs': 'auto_examples',
     # To auto-generate example sections in the API
-    'doc_module': ('shablona',),
+    'doc_module': ('annsa',),
     # Auto-generated mini-galleries go here
     'backreferences_dir': 'gen_api'
 }
@@ -216,7 +216,7 @@ html_domain_indices = False
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'shablonadoc'
+htmlhelp_basename = 'annsadoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -232,12 +232,12 @@ latex_elements = {
 #'preamble': '',
 }
 
-# Grouping the document tree into LaTeX files. List of tuples
+# grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'shablona.tex', 'shablona Documentation',
-   'Ariel Rokem', 'manual'),
+  ('index', 'annsa.tex', 'annsa Documentation',
+   'Advanced Reactors and Fuel Cycles group', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -266,8 +266,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'shablona', 'shablona Documentation',
-     ['Ariel Rokem'], 1)
+    ('index', 'annsa', 'annsa Documentation',
+     ['Advanced Reactors and Fuel Cycles group'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -276,13 +276,13 @@ man_pages = [
 
 # -- Options for Texinfo output -------------------------------------------
 
-# Grouping the document tree into Texinfo files. List of tuples
+# grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'shablona', 'shablona Documentation',
-   'Ariel Rokem', 'shablona', 'One line description of project.',
-   'Miscellaneous'),
+  ('index', 'annsa', 'annsa Documentation',
+   'Advanced Reactors and Fuel Cycles group', 'annsa', 'Artificial neural networks for spectral analysis.',
+   'Physics'),
 ]
 
 # Documents to append as an appendix to all manuals.
