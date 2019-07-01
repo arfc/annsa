@@ -79,7 +79,7 @@ class SpectrumData(object):
 		Parameters: 
 		-----------
 		filename : string
-			Name of file containing raw spe data.
+			Name of file containing raw spectrum data.
 
 		Returns: 
 		--------
