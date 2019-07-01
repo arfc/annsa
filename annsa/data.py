@@ -6,7 +6,7 @@ class spectrum_data(object):
 	"""docstring for spectrum_data"""
 	def __init__(self, filename, folder=False, ae=False, csv=False, online=False):
 		"""
-		Generates a data object. 
+		Generates a data object of type SpectrumData. 
 
 		Parameters: 
 		-----------
