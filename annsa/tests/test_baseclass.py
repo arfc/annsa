@@ -52,7 +52,7 @@ def test_check_earlystop_case2():
     earlystop_patience = 70
     epoch = 69
     stopped = base.check_earlystop(epoch, earlystop_cost[:epoch], earlystop_patience)
-    assert (stopped==False), "Early stopping applied too early. epoch < patience."
+    assert(stopped==False), "If epoch < patience, check_earlystop should return False."
 
 def test_check_earlystop_case3():
     """case 3: early stopping should be applied."""
