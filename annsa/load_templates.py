@@ -28,11 +28,11 @@ def load_template_spectra_from_folder(parent_folder,
     normalization : string or boolean
         Default = None
         Accepts: 'normalheight', 'normalarea', None
-        How the dataset should be normalized. 
+        How the dataset should be normalized.
 
     Returns:
     --------
-    temp_dict : Dictionary 
+    temp_dict : Dictionary
         Contains all template spectra from a folder.
     """
 
@@ -47,24 +47,24 @@ def load_template_spectra_from_folder(parent_folder,
         if normalization is None:
             return temp_spectrum
         elif normalization == 'normalheight':
-            return temp_spectrum/np.max(temp_spectrum)
+            return temp_spectrum / np.max(temp_spectrum)
         elif normalization == 'normalarea':
-            return temp_spectrum/np.sum(temp_spectrum)
+            return temp_spectrum / np.sum(temp_spectrum)
 
-        #ASSERT
-        #Add an assertion if the argument is misspelled or incorrect.
-        #It should throw an error saying "hey this isn't an option."
-        #Will make debugging easier if your error is that normaheight
-        #isn't normalheight.
+        # ASSERT
+        # Add an assertion if the argument is misspelled or incorrect.
+        # It should throw an error saying "hey this isn't an option."
+        # Will make debugging easier if your error is that normaheight
+        # isn't normalheight.
 
-    for i in range(len(an.isotopes)-3):
+    for i in range(len(an.isotopes) - 3):
         temp_dict[an.isotopes[i]] = normalize_spectrum(
             an.isotopes_sources_GADRAS_ID[i])
 
     return temp_dict
 
 
-def load_templates(normalization=None): 
+def load_templates(normalization=None):
     """
     Automatically loads a series of templates from pre-determined directories.
     Deprecated.
@@ -77,9 +77,9 @@ def load_templates(normalization=None):
         Accepts: 'normalheight', 'normalarea', None
         How the dataset should be normalized.
 
-    Returns: 
+    Returns:
     --------
-    spectral_templates : Dictionary 
+    spectral_templates : Dictionary
         Contains all template spectra from predefined folders.
     """
     spectral_templates = {}
@@ -153,7 +153,7 @@ def load_templates(normalization=None):
         """
         Normalizes the spectrum data.
 
-        Parameters: 
+        Parameters:
         -----------
         location : 'string'
             Name of location for template background radiation.
@@ -167,16 +167,17 @@ def load_templates(normalization=None):
         --------
         Normalized temp_spectrum.
         """
-            temp_spectrum = an.read_spectrum(
-                './templates/background/background-'+location+'.spe')
-            if np.max(temp_spectrum) == 0:
-                print(ID + ' Contains no values')
-            if normalization is None:
-                return temp_spectrum
-            elif normalization == 'normalheight':
-                return temp_spectrum/np.max(temp_spectrum)
-            elif normalization == 'normalarea':
-                return temp_spectrum/np.sum(temp_spectrum)
+        temp_spectrum = an.read_spectrum('./templates/' +
+                                         'background/background-' +
+                                         location + '.spe')
+        if np.max(temp_spectrum) == 0:
+            print('spectrum contains no values')
+        if normalization is None:
+            return temp_spectrum
+        elif normalization == 'normalheight':
+            return temp_spectrum / np.max(temp_spectrum)
+        elif normalization == 'normalarea':
+            return temp_spectrum / np.sum(temp_spectrum)
 
     for location in background_locations:
         spectral_templates['background'][location] = normalize_spectrum(

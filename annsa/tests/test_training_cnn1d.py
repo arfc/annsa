@@ -1,15 +1,11 @@
 from __future__ import absolute_import, division, print_function
-import os.path as op
 import numpy as np
 import tensorflow as tf
-import annsa as an
 
-from sklearn.datasets import make_classification
-from sklearn.preprocessing import LabelBinarizer, FunctionTransformer
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
 
-from annsa.model_classes import (cnn1d_model_features,
-                                 generate_random_cnn1d_architecture,
+from annsa.model_classes import (generate_random_cnn1d_architecture,
                                  CNN1D)
 from annsa.load_dataset import load_dataset
 
@@ -19,15 +15,15 @@ tf.enable_eager_execution()
 def construct_cnn1d():
     """
     Constructs a convolutional neural network and tests construction
-    functions. 
+    functions.
 
     Returns:
     --------
     model_features : class cnn1d_model_features
         Contains all features of the CNN1D model
 
-    optimizer : 
-    An Operation that updates the variables in var_list. 
+    optimizer :
+    An Operation that updates the variables in var_list.
     If global_step was not None, that operation also increments
     global_step. See documentation for tf.train.Optimizer
 
@@ -61,7 +57,7 @@ def test_cnn1d_construction():
 
     Returns: Nothing
 
-    Note: _ = something --> Initializes 'something', but does not 
+    Note: _ = something --> Initializes 'something', but does not
                             store anything in memory.
     """
     _, _, _ = construct_cnn1d()

@@ -2,7 +2,6 @@ numpy
 scipy
 matplotlib
 pandas
-pytest
 tensorflow
 scikit-learn
 pandas

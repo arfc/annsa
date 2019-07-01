@@ -3,11 +3,9 @@ import pickle
 import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.eager as tfe
-from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
 from tensorflow.image import resize_images
 from tensorflow.keras.initializers import he_normal, glorot_normal
-import time
 from random import choice
 
 # ##############################################################
@@ -227,7 +225,6 @@ class BaseClass(object):
                     obj_cost,
                     optimizer,
                     data_augmentation):
-
         """
         Trains model on a single epoch using mini-batch training.
 
@@ -251,16 +248,16 @@ class BaseClass(object):
         """
         for (input_data, target) in tfe.Iterator(
                 train_dataset_tensor.shuffle(int(1e8)).batch(self.batch_size)):
-                input_data = data_augmentation(input_data)
-                # check if data_augmentation returns separate source and
-                # background
-                if input_data.shape[1] == 2:
-                    target = input_data[:, 1]
-                    input_data = input_data[:, 0]
-                grads = self.grads_fn(input_data,
-                                      target,
-                                      obj_cost)
-                optimizer.apply_gradients(zip(grads, self.variables))
+            input_data = data_augmentation(input_data)
+            # check if data_augmentation returns separate source and
+            # background
+            if input_data.shape[1] == 2:
+                target = input_data[:, 1]
+                input_data = input_data[:, 0]
+            grads = self.grads_fn(input_data,
+                                  target,
+                                  obj_cost)
+            optimizer.apply_gradients(zip(grads, self.variables))
         return None
 
     def check_earlystop(self, earlystop_cost, earlystop_patience):
@@ -360,7 +357,6 @@ class BaseClass(object):
         train_dataset_tensor = tf.data.Dataset.from_tensor_slices(
             (tf.constant(train_dataset[0]), tf.constant(train_dataset[1])))
 
-        time_start = time.time()
         for epoch in range(num_epochs):
             # Train through one epoch
             self.train_epoch(train_dataset_tensor,
@@ -416,10 +412,10 @@ class BaseClass(object):
                              obj_cost,
                              training=False))
             # Print errors at end of epoch
-            if (print_errors and ((epoch+1) % verbose == 0)) is True:
+            if (print_errors and ((epoch + 1) % verbose == 0)) is True:
                 print('Epoch %d: CostFunc loss: %3.2f %3.2f, '
                       'EarlyStop loss: %3.2f %3.2f' % (
-                          epoch+1,
+                          epoch + 1,
                           objective_cost['train'][-1],
                           objective_cost['test'][-1],
                           earlystop_cost['train'][-1],
@@ -432,8 +428,8 @@ class BaseClass(object):
                 break
             # Apply early stopping if not learning
             if (not_learning_patience and
-               (epoch > not_learning_patience) and
-               (earlystop_cost['test'][-1] > not_learning_threshold)):
+                (epoch > not_learning_patience) and
+                    (earlystop_cost['test'][-1] > not_learning_threshold)):
                 break
 
         return [objective_cost, earlystop_cost]
@@ -461,11 +457,12 @@ class DNN(tf.keras.Model, BaseClass):
 
     '__init__' : constructor
     'forward_pass' : Runs a forward pass throught the network
-    'loss_fn' : 
+    'loss_fn' :
 
 
 
     """
+
     def __init__(self, model_features):
         """
         Initializes dnn structure with model features.
@@ -578,7 +575,6 @@ class dnn_model_features(object):
     '__init__' : Constructor
     """
 
-
     def __init__(self, learning_rate,
                  l2_regularization_scale,
                  dropout_probability,
@@ -588,32 +584,31 @@ class dnn_model_features(object):
                  activation_function,
                  scaler
                  ):
-
         """
         @author: Sam Dotson
 
         Parameters
         ----------
         learning_rate : float
-            How much the weights update due to back propagation of the 
-            error/loss function. 
+            How much the weights update due to back propagation of the
+            error/loss function.
         l2_regularization_scale : float
-            The loss penalty for regularization type l2. If the model 
+            The loss penalty for regularization type l2. If the model
             attempts to increase the weights, it will only be accepted
-            if there is an equal or greater decrease in the error 
+            if there is an equal or greater decrease in the error
             function.
         dropout_probability : float
-            The probability that any neuron will be temporarily turned 
-            off during training. Example: dropout_probability = 0.4 
-            means there is a 40% probability of the neuron turning off. 
-            batch_size : int 
-            'batch_size' is the number of spectra/images being passed 
-            through the network at once. For reference, one epoch is 
-            the size of all training data. 
+            The probability that any neuron will be temporarily turned
+            off during training. Example: dropout_probability = 0.4
+            means there is a 40% probability of the neuron turning off.
+            batch_size : int
+            'batch_size' is the number of spectra/images being passed
+            through the network at once. For reference, one epoch is
+            the size of all training data.
         output_size : Array/Tuple
             The desired dimensions of your output, typically [nx1]
         dense_nodes : int
-            The desired number of nodes in a dense layer. 
+            The desired number of nodes in a dense layer.
         activation_function : Tensorflow activation function.
             Example: tf.nn.relu
         scaler : tensorflow scaling function
@@ -652,18 +647,6 @@ class CNN1D(tf.keras.Model, BaseClass):
         network.
 
         """
-
-        #=========================Notes======================#
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #================Delete this section later===========#
-        
         self.batch_size = model_features.batch_size
         output_size = model_features.output_size
         self.scaler = model_features.scaler
@@ -672,7 +655,6 @@ class CNN1D(tf.keras.Model, BaseClass):
         output_function = model_features.output_function
         cnn_filters = model_features.cnn_filters
         cnn_kernel = model_features.cnn_kernel
-        cnn_strides = model_features.cnn_strides
         pool_size = model_features.pool_size
         pool_strides = model_features.pool_strides
         Pooling = model_features.Pooling
@@ -753,7 +735,7 @@ class CNN1D(tf.keras.Model, BaseClass):
         return loss
 
     def forward_pass(self, input_data, training):
-        """ 
+        """
         Runs a forward-pass through the network. Outputs are defined by
         'output_layer' in the model's structure. The scaler is applied
         here.
@@ -790,7 +772,7 @@ class CNN1D(tf.keras.Model, BaseClass):
 class cnn1d_model_features(object):
 
     """
-    Defines the features of a CNN model. 
+    Defines the features of a CNN model.
     """
 
     def __init__(self,
@@ -811,35 +793,34 @@ class cnn1d_model_features(object):
                  dense_nodes,
                  activation_function,
                  ):
-
         """
         @Author: Sam Dotson
 
         Parameters
         ----------
         learning_rate : float
-            How much the weights update due to back propagation of the 
-            error/loss function. 
+            How much the weights update due to back propagation of the
+            error/loss function.
         trainable : boolean
             If true, optimization will be applied and weights will be
-            updated. 
-            False is used for prediction. 
-        output_function : 
+            updated.
+            False is used for prediction.
+        output_function :
 
         l2_regularization_scale : float
-            The loss penalty for regularization type l2. If the model 
+            The loss penalty for regularization type l2. If the model
             attempts to increase the weights, it will only be accepted
-            if there is an equal or greater decrease in the error 
+            if there is an equal or greater decrease in the error
             function.
         dropout_probability : float
-            The probability that any neuron will be temporarily turned 
-            off during training. Example: dropout_probability = 0.4 
-            means there is a 40% probability of the neuron turning off. 
+            The probability that any neuron will be temporarily turned
+            off during training. Example: dropout_probability = 0.4
+            means there is a 40% probability of the neuron turning off.
         scaler : Tensorflow scaling function
-        batch_size : int 
-            'batch_size' is the number of spectra/images being passed 
-            through the network at once. For reference, one epoch is 
-            the size of all training data. 
+        batch_size : int
+            'batch_size' is the number of spectra/images being passed
+            through the network at once. For reference, one epoch is
+            the size of all training data.
         Pooling : Tensorflow pooling function
         cnn_filters : int
             The number of filters in a convolutional layer.
@@ -848,11 +829,11 @@ class cnn1d_model_features(object):
             The values of an array will be taken as the desired dimens-
             ion size of the filter.
         cnn_strides: int
-            The stride size of each filter. How far it shifts per 
-            iteration. Typically stride size is one. 
+            The stride size of each filter. How far it shifts per
+            iteration. Typically stride size is one.
         pool_size : int or array/tuple
             'int':
-                Creates a square pool. 
+                Creates a square pool.
             'array' or 'tuple':
                 Creates a pool the size of elements in your tuple.
                 pool_strides : int
@@ -861,7 +842,7 @@ class cnn1d_model_features(object):
         output_size : Array/Tuple
             The desired dimensions of your output, typically [nx1]
         dense_nodes : int
-            The desired number of nodes in a dense layer. 
+            The desired number of nodes in a dense layer.
         activation_function : Tensorflow activation function
             Example: tf.nn.relu
 
@@ -894,7 +875,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     @author: Sam Dotson
 
     Parameters:
-    ----------- 
+    -----------
     cnn_filters_choices : 1-D array-like or int
         Input a choice of ..............
 
@@ -915,37 +896,37 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     cnn_kernel_choice = choice(cnn_kernel_choices)
     pool_size_choice = choice(pool_size_choices)
 
-    cnn_kernel = cnn_kernel_choice*(len(cnn_filters))
-    cnn_strides = (1,)*(len(cnn_filters))
-    pool_size = pool_size_choice*(len(cnn_filters))
-    pool_strides = (2,)*(len(cnn_filters))
+    cnn_kernel = cnn_kernel_choice * (len(cnn_filters))
+    cnn_strides = (1,) * (len(cnn_filters))
+    pool_size = pool_size_choice * (len(cnn_filters))
+    pool_strides = (2,) * (len(cnn_filters))
 
     number_layers = np.random.randint(1, 4)
     dense_nodes = (10**np.random.uniform(1,
-                                         np.log10(1024/(2**len(
+                                         np.log10(1024 / (2**len(
                                              cnn_filters))),
                                          number_layers)).astype('int')
     dense_nodes = np.sort(dense_nodes)
     dense_nodes = np.flipud(dense_nodes)
 
     model_features = cnn1d_model_features(
-            trainable=None,
-            learning_rate=None,
-            batch_size=None,
-            output_size=None,
-            scaler=None,
-            activation_function=None,
-            output_function=None,
-            Pooling=None,
-            l2_regularization_scale=None,
-            dropout_probability=None,
-            cnn_filters=cnn_filters,
-            cnn_kernel=cnn_kernel,
-            cnn_strides=cnn_strides,
-            pool_size=pool_size,
-            pool_strides=pool_strides,
-            dense_nodes=dense_nodes
-            )
+        trainable=None,
+        learning_rate=None,
+        batch_size=None,
+        output_size=None,
+        scaler=None,
+        activation_function=None,
+        output_function=None,
+        Pooling=None,
+        l2_regularization_scale=None,
+        dropout_probability=None,
+        cnn_filters=cnn_filters,
+        cnn_kernel=cnn_kernel,
+        cnn_strides=cnn_strides,
+        pool_size=pool_size,
+        pool_strides=pool_strides,
+        dense_nodes=dense_nodes
+    )
 
     return model_features
 
@@ -967,7 +948,6 @@ class DAE(tf.keras.Model, BaseClass):
     summary of what they do!
 
     """
-
 
     def __init__(self, model_features):
         super(DAE, self).__init__()
@@ -1075,14 +1055,14 @@ class DAE(tf.keras.Model, BaseClass):
         return decoding
 
     def total_activity(self, input_data, training=False):
-        """ 
+        """
         Calculates the total network activity (l1 activation) on
         some input data.
-            
+
         Parameters:
         -----------
             input_data : 2D tensor of shape (n_samples, n_features).
-        
+
         Returns:
         --------
         average_activity : float
@@ -1100,7 +1080,7 @@ class DAE(tf.keras.Model, BaseClass):
             x = self.dense_layers_decoder[str(layer)](x)
             activity += np.sum(np.abs(x))
             x = self.dropout_layers_encoder[str(layer)](x, training)
-        average_activity = activity/int(input_data.shape[0])
+        average_activity = activity / int(input_data.shape[0])
         return average_activity
 
     def forward_pass(self, input_data, training):
@@ -1190,7 +1170,7 @@ class dae_model_features(object):
             off during training. Example: dropout_probability = 0.4
             means there is a 40% probability of the neuron turning off.
         scaler : Tensorflow scaling function
-        batch_size : int 
+        batch_size : int
             'batch_size' is the number of spectra/images being passed
             through the network at once. For reference, one epoch is
         output_size : Array/Tuple
@@ -1222,14 +1202,15 @@ class dae_model_features(object):
 # ##############################################################
 
 
-class CAE(tf.keras.Model, BaseClass): 
+class CAE(tf.keras.Model, BaseClass):
     """
     FUNCTIONS
 
     Under the class -- list the member functions and a short
     summary of what they do!
-    
+
     """
+
     def __init__(self, model_features):
         super(CAE, self).__init__()
         """
@@ -1244,7 +1225,6 @@ class CAE(tf.keras.Model, BaseClass):
         output_function = model_features.output_function
         cnn_filters_encoder = model_features.cnn_filters_encoder
         cnn_kernel_encoder = model_features.cnn_kernel_encoder
-        cnn_strides_encoder = model_features.cnn_strides_encoder
         pool_size_encoder = model_features.pool_size_encoder
         pool_strides_encoder = model_features.pool_strides_encoder
         cnn_filters_decoder = model_features.cnn_filters_decoder
@@ -1285,7 +1265,7 @@ class CAE(tf.keras.Model, BaseClass):
 
         # Define hidden layers for encoder
         self.conv_layers_decoder = {}
-        for layer in range(len(cnn_filters_decoder)-1):
+        for layer in range(len(cnn_filters_decoder) - 1):
             self.conv_layers_decoder[str(layer)] = tf.layers.Conv1D(
                 filters=cnn_filters_decoder[layer],
                 kernel_size=cnn_kernel_decoder[layer],
@@ -1293,7 +1273,7 @@ class CAE(tf.keras.Model, BaseClass):
                 padding='same',
                 kernel_initializer=kernel_initializer,
                 activation=activation_function)
-        self.conv_layers_decoder[str(layer+1)] = tf.layers.Conv1D(
+        self.conv_layers_decoder[str(layer + 1)] = tf.layers.Conv1D(
             filters=cnn_filters_decoder[-1],
             kernel_size=cnn_kernel_decoder[-1],
             strides=cnn_strides_decoder[-1],
@@ -1322,8 +1302,7 @@ class CAE(tf.keras.Model, BaseClass):
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1], 1])
-        layer_list = list(self.conv_layers_encoder.keys())
-        layer_list.sort()
+        layer_list = sorted(self.conv_layers_encoder.keys())
         for layer in layer_list:
             x = self.conv_layers_encoder[str(layer)](x)
             x = self.pool_layers_encoder[str(layer)](x)
@@ -1350,12 +1329,11 @@ class CAE(tf.keras.Model, BaseClass):
 
         """
         x = encoding
-        layer_list = list(self.conv_layers_decoder.keys())
-        layer_list.sort()
+        layer_list = sorted(self.conv_layers_decoder.keys())
         for layer in layer_list:
             x = tf.reshape(x, (x.shape[0], x.shape[1], x.shape[2], 1))
             # upscale image by 2x
-            x = resize_images(x, [x.shape[1]*2, 1])
+            x = resize_images(x, [x.shape[1] * 2, 1])
             x = tf.reshape(x, (x.shape[0], x.shape[1], x.shape[2]))
             x = self.conv_layers_decoder[str(layer)](x)
             'decoder conv ' + str(x.shape)
@@ -1444,7 +1422,7 @@ class cae_model_features(object):
             error/loss function.
         encoder_trainable : boolean
             If true, optimization will be applied and weights will be
-            updated. 
+            updated.
             False is used for prediction.
         output_function :
 
@@ -1458,10 +1436,10 @@ class cae_model_features(object):
             off during training. Example: dropout_probability = 0.4
             means there is a 40% probability of the neuron turning off.
         scaler : Tensorflow scaling function
-        batch_size : int 
+        batch_size : int
             'batch_size' is the number of spectra/images being passed
             through the network at once. For reference, one epoch is
-            the size of all training data. 
+            the size of all training data.
         Pooling : Tensorflow pooling function
         cnn_filters_encoder : int
             The number of filters in a convolutional layer.
@@ -1471,10 +1449,10 @@ class cae_model_features(object):
             ion size of the filter.
         cnn_strides_encoder: int
             The stride size of each filter. How far it shifts per
-            iteration. Typically stride size is one. 
+            iteration. Typically stride size is one.
         pool_size_encoder : int or array/tuple
             'int':
-                Creates a square pool. 
+                Creates a square pool.
             'array' or 'tuple':
                 Creates a pool the size of elements in your tuple.
         pool_strides_encoder : int
@@ -1548,11 +1526,11 @@ def generate_random_cae_architecture(cnn_filters_encoder_choices,
     cnn_filters_encoder = cnn_filters_encoder_choices[
         cnn_filters_encoder_choice]
     cnn_kernel_encoder = cnn_kernel_encoder_choices[
-        cnn_kernel_encoder_choice]*(len(cnn_filters_encoder_choices))
-    cnn_strides_encoder = (1,)*(len(cnn_filters_encoder_choices))
-    pool_size_encoder = pool_size_encoder_choices[pool_size_encoder_choice]*(
+        cnn_kernel_encoder_choice] * (len(cnn_filters_encoder_choices))
+    cnn_strides_encoder = (1,) * (len(cnn_filters_encoder_choices))
+    pool_size_encoder = pool_size_encoder_choices[pool_size_encoder_choice] * (
         len(cnn_filters_encoder_choices))
-    pool_strides_encoder = (2,)*(len(cnn_filters_encoder_choices))
+    pool_strides_encoder = (2,) * (len(cnn_filters_encoder_choices))
 
     # #############
     # ## Decoder ##
@@ -1562,21 +1540,21 @@ def generate_random_cae_architecture(cnn_filters_encoder_choices,
     cnn_strides_decoder = cnn_strides_encoder
 
     model_features = cae_model_features(
-            encoder_trainable=None,
-            learning_rate=None,
-            batch_size=None,
-            scaler=None,
-            activation_function=None,
-            output_function=None,
-            Pooling=None,
-            cnn_filters_encoder=cnn_filters_encoder,
-            cnn_kernel_encoder=cnn_kernel_encoder,
-            cnn_strides_encoder=cnn_strides_encoder,
-            pool_size_encoder=pool_size_encoder,
-            pool_strides_encoder=pool_strides_encoder,
-            cnn_filters_decoder=cnn_filters_decoder,
-            cnn_kernel_decoder=cnn_kernel_decoder,
-            cnn_strides_decoder=cnn_strides_decoder)
+        encoder_trainable=None,
+        learning_rate=None,
+        batch_size=None,
+        scaler=None,
+        activation_function=None,
+        output_function=None,
+        Pooling=None,
+        cnn_filters_encoder=cnn_filters_encoder,
+        cnn_kernel_encoder=cnn_kernel_encoder,
+        cnn_strides_encoder=cnn_strides_encoder,
+        pool_size_encoder=pool_size_encoder,
+        pool_strides_encoder=pool_strides_encoder,
+        cnn_filters_decoder=cnn_filters_decoder,
+        cnn_kernel_decoder=cnn_kernel_decoder,
+        cnn_strides_decoder=cnn_strides_decoder)
 
     return model_features
 
@@ -1646,7 +1624,7 @@ def train_earlystop(training_data,
     augment_testing_data : boolean, optional
         Decides whether to augment testing data. Default is False.
     fit_batch_verbose : int, optional
-        The frequency that the output of fit_batch is printed. 
+        The frequency that the output of fit_batch is printed.
     record_train_errors : boolean, optional
         Decides whether to record training error. Default is False.
         If True, will print model errors after each epoch.
@@ -1708,15 +1686,15 @@ def save_model(folder_name, model_id, model, model_features):
     The variable that contains the instance of the neural network
     that you want to save.
     model_features : object
-    Variable that contains all of the features of your model. 
+    Variable that contains all of the features of your model.
 
     Returns:
     --------
     Nothing. This function simply saves the model.
     """
     saver = tfe.Saver(model.variables)
-    saver.save(folder_name+'/'+model_id)
-    with open(folder_name+'/'+model_id+'_features', 'w') as f:
+    saver.save(folder_name + '/' + model_id)
+    with open(folder_name + '/' + model_id + '_features', 'w') as f:
         pickle.dump(model_features, f)
 
 
@@ -1742,7 +1720,7 @@ def load_model(model_folder,
     new_model_features.scaler : tensorflow scaling function
     """
     # load model features (number of layers, nodes)
-    with open('./'+model_folder+'/'+model_id+'_features') as f:
+    with open('./' + model_folder + '/' + model_id + '_features') as f:
         new_model_features = pickle.load(f)
 
     # Initialize variables by running a single training iteration
@@ -1767,7 +1745,7 @@ def load_model(model_folder,
 
     # Restore saved variables
     saver = tfe.Saver(model.variables)
-    saver.restore('./'+model_folder+'/'+model_id)
+    saver.restore('./' + model_folder + '/' + model_id)
 
     return model, new_model_features.scaler
 
