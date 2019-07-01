@@ -45,7 +45,7 @@ def test_check_earlystop_case1():
     earlystop_patience = 0
     epoch = 5
     stopped = base.check_earlystop(epoch, earlystop_cost[:epoch], earlystop_patience)
-    assert (stopped==False), "Early stopping is turned off, should not have stopped."
+    assert(stopped==False), "With earlystopping_patience=0, check_earlystop should return False.")
 
 def test_check_earlystop_case2():
     """case 2: not enough epochs have passed"""
