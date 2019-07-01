@@ -51,7 +51,6 @@ class SpectrumData(object):
 		values = parse_fname(self.filename)
 
 		#read in the data from the file
-
 		value.append(spectrum) #spectrum is a list
 
 		dictionary = {}
