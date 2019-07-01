@@ -2,7 +2,7 @@ import pandas as pd
 from annsa.template_sampling import make_random_spectrum
 import os
 
-class spectrum_data(object):
+class SpectrumData(object):
 	"""docstring for spectrum_data"""
 	def __init__(self, filename, folder=False, ae=False, csv=False, online=False):
 		"""
