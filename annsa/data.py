@@ -52,7 +52,6 @@ class SpectrumData(object):
 
 		#read in the data from the file
 		#...
-		#...
 
 		value.append(spectrum) #spectrum is a list
 
