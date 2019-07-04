@@ -1,9 +1,7 @@
-import pickle
 import numpy as np
 import pandas as pd
 from sklearn.datasets import make_classification
-from sklearn.preprocessing import LabelBinarizer, FunctionTransformer
-from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import LabelBinarizer
 
 
 def load_easy(source_dataset, background_dataset):
@@ -34,13 +32,13 @@ def load_easy(source_dataset, background_dataset):
     source_dataset = source_dataset[source_dataset['shieldingdensity'] != 0.22]
 
     # remove empty spectra
-    zero_count_indicies = np.argwhere(np.sum(source_dataset.values[:, 6:],
-                                             axis=1) == 0).flatten()
+    zero_count_indicies = np.argwhere(
+        np.sum(source_dataset.values[:, 6:], axis=1) == 0).flatten()
 
     print('indicies dropped: ' + str(zero_count_indicies))
 
-    source_dataset.drop(source_dataset.index[zero_count_indicies],
-                        inplace=True)
+    source_dataset.drop(
+        source_dataset.index[zero_count_indicies], inplace=True)
 
     # Add empty spectra for background
     blank_spectra = []
@@ -50,7 +48,7 @@ def load_easy(source_dataset, background_dataset):
                                       source_dataset['isotope'].iloc()[0])
                                       ].shape[0]
         for k in range(num_examples):
-            blank_spectra_tmp = [0]*1200
+            blank_spectra_tmp = [0] * 1200
             blank_spectra_tmp[5] = fwhm
             blank_spectra_tmp[0] = 'background'
             blank_spectra_tmp[3] = 'background'
@@ -103,7 +101,7 @@ def load_full(source_dataset, background_dataset):
             (source_dataset['isotope'] ==
              source_dataset['isotope'].iloc()[0])].shape[0]
         for k in range(num_examples):
-            blank_spectra_tmp = [0]*1200
+            blank_spectra_tmp = [0] * 1200
             blank_spectra_tmp[5] = fwhm
             blank_spectra_tmp[0] = 'background'
             blank_spectra_tmp[3] = 'background'
@@ -133,6 +131,7 @@ def dataset_to_spectrakeys(dataset):
 
     return spectra, keys
 
+
 def load_dataset(kind='nn'):
     """
     Generates dummy data using 'sklearn.datasets.make_classification()'. 
@@ -142,7 +141,7 @@ def load_dataset(kind='nn'):
     kind : string, optional
         A string describing what kind of neural network this dataset
         will be used for. Default is 'nn.'
-        Accepts: 
+        Accepts:
         'nn' (standard convolution or dense neural networks)
         'ae' (autoencoder)
 
@@ -154,7 +153,7 @@ def load_dataset(kind='nn'):
         format.
     test_dataset : tuple of [test_data, testing_keys_binarized]
         Contains the testing data and the labels in a binarized
-        format. 
+        format.
     """
 
     training_dataset = make_classification(n_samples=100,
@@ -169,13 +168,13 @@ def load_dataset(kind='nn'):
 
     mlb = LabelBinarizer()
 
-    #transform the training data
+    # transform the training data
     training_data = np.abs(training_dataset[0])
     training_keys = training_dataset[1]
     training_keys_binarized = mlb.fit_transform(
         training_keys.reshape([training_data.shape[0], 1]))
-    
-    #transform the testing data
+
+    # transform the testing data
     testing_data = np.abs(testing_dataset[0])
     testing_keys = testing_dataset[1]
     testing_keys_binarized = mlb.transform(
