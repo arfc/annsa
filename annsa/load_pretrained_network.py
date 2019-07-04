@@ -2,13 +2,13 @@ from __future__ import print_function
 import tensorflow as tf
 import pickle
 import numpy as np
-import os
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer
 
 from annsa.model_classes import (cnn1d_model_features,
                                  CNN1D,
                                  CAE,
+                                 DNN,
+                                 DAE,
+                                 dnn_model_features,
                                  )
 
 
@@ -144,10 +144,9 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         pool_strides=cae_features.pool_strides_encoder,
         dense_nodes=cnn_dense_nodes,
         activation_function=activation_function,
-        )
+    )
 
     CNN_model = CNN1D(model_features_CNN)
-    optimizer = tf.train.AdamOptimizer(model_features_CNN.learining_rate)
 
     # need to do a forward pass to initialize weights
     dummy_data = np.zeros(1024)
@@ -157,4 +156,78 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         CNN_model.layers[i].set_weights(CAE_model.layers[i].get_weights())
 
     return CNN_model, model_features_CNN
+
+
+def load_pretrained_dae_into_dnn(dae_features_filename,
+                                 dae_weights_filename,
+                                 dnn_dense_nodes=[128],
+                                 learining_rate=1e-4,
+                                 batch_size=32,
+                                 output_size=30,
+                                 activation_function=tf.nn.tanh,
+                                 l2_regularization_scale=0.0,
+                                 dropout_probability=0.0):
+    '''
+    Initialized a CNN with a pretrained CAE for fine-tuning.
+
+    inputs:
+        dae_features_filename : str
+            Filname location of the pickle file containing the DAE features
+        dae_weights_filename : str
+            Filname location of the file containing the DAE pretrained weights
+        dnn_dense_nodes : list, int (optional)
+            List of integers describing the untrained dense part of the DNN
+        learining_rate : float (optional)
+            Learning rate for the DNN
+        batch_size : int (optional)
+            Training batch size for the DNN
+        output_size : int (optional)
+            Output size for the DNN
+        activation_function : tensorflow function
+            Activation function for the entire DNN
+        l2_regularization_scale : float (optional)
+            The dropout probability for all dense layers
+        dropout_probability : float (optional)
+            The dropout probability for all dense layers
+    outputs:
+        DNN_model : Keras model class
+            The class containing the keras model with pretrained weights
+        model_features_DNN : model features class
+            The class containing the model features.
+    '''
+
+    dae_features = load_features(dae_features_filename)
+    DAE_model = DAE(dae_features)
+    if dae_weights_filename:
+        DAE_model.load_weights(dae_weights_filename)
+
+    # need to do a forward pass to initialize weights
+    dummy_data = np.zeros(1024)
+    _ = DAE_model.encoder([dummy_data])
+
+    dense_nodes = DAE_model.dense_nodes_encoder + dnn_dense_nodes
+
+    model_features_DNN = dnn_model_features(
+        learining_rate=learining_rate,
+        batch_size=batch_size,
+        output_size=output_size,
+        output_function=None,
+        l2_regularization_scale=l2_regularization_scale,
+        dropout_probability=dropout_probability,
+        scaler=DAE_model.scaler,
+        dense_nodes=dense_nodes,
+        activation_function=activation_function,
+        )
+
+    DNN_model = DNN(model_features_DNN)
+    optimizer = tf.train.AdamOptimizer(model_features_DNN.learining_rate)
+
+    # need to do a forward pass to initialize weights
+    dummy_data = np.zeros(1024)
+    _ = DNN_model.predict_class([dummy_data])
+
+    for i in range(len(dae_features.dense_nodes_encoder)):
+        DNN_model.layers[i].set_weights(DAE_model.layers[i].get_weights())
+
+    return DNN_model, model_features_DNN
 

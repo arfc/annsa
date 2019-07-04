@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from scipy.interpolate import griddata
 import tensorflow as tf
 
@@ -50,7 +49,7 @@ def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
             The rebinned spectrum template
     """
 
-    new_bin_positions = a + b*np.arange(1194) + c*np.arange(1194)**2
+    new_bin_positions = a + b * np.arange(1194) + c * np.arange(1194)**2
 
     spectrum_template = griddata(np.arange(1194),
                                  spectrum_template,
@@ -75,7 +74,7 @@ def poisson_sample_template(template, total_counts):
             The poisson sampled spectrum
     """
 
-    template_probability = template/np.sum(template)
+    template_probability = template / np.sum(template)
     template_poiss_sampled = np.random.poisson(total_counts *
                                                template_probability)
 
@@ -95,7 +94,7 @@ def apply_LLD(spectrum, LLD=10):
     Returns:
     --------
         spectrum : vector
-            The spectrum with LLD channels set to 0
+            The spectrum with channels in the LLD set to 0
     """
     spectrum[0:LLD] = 0
     return spectrum
@@ -121,10 +120,10 @@ def make_random_spectrum(source_data,
         background_dataset : dataframe
             contains the background template data
         background_cps : float, optional
-            Determines the statistics for background radiation. 
+            Determines the count rate for background radiation.
             Default is 120 counts per second (cps)
         integration_time : float, optional
-            Sets the integration time for a simulated detector in 
+            Sets the integration time for a simulated detector in
             seconds.
             Default is 600 seconds
         signal_to_background : float, optional
@@ -150,12 +149,11 @@ def make_random_spectrum(source_data,
     c = calibration[2]
 
     # Make source spectrum
-    source_counts = background_cps*integration_time*signal_to_background
-    #verifies that the source data is a tensorflow tensor. 
+    source_counts = background_cps * integration_time * signal_to_background
     if type(source_data) == np.ndarray:
         source_data = tf.convert_to_tensor(source_data)
 
-    #Checks if a single spectrum. 
+    # Checks if a single spectrum.
     if tf.contrib.framework.is_tensor(source_data):
         source_spectrum = source_data
         fwhm = source_spectrum.numpy()[0]
@@ -163,12 +161,12 @@ def make_random_spectrum(source_data,
         if np.count_nonzero(source_spectrum) > 0:
             source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
             source_spectrum = apply_LLD(source_spectrum, LLD)
-            source_spectrum /= np.sum(source_spectrum) #normalizes
-            source_spectrum *= source_counts #rescales
+            source_spectrum /= np.sum(source_spectrum)  # normalizes
+            source_spectrum *= source_counts  # rescales
         else:
             source_spectrum = source_spectrum[:1024]
 
-    #if the source data is a pandas dataframe.
+    # if the source data is a pandas dataframe.
     else:
         for key, value in kwargs.items():
             source_data = source_data[source_data[key] == value]
@@ -176,11 +174,12 @@ def make_random_spectrum(source_data,
         # if (source_data['isotope'] != 'background' and
         #    np.count_nonzero(source_spectrum) == 1024):
         #    # resample if template is non-background and empty
-        source_spectrum = source_data.sample().values[0][6:] #turns the selected spectrum into a ndarray
+        # turns the selected spectrum into a ndarray
+        source_spectrum = source_data.sample().values[0][6:]
         source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
         source_spectrum = apply_LLD(source_spectrum, LLD)
-        source_spectrum /= np.sum(source_spectrum) #normalizes 
-        source_spectrum *= source_counts #rescales
+        source_spectrum /= np.sum(source_spectrum)  # normalizes
+        source_spectrum *= source_counts  # rescales
         if 'fwhm' in kwargs:
             fwhm = kwargs['fwhm']
 
@@ -189,13 +188,54 @@ def make_random_spectrum(source_data,
         background_dataset,
         fwhm,
         cosmic=0)
-    background_counts = background_cps*integration_time
+    background_counts = background_cps * integration_time
     background_spectrum = rebin_spectrum(background_spectrum, a, b, c)
     background_spectrum = apply_LLD(background_spectrum, LLD)
     background_spectrum /= np.sum(background_spectrum)
     background_spectrum *= background_counts
-
     return source_spectrum, background_spectrum
+
+
+def online_data_augmentation_easy():
+    '''
+    Returns data augmentation parameters for the easy dataset setting
+    '''
+    def integration_time():
+        return 10**np.random.uniform(np.log10(60), np.log10(600))
+
+    def background_cps():
+        return np.random.poisson(200)
+
+    def signal_to_background():
+        return np.random.uniform(0.5, 2)
+
+    def calibration():
+        return [np.random.uniform(0, 10),
+                np.random.uniform(2800/3000, 3200/3000),
+                0]
+
+    return integration_time, background_cps, signal_to_background, calibration
+
+
+def online_data_augmentation_full():
+    '''
+    Returns data augmentation parameters for the full dataset setting
+    '''
+    def integration_time():
+        return 10**np.random.uniform(np.log10(10), np.log10(3600))
+
+    def background_cps():
+        return np.random.poisson(200)
+
+    def signal_to_background():
+        return np.random.uniform(0.1, 2)
+
+    def calibration():
+        return [np.random.uniform(0, 10),
+                np.random.uniform(2500/3000, 3500/3000),
+                0]
+
+    return integration_time, background_cps, signal_to_background, calibration
 
 
 def online_data_augmentation_vanilla(background_dataset,
@@ -211,15 +251,15 @@ def online_data_augmentation_vanilla(background_dataset,
     background_dataset : dataframe
         contains the background template data
     background_cps : int
-        the number of counts per second due to background 
+        the number of counts per second due to background
         radiation.
     integration_time : float, optional
-        Sets the integration time for a simulated detector in 
+        Sets the integration time for a simulated detector in
         seconds.
     signal_to_background : float, optional
         The ratio of source signal to background signal.
     calibration : list, float
-        The calibration used for quadratic rebinning. 
+        The calibration used for quadratic rebinning.
         [a,b,c]; a = constant, b = linear, c = quadratic
 
     Returns:
@@ -253,7 +293,7 @@ def online_data_augmentation_vanilla(background_dataset,
             source_spectrum_poiss = np.random.poisson(source_spectrum)
             background_spectrum_poiss = np.random.poisson(background_spectrum)
             output_data.append(
-                tf.cast(source_spectrum_poiss+background_spectrum_poiss,
+                tf.cast(source_spectrum_poiss + background_spectrum_poiss,
                         tf.double))
         return tf.convert_to_tensor(output_data)
     return online_data_augmentation
@@ -264,7 +304,7 @@ def online_data_augmentation_ae(background_dataset,
                                 integration_time,
                                 signal_to_background,
                                 calibration,
-                                background_subtracting=True):
+                                background_subtracting=True,):
     """
     Augments datasets for autoencoders.
 
@@ -276,12 +316,12 @@ def online_data_augmentation_ae(background_dataset,
         the number of counts per second due to background
         radiation.
     integration_time : float, optional
-        Sets the integration time for a simulated detector in 
+        Sets the integration time for a simulated detector in
         seconds.
     signal_to_background : float, optional
         The ratio of source signal to background signal.
     calibration : list, float
-        The calibration used for quadratic rebinning. 
+        The calibration used for quadratic rebinning.
         [a,b,c]; a = constant, b = linear, c = quadratic
     background_subtracting : boolean, optional
         Subtracts background from signal. Default is True.
@@ -290,7 +330,7 @@ def online_data_augmentation_ae(background_dataset,
     Returns:
     --------
     online_data_augmentation : function
-        can be used as input data for model. 
+        can be used as input data for model.
     """
     def online_data_augmentation(input_data):
         """
@@ -320,15 +360,15 @@ def online_data_augmentation_ae(background_dataset,
             background_spectrum_poiss = np.random.poisson(background_spectrum)
             if background_subtracting:
                 output_data.append(
-                    [tf.cast(source_spectrum_poiss+background_spectrum_poiss,
+                    [tf.cast(source_spectrum_poiss + background_spectrum_poiss,
                              tf.double),
                      tf.cast(source_spectrum,
                              tf.double)])
             else:
                 output_data.append(
-                    [tf.cast(source_spectrum_poiss+background_spectrum_poiss,
+                    [tf.cast(source_spectrum_poiss + background_spectrum_poiss,
                              tf.double),
-                     tf.cast(source_spectrum+background_spectrum,
+                     tf.cast(source_spectrum + background_spectrum,
                              tf.double)])
         return tf.convert_to_tensor(output_data)
     return online_data_augmentation

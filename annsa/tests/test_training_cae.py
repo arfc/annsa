@@ -1,15 +1,11 @@
 from __future__ import absolute_import, division, print_function
-import os.path as op
 import numpy as np
 import tensorflow as tf
-import annsa as an
 
-from sklearn.datasets import make_classification
-from sklearn.preprocessing import LabelBinarizer, FunctionTransformer
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
 
-from annsa.model_classes import (cae_model_features,
-                                 generate_random_cae_architecture,
+from annsa.model_classes import (generate_random_cae_architecture,
                                  CAE)
 from annsa.load_dataset import load_dataset
 
@@ -17,7 +13,6 @@ tf.enable_eager_execution()
 
 
 def construct_cae():
-
     """
     Builds a convolutional autoencoder with a random architecture.
 
@@ -65,7 +60,8 @@ def test_cae_training():
 
     tf.reset_default_graph()
     model_features, optimizer, model = construct_cae()
-    train_dataset, test_dataset = load_dataset(kind='ae') #this should fail a test
+    train_dataset, test_dataset = load_dataset(
+        kind='ae')  # this should fail a test
     model_features.scaler.fit(train_dataset[0])
 
     all_loss_train, all_loss_test = model.fit_batch(

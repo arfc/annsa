@@ -1,11 +1,8 @@
 from __future__ import absolute_import, division, print_function
-import os.path as op
 import numpy as np
 import tensorflow as tf
-import annsa as an
 
-from sklearn.datasets import make_classification
-from sklearn.preprocessing import LabelBinarizer, FunctionTransformer
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
 
 from annsa.model_classes import (dae_model_features,
@@ -16,7 +13,6 @@ tf.enable_eager_execution()
 
 
 def construct_dae():
-
     """
     Constructs a dense autoencoder.
 
@@ -25,8 +21,8 @@ def construct_dae():
     model_features : class dae_model_features
         Contains all features of the DAE model
 
-    optimizer : 
-    An Operation that updates the variables in var_list. 
+    optimizer :
+    An Operation that updates the variables in var_list.
     If global_step was not None, that operation also increments
     global_step. See documentation for tf.train.Optimizer
 
@@ -51,7 +47,6 @@ def construct_dae():
 
 
 def test_dae_construction():
-
     """
     Tests construction of the dense autoencoder.
     """
