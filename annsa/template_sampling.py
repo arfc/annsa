@@ -140,10 +140,13 @@ def make_random_spectrum(source_data,
         #    np.count_nonzero(source_spectrum) == 1024):
         #    # resample if template is non-background and empty
         source_spectrum = source_data.sample().values[0][6:]
-        source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
-        source_spectrum = apply_LLD(source_spectrum, LLD)
-        source_spectrum /= np.sum(source_spectrum)
-        source_spectrum *= source_counts
+        if np.count_nonzero(source_spectrum) > 0:
+            source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
+            source_spectrum = apply_LLD(source_spectrum, LLD)
+            source_spectrum /= np.sum(source_spectrum)
+            source_spectrum *= source_counts
+        else:
+            source_spectrum = source_spectrum[:1024]
         if 'fwhm' in kwargs:
             fwhm = kwargs['fwhm']
 

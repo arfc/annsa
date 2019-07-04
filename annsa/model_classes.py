@@ -72,7 +72,8 @@ class BaseClass(object):
             model's prediction given the inputs and the ground-truth
             target.
         """
-        if targets.shape[1] > 1:
+        # check if targets are a spectrum
+        if targets.shape[1] == input_data.shape[1]:
             targets = self.scaler.transform(targets)
 
         logits = self.forward_pass(input_data, training=training)
@@ -106,7 +107,7 @@ class BaseClass(object):
             the inputs and the ground-truth target.
         """
         # check if targets are a spectrum
-        if targets.shape[1] > 1:
+        if targets.shape[1] == input_data.shape[1]:
             targets = self.scaler.transform(targets)
         model_predictions = self.forward_pass(input_data, training=training)
         return tf.losses.mean_squared_error(targets, model_predictions)
@@ -229,7 +230,6 @@ class BaseClass(object):
                     obj_cost,
                     optimizer,
                     data_augmentation):
-
         """
         Trains model on a single epoch using mini-batch training.
 

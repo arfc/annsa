@@ -4,6 +4,10 @@ import pandas as pd
 
 
 def load_easy(source_dataset, background_dataset):
+    '''
+    Loads the easy version of the dataset. Adds empty spectra for background 
+    construction. 
+    '''
     source_dataset = source_dataset[source_dataset['fwhm'] == 7.5]
     source_dataset = source_dataset[source_dataset['sourcedist'] == 175.0]
     source_dataset = source_dataset[source_dataset['sourceheight'] == 100.0]
@@ -63,6 +67,10 @@ def load_easy(source_dataset, background_dataset):
 
 
 def load_full(source_dataset, background_dataset):
+    '''
+    Loads the full version of the dataset. Adds empty spectra for background 
+    construction. 
+    '''
     source_dataset = source_dataset[(source_dataset['fwhm'] == 7.0) |
                                     (source_dataset['fwhm'] == 7.5) |
                                     (source_dataset['fwhm'] == 8.0)]

@@ -402,8 +402,10 @@ def plot_f1_scores_bagged(dataframe,
                           model_ids,
                           all_models,
                           indep_variable,
-                          plot_label=None,
-                          **kwargs
+                          plot_label,
+                          linestyle,
+                          color,
+                          **kwargs,
                           ):
     '''
     Plots the F1 scores for model's in model_ids given some dataframe of spectra.
@@ -429,7 +431,8 @@ def plot_f1_scores_bagged(dataframe,
     mlb = LabelBinarizer()
     keys = list(set(dataframe['isotope']))
     mlb.fit(keys)
-    
+
+
     f1_scores_models = {}
     for key, value in kwargs.items():
         dataframe = dataframe[dataframe[key] == value]
@@ -446,9 +449,13 @@ def plot_f1_scores_bagged(dataframe,
 
         # f1_scores_models[model_id] = tmp_f1_scores
         if plot_label:
-            plt.plot(tmp_f1_scores, label = plot_label)
+            plt.plot(tmp_f1_scores,
+                     label=plot_label,
+                     linestyle=linestyle,)
         else:
-            plt.plot(tmp_f1_scores, label = model_id)
+            plt.plot(tmp_f1_scores,
+                     label=model_id,
+                     linestyle=linestyle,)
     plt.legend()
     plt.xlabel(indep_variable)
     plt.ylabel('F1 Score')
