@@ -40,6 +40,7 @@ def construct_dnn():
         output_size=2,
         dense_nodes=[100],
         activation_function=tf.nn.relu,
+       	output_function=None,
         scaler=scaler)
 
     optimizer = tf.train.AdamOptimizer(model_features.learning_rate)
