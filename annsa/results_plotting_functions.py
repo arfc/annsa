@@ -57,7 +57,7 @@ def hyperparameter_efficiency_plot(accuracy):
 
 
 def make_f1_scores(all_models, all_spectra, all_keys):
-    '''
+    """
     Makes a dict of f1 scores for some set of independent
     variables in a dataset
 
@@ -72,7 +72,7 @@ def make_f1_scores(all_models, all_spectra, all_keys):
     Outputs
         f1_scores : dict
             Dictionary containing F1 scores and model_id
-    '''
+    """
 
     # initialize empty scores
     f1_scores = {}
@@ -102,7 +102,7 @@ def make_dataset(source_dataset,
                  cal_c=0.0,
                  background_cps=200,
                  total_spectra=1e1):
-    '''
+    """
     Makes a dataset of spectra based on template source and background spectra
     and a number of options.
 
@@ -126,7 +126,7 @@ def make_dataset(source_dataset,
             DataFrame containing the model_id, F1 score, and options from
             kwargs
 
-    '''
+    """
     dataset = {'sources': [],
                'backgrounds': [],
                'keys': []}
@@ -323,7 +323,7 @@ def make_f1_scores_dataframe(models,
                              background_dataset,
                              total_spectra=1e1,
                              **kwargs,):
-    '''
+    """
     Makes a dataset of F1 scores for a list of models and dataset.
 
     Inputs
@@ -346,7 +346,7 @@ def make_f1_scores_dataframe(models,
         dataframe : Pandas DataFrame
             DataFrame containing the model_id, F1 score, and options from
             kwargs
-    '''
+    """
     keys = kwargs.keys()
     values = (kwargs[key] for key in keys)
     combinations = [dict(zip(keys, combination))
@@ -463,7 +463,28 @@ def plot_f1_scores(dataframe,
                    indep_variable,
                    plot_label=None,
                    **kwargs
-                   ):
+                   ): 
+
+    """
+    Plots the f1 error of the model.
+
+    Parameters:
+    -----------
+    dataframe : pandas dataframe
+        Dataframe containing the model and f1 score
+        for some spectra dataset.
+    all_models : dictionary
+        Dictionary containing all models
+    indep_variable : key
+        The key for accessing the data column
+        that contains the independent variable
+        data.
+    plot_labl : string
+
+    Returns:
+    --------
+    Nothing. This function generates a plot only.
+    """
 
     f1_scores = {}
     for key, value in kwargs.items():

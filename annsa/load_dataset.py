@@ -1,6 +1,9 @@
 import pickle
 import numpy as np
 import pandas as pd
+from sklearn.datasets import make_classification
+from sklearn.preprocessing import LabelBinarizer, FunctionTransformer
+from sklearn.pipeline import make_pipeline
 
 
 def load_easy(source_dataset, background_dataset):
@@ -129,3 +132,62 @@ def dataset_to_spectrakeys(dataset):
     keys = np.array(dataset.item()['keys'])
 
     return spectra, keys
+
+def load_dataset(kind='nn'):
+    """
+    Generates dummy data using 'sklearn.datasets.make_classification()'. 
+    See 'make_classification' documentation for more details.
+
+    Parameters:
+    kind : string, optional
+        A string describing what kind of neural network this dataset
+        will be used for. Default is 'nn.'
+        Accepts: 
+        'nn' (standard convolution or dense neural networks)
+        'ae' (autoencoder)
+
+
+    Returns:
+    -------
+    train_dataset : tuple of [train_data, training_keys_binarized]
+        Contains the training data and the labels in a binarized
+        format.
+    test_dataset : tuple of [test_data, testing_keys_binarized]
+        Contains the testing data and the labels in a binarized
+        format. 
+    """
+
+    training_dataset = make_classification(n_samples=100,
+                                           n_features=1024,
+                                           n_informative=200,
+                                           n_classes=2)
+
+    testing_dataset = make_classification(n_samples=100,
+                                          n_features=1024,
+                                          n_informative=200,
+                                          n_classes=2)
+
+    mlb = LabelBinarizer()
+
+    #transform the training data
+    training_data = np.abs(training_dataset[0])
+    training_keys = training_dataset[1]
+    training_keys_binarized = mlb.fit_transform(
+        training_keys.reshape([training_data.shape[0], 1]))
+    
+    #transform the testing data
+    testing_data = np.abs(testing_dataset[0])
+    testing_keys = testing_dataset[1]
+    testing_keys_binarized = mlb.transform(
+        testing_keys.reshape([testing_data.shape[0], 1]))
+
+    if kind == 'nn':
+        test_dataset = [testing_data, testing_keys_binarized]
+        train_dataset = [training_data, training_keys_binarized]
+
+    elif kind == 'ae':
+        train_dataset = [training_data, training_data]
+        test_dataset = [testing_data, testing_data]
+
+    return train_dataset, test_dataset
+

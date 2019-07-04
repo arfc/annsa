@@ -5,18 +5,20 @@ import tensorflow as tf
 
 
 def random_background_template_with_FWHM(background_dataset, FWHM, cosmic=0):
-    '''
-    inputs:
-        background_dataset : pandas dataframe
-            The spectrums template
+    """
+    Parameters:
+    -----------
+        background_dataset : dataframe
+            contains the background template data
         FWHM : float
             Desired FWHM parameter
         cosmic : bool (optional)
             Choice to include cosmic radiation
-    returns:
+    Returns:
+    --------
         random_background_spectrum : vector
             The full background spectrum
-    '''
+    """
 
     background_choices = background_dataset[
         (background_dataset['fwhm'] == FWHM) &
@@ -28,11 +30,12 @@ def random_background_template_with_FWHM(background_dataset, FWHM, cosmic=0):
 
 
 def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
-    '''
-    Rebins spectrum based on quadratic rebinning. Returns a 1024 channel
-    spectrum.
+    """
+    Rebins spectrum based on second order polynomial rebinning. Returns a 1024
+    channel spectrum.
 
-    inputs:
+    Parameters:
+    -----------
         spectrum_template : vector (1x1194)
             The spectrums template
         a : float
@@ -41,10 +44,11 @@ def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
             Linear rebinning term
         c : float
             Quadratic rebinning term
-    returns:
+    Returns:
+    --------
         rebinned_spectrum_template : vector (1x1194)
             The rebinned spectrum template
-    '''
+    """
 
     new_bin_positions = a + b*np.arange(1194) + c*np.arange(1194)**2
 
@@ -58,16 +62,18 @@ def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
 
 
 def poisson_sample_template(template, total_counts):
-    '''
-    inputs:
+    """
+    Parameters:
+    -----------
         template : vector
             The spectrums template
         total_counts : int
             The total expected counts in a spectrum
-    returns:
+    Returns:
+    --------
         template_poiss_sampled : vector
             The poisson sampled spectrum
-    '''
+    """
 
     template_probability = template/np.sum(template)
     template_poiss_sampled = np.random.poisson(total_counts *
@@ -77,16 +83,20 @@ def poisson_sample_template(template, total_counts):
 
 
 def apply_LLD(spectrum, LLD=10):
-    '''
-    inputs:
+    """
+    Applies a low level discriminator (LLD) to a channel.
+
+    Parameters:
+    -----------
         spectrum : vector
             The spectrum
         LLD : int
             The channel where the low level discriminator is applied
-    returns:
+    Returns:
+    --------
         spectrum : vector
-            The spectrum with LLD channelsset to 0
-    '''
+            The spectrum with LLD channels set to 0
+    """
     spectrum[0:LLD] = 0
     return spectrum
 
@@ -99,51 +109,79 @@ def make_random_spectrum(source_data,
                          calibration=[0, 1.0, 0],
                          LLD=10,
                          **kwargs,):
-    '''
-    inputs:
-        source_spectrum : vector
-            Vector containing the FWHM and spectrum for
-        background_dataset :
-            bla
-    returns:
+    """
+    This function uses source data and background data to generate
+    a random spectrum drawn from a statistical distribution.
+
+    Parameters:
+    -----------
+        source_data : vector
+            Vector containing the FWHM and spectrum from the main
+            radiation source.
+        background_dataset : dataframe
+            contains the background template data
+        background_cps : float, optional
+            Determines the statistics for background radiation. 
+            Default is 120 counts per second (cps)
+        integration_time : float, optional
+            Sets the integration time for a simulated detector in 
+            seconds.
+            Default is 600 seconds
+        signal_to_background : float, optional
+            The ratio of source signal to background signal.
+        calibration : list, optional
+            A list of parameters used for rebinning the data according
+            to a quadratic.
+            [a,b,c]; a = constant, b = linear, c = quadratic
+            Default is [0, 1.0, 0].
+        LLD : int, optional
+            Specifies the channel number for a low level discriminator (LLD).
+            Default is 10.
+
+    Returns:
+    --------
         source_spectrum : vector
             The 1024 length source spectrum
         background_spectrum : vector
             The 1024 length background spectrum
-    '''
+    """
     a = calibration[0]
     b = calibration[1]
     c = calibration[2]
 
     # Make source spectrum
     source_counts = background_cps*integration_time*signal_to_background
+    #verifies that the source data is a tensorflow tensor. 
     if type(source_data) == np.ndarray:
         source_data = tf.convert_to_tensor(source_data)
+
+    #Checks if a single spectrum. 
     if tf.contrib.framework.is_tensor(source_data):
-        # if single spectrum
         source_spectrum = source_data
         fwhm = source_spectrum.numpy()[0]
         source_spectrum = source_spectrum.numpy()[1:]
         if np.count_nonzero(source_spectrum) > 0:
             source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
             source_spectrum = apply_LLD(source_spectrum, LLD)
-            source_spectrum /= np.sum(source_spectrum)
-            source_spectrum *= source_counts
+            source_spectrum /= np.sum(source_spectrum) #normalizes
+            source_spectrum *= source_counts #rescales
         else:
             source_spectrum = source_spectrum[:1024]
+
+    #if the source data is a pandas dataframe.
     else:
-        # if dataset of spectra
         for key, value in kwargs.items():
             source_data = source_data[source_data[key] == value]
 
         # if (source_data['isotope'] != 'background' and
         #    np.count_nonzero(source_spectrum) == 1024):
         #    # resample if template is non-background and empty
-        source_spectrum = source_data.sample().values[0][6:]
+        # turns the selected spectrum into a ndarray
+        source_spectrum = source_data.sample().values[0][6:] 
         source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
         source_spectrum = apply_LLD(source_spectrum, LLD)
-        source_spectrum /= np.sum(source_spectrum)
-        source_spectrum *= source_counts
+        source_spectrum /= np.sum(source_spectrum) #normalizes 
+        source_spectrum *= source_counts #rescales
         if 'fwhm' in kwargs:
             fwhm = kwargs['fwhm']
 
@@ -208,11 +246,42 @@ def online_data_augmentation_vanilla(background_dataset,
                                      integration_time,
                                      signal_to_background,
                                      calibration,):
-    '''
+    """
+    Uses data augmentation to generate new data from a template datasets.
 
-    '''
-    
+    Parameters:
+    -----------
+    background_dataset : dataframe
+        contains the background template data
+    background_cps : int
+        the number of counts per second due to background 
+        radiation.
+    integration_time : float, optional
+        Sets the integration time for a simulated detector in 
+        seconds.
+    signal_to_background : float, optional
+        The ratio of source signal to background signal.
+    calibration : list, float
+        The calibration used for quadratic rebinning. 
+        [a,b,c]; a = constant, b = linear, c = quadratic
+
+    Returns:
+    --------
+    online_data_augmentation : function
+    """
     def online_data_augmentation(input_data):
+        """
+        Augments data using a template dataset.
+
+        Parameters:
+        -----------
+        input_data : numpy matrix
+            [nxm] matrix containing all datasets.
+
+        Returns:
+        --------
+        output_data : tensorflow Tensor
+        """
         output_data = []
         for source_data in input_data:
             if type(source_data) == 'numpy.ndarray':
@@ -239,11 +308,46 @@ def online_data_augmentation_ae(background_dataset,
                                 signal_to_background,
                                 calibration,
                                 background_subtracting=True,):
-    '''
+    """
+    Augments datasets for autoencoders.
 
-    '''    
+    Parameters:
+    -----------
+    background_dataset : dataframe
+        contains the background template data
+    background_cps : int
+        the number of counts per second due to background
+        radiation.
+    integration_time : float, optional
+        Sets the integration time for a simulated detector in 
+        seconds.
+    signal_to_background : float, optional
+        The ratio of source signal to background signal.
+    calibration : list, float
+        The calibration used for quadratic rebinning. 
+        [a,b,c]; a = constant, b = linear, c = quadratic
+    background_subtracting : boolean, optional
+        Subtracts background from signal. Default is True.
 
+
+    Returns:
+    --------
+    online_data_augmentation : function
+        can be used as input data for model. 
+    """
     def online_data_augmentation(input_data):
+        """
+        Augments data using a template dataset.
+
+        Parameters:
+        -----------
+        input_data : numpy matrix
+            [nxm] matrix containing all datasets.
+
+        Returns:
+        --------
+        output_data : tensorflow Tensor
+        """
         output_data = []
         for source_data in input_data:
             if type(source_data) == 'numpy.ndarray':
@@ -271,3 +375,4 @@ def online_data_augmentation_ae(background_dataset,
                              tf.double)])
         return tf.convert_to_tensor(output_data)
     return online_data_augmentation
+
