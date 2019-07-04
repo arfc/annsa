@@ -3,11 +3,9 @@ import pickle
 import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.eager as tfe
-from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
 from tensorflow.image import resize_images
 from tensorflow.keras.initializers import he_normal, glorot_normal
-import time
 from random import choice
 
 # ##############################################################
@@ -31,7 +29,7 @@ class BaseClass(object):
         predicting class, training needs to be false to avoid
         applying dropout.
 
-        Parameters
+        Parameters:
         ----------
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
@@ -39,7 +37,7 @@ class BaseClass(object):
         training : bool, optional
             Turns training on or off for optional features.
 
-        Returns
+        Returns:
         -------
         class_predictions : int
             [nxl] matrix of class predictions. n is number of samples, l is
@@ -53,7 +51,7 @@ class BaseClass(object):
         """
         Computes the cross entropy error on some data and target.
 
-        Parameters
+        Parameters:
         ----------
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
@@ -65,7 +63,7 @@ class BaseClass(object):
         training : bool
             Turns training on or off for optional features.
 
-        Returns
+        Returns:
         -------
         cross_entropy_loss : float
             The cross entropy between the
@@ -87,8 +85,8 @@ class BaseClass(object):
         """
         Computes the mean squared error on some data and target.
 
-        Parameters
-        ----------
+        Parameters:
+        -----------
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
@@ -100,8 +98,8 @@ class BaseClass(object):
         training : bool, optional
             Turns training on or off for optional features.
 
-        Returns
-        -------
+        Returns:
+        --------
         mean_squared_error : float
             The mean squared error between the model's prediction given
             the inputs and the ground-truth target.
@@ -125,15 +123,15 @@ class BaseClass(object):
 
             'weighted' calculates metrics for each label, and find their
             average weighted by support (the number of true instances for
-            each label). This alters ‘macro’ to account for label imbalance; it
+            each label). This alters macro to account for label imbalance; it
             can result in an F-score that is not between precision and recall.
 
             'samples' calculates metrics for each instance, and find their
             average (only meaningful for multilabel classification where this
             differs from accuracy_score).
 
-        Parameters
-        ----------
+        Parameters:
+        -----------
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
@@ -147,8 +145,8 @@ class BaseClass(object):
         average : string, optional
             Type of averaging used by sklearns f1 score function.
 
-        Returns
-        -------
+        Returns:
+        --------
         f1_error: float
             The f1_score of the model  on some data implemented using sklearn.
 
@@ -162,15 +160,15 @@ class BaseClass(object):
 
     def default_data_augmentation(self, x):
         """
-        Default data augmentation is identity function.
+        Default data augmentation is an identity function.
 
-        Parameters
-        ----------
+        Parameters:
+        -----------
         x : list, float
             Input data
 
-        Returns
-        -------
+        Returns:
+        --------
         x : list, float
             Input data
 
@@ -181,12 +179,12 @@ class BaseClass(object):
         """
         Returns input data with poisson noise for data augmentation.
 
-        Parameters
-        ----------
+        Parameters:
+        -----------
         x : list, float
             Input data
 
-        Returns
+        Returns:
         -------
         x : list, float
             Poisson sampled input data
@@ -200,7 +198,7 @@ class BaseClass(object):
         with respect to the parameters of the model, in each
         forward pass.
 
-        Parameters
+        Parameters:
         ----------
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
@@ -214,9 +212,9 @@ class BaseClass(object):
             Main cost function the algorithm minimizes. examples are
             'self.mse' or 'self.cross_entropy'.
 
-        Returns
+        Returns:
         -------
-        gradient: float
+        gradient : float
             The gradient of the loss function with respect to the
             weights.
         """
@@ -233,7 +231,7 @@ class BaseClass(object):
         """
         Trains model on a single epoch using mini-batch training.
 
-        Parameters
+        Parameters:
         ----------
         train_dataset_tensor : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
@@ -247,22 +245,22 @@ class BaseClass(object):
         data_augmentation : function
             Function used to apply data augmentation each training iteration.
 
-        Returns
+        Returns:
         -------
         None
         """
         for (input_data, target) in tfe.Iterator(
                 train_dataset_tensor.shuffle(int(1e8)).batch(self.batch_size)):
-                input_data = data_augmentation(input_data)
-                # check if data_augmentation returns separate source and
-                # background
-                if input_data.shape[1] == 2:
-                    target = input_data[:, 1]
-                    input_data = input_data[:, 0]
-                grads = self.grads_fn(input_data,
-                                      target,
-                                      obj_cost)
-                optimizer.apply_gradients(zip(grads, self.variables))
+            input_data = data_augmentation(input_data)
+            # check if data_augmentation returns separate source and
+            # background
+            if input_data.shape[1] == 2:
+                target = input_data[:, 1]
+                input_data = input_data[:, 0]
+            grads = self.grads_fn(input_data,
+                                  target,
+                                  obj_cost)
+            optimizer.apply_gradients(zip(grads, self.variables))
         return None
 
     def check_earlystop(self, earlystop_cost, earlystop_patience):
@@ -270,7 +268,7 @@ class BaseClass(object):
         Checks if early stop condition is met and either continues or
             stops training.
 
-        Parameters
+        Parameters:
         ----------
         earlystop_cost : narray, float
             Array of cost values for each iteration used for early stopping.
@@ -278,7 +276,7 @@ class BaseClass(object):
             Number of epochs training is allowed to run without improvment.
             If 0, training will run until max_time or num_epochs is passed.
 
-        Returns
+        Returns:
         -------
         earlystop_flag: bool
             If true will end training. If false training continues.
@@ -309,7 +307,7 @@ class BaseClass(object):
         """
         Function used to train the model.
 
-        Parameters
+        Parameters:
         ----------
         train_dataset : list, float, int
             Two element list of [data, keys] where data
@@ -333,12 +331,13 @@ class BaseClass(object):
             If 0, training will run until max_time or num_epochs is passed.
         max_time : int, optional
             Max time in seconds training is allowed to run.
-        not_learning_patience: int, optional
+        not_learning_patience : int, optional
             Max number of epochs to wait before checking if model is not
             learning.
-        not_learning_threshold: float, optional
+        not_learning_threshold : float, optional
             If error at epoch ``not_learning_patience`` is above this, training
             stops.
+        obj_cost : function
         earlystop_cost_fctn : function
             Cost function used for early stopping. Examples are
             ``self.f1_error``, ``self.mse``, and ``self.cross_entropy``.
@@ -361,7 +360,6 @@ class BaseClass(object):
         train_dataset_tensor = tf.data.Dataset.from_tensor_slices(
             (tf.constant(train_dataset[0]), tf.constant(train_dataset[1])))
 
-        time_start = time.time()
         for epoch in range(num_epochs):
             # Train through one epoch
             self.train_epoch(train_dataset_tensor,
@@ -416,11 +414,11 @@ class BaseClass(object):
                              testing_key,
                              obj_cost,
                              training=False))
-            # Print erros at end of epoch
-            if (print_errors and ((epoch+1) % verbose == 0)) is True:
+            # Print errors at end of epoch
+            if (print_errors and ((epoch + 1) % verbose == 0)) is True:
                 print('Epoch %d: CostFunc loss: %3.2f %3.2f, '
                       'EarlyStop loss: %3.2f %3.2f' % (
-                          epoch+1,
+                          epoch + 1,
                           objective_cost['train'][-1],
                           objective_cost['test'][-1],
                           earlystop_cost['train'][-1],
@@ -433,8 +431,8 @@ class BaseClass(object):
                 break
             # Apply early stopping if not learning
             if (not_learning_patience and
-               (epoch > not_learning_patience) and
-               (earlystop_cost['test'][-1] > not_learning_threshold)):
+                (epoch > not_learning_patience) and
+                    (earlystop_cost['test'][-1] > not_learning_threshold)):
                 break
 
         return [objective_cost, earlystop_cost]
@@ -442,7 +440,7 @@ class BaseClass(object):
 # ##############################################################
 # ##############################################################
 # ##############################################################
-# ##################### Dense Archetecture #####################
+# ##################### Dense Architecture #####################
 # ##############################################################
 # ##############################################################
 # ##############################################################
@@ -452,14 +450,29 @@ class DNN(tf.keras.Model, BaseClass):
     """
     Defines dense neural network structure, loss functions, training functions.
 
+    FUNCTIONS
+
+    Under the class -- list the member functions and a short
+    summary of what they do!
+
+    Functions:
+    ----------
+
+    '__init__' : constructor
+    'forward_pass' : Runs a forward pass throught the network
+    'loss_fn' :
+
+
+
     """
+
     def __init__(self, model_features):
         """
         Initializes dnn structure with model features.
 
-        Args:
-            model_features: Class that contains variables
-            to construct the dense neural network.
+        Parameters:
+        -----------
+        model_features : Class dnn_model_features
 
         """
         super(DNN, self).__init__()
@@ -502,7 +515,7 @@ class DNN(tf.keras.Model, BaseClass):
         """
         Runs a forward-pass through the network.
 
-        Parameters
+        Parameters:
         ----------
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
@@ -510,7 +523,7 @@ class DNN(tf.keras.Model, BaseClass):
         training : bool, optional
             Turns training on or off for optional features.
 
-        Returns
+        Returns:
         -------
         logits : tensor
             Output layer of the network.
@@ -529,23 +542,23 @@ class DNN(tf.keras.Model, BaseClass):
         Defines the loss function, including regularization, used during
         training.
 
-        Parameters
+        Parameters:
         ----------
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
-        target: narray, int
+        target : narray, int
             [nxl] matrix of target outputs. n is number of samples,
             same as n in input. l is the number of elements in each
             output . If using one-hot encoding l is equal to number
             of classes. If used as autoencoder l is equal to m.
-        cost: string
+        cost : string
             Main cost function the algorithm minimizes. examples are
             'self.mse' or 'self.cross_entropy'.
         training : bool, optional
             Turns training on or off for optional features.
 
-        Returns
+        Returns:
         -------
         loss : TensorFlow float
             The value of all network losses computed during training
@@ -560,7 +573,13 @@ class DNN(tf.keras.Model, BaseClass):
 
 
 class dnn_model_features(object):
-    def __init__(self, learining_rate,
+    """
+    Defines the features for the dense neural network.
+
+    '__init__' : Constructor
+    """
+
+    def __init__(self, learning_rate,
                  l2_regularization_scale,
                  dropout_probability,
                  batch_size,
@@ -570,7 +589,38 @@ class dnn_model_features(object):
                  activation_function,
                  scaler
                  ):
-        self.learining_rate = learining_rate
+        """
+        @author: Sam Dotson
+
+        Parameters
+        ----------
+        learning_rate : float
+            How much the weights update due to back propagation of the
+            error/loss function.
+        l2_regularization_scale : float
+            The loss penalty for regularization type l2. If the model
+            attempts to increase the weights, it will only be accepted
+            if there is an equal or greater decrease in the error
+            function.
+        dropout_probability : float
+            The probability that any neuron will be temporarily turned
+            off during training. Example: dropout_probability = 0.4
+            means there is a 40% probability of the neuron turning off.
+            batch_size : int
+            'batch_size' is the number of spectra/images being passed
+            through the network at once. For reference, one epoch is
+            the size of all training data.
+        output_size : Array/Tuple
+            The desired dimensions of your output, typically [nx1]
+        dense_nodes : int
+            The desired number of nodes in a dense layer.
+        activation_function : Tensorflow activation function.
+            Example: tf.nn.relu
+        scaler : tensorflow scaling function
+            See documentation for tensorflow scaling
+
+        """
+        self.learning_rate = learning_rate
         self.l2_regularization_scale = l2_regularization_scale
         self.dropout_probability = dropout_probability
         self.batch_size = batch_size
@@ -583,13 +633,19 @@ class dnn_model_features(object):
 # ##############################################################
 # ##############################################################
 # ##############################################################
-# ################# Convolutional Archetecture #################
+# ################# Convolutional Architecture #################
 # ##############################################################
 # ##############################################################
 # ##############################################################
 
 
 class CNN1D(tf.keras.Model, BaseClass):
+    """
+    FUNCTIONS
+    Under the class -- list the member functions and a short
+    summary of what they do!
+    """
+
     def __init__(self, model_features):
         super(CNN1D, self).__init__()
         """
@@ -605,7 +661,6 @@ class CNN1D(tf.keras.Model, BaseClass):
         output_function = model_features.output_function
         cnn_filters = model_features.cnn_filters
         cnn_kernel = model_features.cnn_kernel
-        cnn_strides = model_features.cnn_strides
         pool_size = model_features.pool_size
         pool_strides = model_features.pool_strides
         Pooling = model_features.Pooling
@@ -657,23 +712,23 @@ class CNN1D(tf.keras.Model, BaseClass):
         Defines the loss function, including regularization, used during
         training.
 
-        Parameters
+        Parameters:
         ----------
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
-        target: narray, int
+        target : narray, int
             [nxl] matrix of target outputs. n is number of samples,
             same as n in input. l is the number of elements in each
             output . If using one-hot encoding l is equal to number
             of classes. If used as autoencoder l is equal to m.
-        cost: string
+        cost : string
             Main cost function the algorithm minimizes. examples are
             'self.mse' or 'self.cross_entropy'.
         training : bool, optional
             Turns training on or off for optional features.
 
-        Returns
+        Returns:
         -------
         loss : TensorFlow float
             The value of all network losses computed during training
@@ -686,20 +741,25 @@ class CNN1D(tf.keras.Model, BaseClass):
         return loss
 
     def forward_pass(self, input_data, training):
-        """ Runs a forward-pass through the network. Outputs are defined by
-            'output_layer' in the model's structure. The scaler is applied
-            here.
-            Args:
-                input_data: [nxm] matrix of unprocessed gamma-ray spectra. n is
-                    number of samples, m is length of a spectrum
-                training: Binary (True or False). If true, dropout is applied.
-                    When training weights this needs to be true for dropout to
-                    work.
-            Returns:
-                logits: [nxl] matrix of model outputs. n is number of samples,
-                    same as n in input. l is the number of elements in each
-                    output . If using one-hot encoding l is equal to number
-                    of classes. If used as autoencoder l is equal to m.
+        """
+        Runs a forward-pass through the network. Outputs are defined by
+        'output_layer' in the model's structure. The scaler is applied
+        here.
+
+        Parameters:
+        -----------
+        input_data : [nxm] matrix of unprocessed gamma-ray spectra. n is
+            number of samples, m is length of a spectrum
+        training : Binary (True or False). If true, dropout is applied.
+            When training weights this needs to be true for dropout to
+            work.
+
+        Returns:
+        --------
+        logits : [nxl] matrix of model outputs. n is number of samples,
+            same as n in input. l is the number of elements in each
+            output . If using one-hot encoding l is equal to number
+            of classes. If used as autoencoder l is equal to m.
 
         """
         x = self.scaler.transform(input_data)
@@ -717,8 +777,12 @@ class CNN1D(tf.keras.Model, BaseClass):
 
 class cnn1d_model_features(object):
 
+    """
+    Defines the features of a CNN model.
+    """
+
     def __init__(self,
-                 learining_rate,
+                 learning_rate,
                  trainable,
                  batch_size,
                  output_size,
@@ -735,7 +799,61 @@ class cnn1d_model_features(object):
                  dense_nodes,
                  activation_function,
                  ):
-        self.learining_rate = learining_rate
+        """
+        @Author: Sam Dotson
+
+        Parameters
+        ----------
+        learning_rate : float
+            How much the weights update due to back propagation of the
+            error/loss function.
+        trainable : boolean
+            If true, optimization will be applied and weights will be
+            updated.
+            False is used for prediction.
+        output_function :
+
+        l2_regularization_scale : float
+            The loss penalty for regularization type l2. If the model
+            attempts to increase the weights, it will only be accepted
+            if there is an equal or greater decrease in the error
+            function.
+        dropout_probability : float
+            The probability that any neuron will be temporarily turned
+            off during training. Example: dropout_probability = 0.4
+            means there is a 40% probability of the neuron turning off.
+        scaler : Tensorflow scaling function
+        batch_size : int
+            'batch_size' is the number of spectra/images being passed
+            through the network at once. For reference, one epoch is
+            the size of all training data.
+        Pooling : Tensorflow pooling function
+        cnn_filters : int
+            The number of filters in a convolutional layer.
+        cnn_kernel : int or 1D array of type int
+            Passing int will assume a square filter of size int x int.
+            The values of an array will be taken as the desired dimens-
+            ion size of the filter.
+        cnn_strides: int
+            The stride size of each filter. How far it shifts per
+            iteration. Typically stride size is one.
+        pool_size : int or array/tuple
+            'int':
+                Creates a square pool.
+            'array' or 'tuple':
+                Creates a pool the size of elements in your tuple.
+                pool_strides : int
+            How much the pool shifts per iteration. Typically stride
+            is 2.
+        output_size : Array/Tuple
+            The desired dimensions of your output, typically [nx1]
+        dense_nodes : int
+            The desired number of nodes in a dense layer.
+        activation_function : Tensorflow activation function
+            Example: tf.nn.relu
+
+        """
+        self.learning_rate = learning_rate
         self.trainable = trainable
         self.batch_size = batch_size
         self.output_size = output_size
@@ -757,51 +875,64 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
                                        cnn_kernel_choices,
                                        pool_size_choices):
     """
-    Generates a random 1d convolutional neural network based on a set of
-    predefined architectures.
+    Generates a random 1d convolutional neural network based on a
+    set of predefined architectures.
 
-    Returns
-    -------
+    @author: Sam Dotson
+
+    Parameters:
+    -----------
+    cnn_filters_choices : 1-D array-like or int
+        Input a choice of ..............
+
+    cnn_kernel_choices : 1-D array-like or int
+        Input a choice of kernel (filter) sizes.
+
+    pool_size_choices : 1-D array-like or int
+        Input a choice of pooling sizes.
+
+    Returns:
+    --------
     model_features : class
-        Class that describes the structure of a 1D convolution neural network.
-
+        Class that describes the structure of a 1D convolution
+        neural network.
     """
 
     cnn_filters = choice(cnn_filters_choices)
     cnn_kernel_choice = choice(cnn_kernel_choices)
     pool_size_choice = choice(pool_size_choices)
 
-    cnn_kernel = cnn_kernel_choice*(len(cnn_filters))
-    cnn_strides = (1,)*(len(cnn_filters))
-    pool_size = pool_size_choice*(len(cnn_filters))
-    pool_strides = (2,)*(len(cnn_filters))
+    cnn_kernel = cnn_kernel_choice * (len(cnn_filters))
+    cnn_strides = (1,) * (len(cnn_filters))
+    pool_size = pool_size_choice * (len(cnn_filters))
+    pool_strides = (2,) * (len(cnn_filters))
 
     number_layers = np.random.randint(1, 4)
     dense_nodes = (10**np.random.uniform(1,
-                                         np.log10(1024/(2**len(
+                                         np.log10(1024 / (2**len(
                                              cnn_filters))),
                                          number_layers)).astype('int')
     dense_nodes = np.sort(dense_nodes)
     dense_nodes = np.flipud(dense_nodes)
 
     model_features = cnn1d_model_features(
-            trainable=None,
-            learining_rate=None,
-            batch_size=None,
-            output_size=None,
-            scaler=None,
-            activation_function=None,
-            output_function=None,
-            Pooling=None,
-            l2_regularization_scale=None,
-            dropout_probability=None,
-            cnn_filters=cnn_filters,
-            cnn_kernel=cnn_kernel,
-            cnn_strides=cnn_strides,
-            pool_size=pool_size,
-            pool_strides=pool_strides,
-            dense_nodes=dense_nodes
-            )
+        trainable=None,
+        learning_rate=None,
+        batch_size=None,
+        output_size=None,
+        scaler=None,
+        activation_function=None,
+        output_function=None,
+        Pooling=None,
+        l2_regularization_scale=None,
+        dropout_probability=None,
+        cnn_filters=cnn_filters,
+        cnn_kernel=cnn_kernel,
+        cnn_strides=cnn_strides,
+        pool_size=pool_size,
+        pool_strides=pool_strides,
+        dense_nodes=dense_nodes
+    )
 
     return model_features
 
@@ -816,6 +947,14 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
 
 
 class DAE(tf.keras.Model, BaseClass):
+    """
+    FUNCTIONS
+
+    Under the class -- list the member functions and a short
+    summary of what they do!
+
+    """
+
     def __init__(self, model_features):
         super(DAE, self).__init__()
         """
@@ -874,16 +1013,16 @@ class DAE(tf.keras.Model, BaseClass):
         Runs a forward-pass through only the encoder.
         Note, training is currently not used here.
 
-        Parameters
-        ----------
+        Parameters:
+        -----------
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
         training : bool, optional
             Turns training on or off for optional features.
 
-        Returns
-        -------
+        Returns:
+        --------
         encoding : tensor
             The DAE's encoding of the input.
 
@@ -901,15 +1040,15 @@ class DAE(tf.keras.Model, BaseClass):
         Runs a forward-pass through only the decoder.
         Note, training is currently not used here.
 
-        Parameters
-        ----------
+        Parameters:
+        -----------
         encoding : 2D tensor, float
             Input tensor of shape (n_samples, size_encoding).
         training : bool, optional
             Turns training on or off for optional features.
 
-        Returns
-        -------
+        Returns:
+        --------
         decoding : tensor
             The DAE's decoding of the encoding.
 
@@ -922,12 +1061,18 @@ class DAE(tf.keras.Model, BaseClass):
         return decoding
 
     def total_activity(self, input_data, training=False):
-        """ Calculates the total network activity (l1 activation) on
-            some input data.
-            Args:
-                input_data: 2D tensor of shape (n_samples, n_features).
-            Returns:
-                average_activity (float): Average total l1 activation.
+        """
+        Calculates the total network activity (l1 activation) on
+        some input data.
+
+        Parameters:
+        -----------
+            input_data : 2D tensor of shape (n_samples, n_features).
+
+        Returns:
+        --------
+        average_activity : float
+            Average total l1 activation.
 
         """
         activity = 0
@@ -941,14 +1086,14 @@ class DAE(tf.keras.Model, BaseClass):
             x = self.dense_layers_decoder[str(layer)](x)
             activity += np.sum(np.abs(x))
             x = self.dropout_layers_encoder[str(layer)](x, training)
-        average_activity = activity/int(input_data.shape[0])
+        average_activity = activity / int(input_data.shape[0])
         return average_activity
 
     def forward_pass(self, input_data, training):
         """
         Runs a forward-pass through the encoder and decoder.
 
-        Parameters
+        Parameters:
         ----------
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
@@ -956,7 +1101,7 @@ class DAE(tf.keras.Model, BaseClass):
         training : bool, optional
             Turns training on or off for optional features.
 
-        Returns
+        Returns:
         -------
         decoding : tensor
             The DAE's decoding of the encoding.
@@ -971,23 +1116,23 @@ class DAE(tf.keras.Model, BaseClass):
         Defines the loss function, including regularization, used during
         training.
 
-        Parameters
+        Parameters:
         ----------
         input_data : 2D tensor, float
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
-        target: narray, int
+        target : narray, int
             [nxl] matrix of target outputs. n is number of samples,
             same as n in input. l is the number of elements in each
             output . If using one-hot encoding l is equal to number
             of classes. If used as autoencoder l is equal to m.
-        cost: string
+        cost : string
             Main cost function the algorithm minimizes. examples are
             'self.mse' or 'self.cross_entropy'.
         training : bool, optional
             Turns training on or off for optional features.
 
-        Returns
+        Returns:
         -------
         loss : TensorFlow float
             The value of all network losses computed during training
@@ -1001,7 +1146,7 @@ class DAE(tf.keras.Model, BaseClass):
 class dae_model_features(object):
 
     def __init__(self,
-                 learining_rate,
+                 learning_rate,
                  l1_regularization_scale,
                  dropout_probability,
                  batch_size,
@@ -1012,7 +1157,38 @@ class dae_model_features(object):
                  output_function,
                  output_size,
                  ):
-        self.learining_rate = learining_rate
+        """
+        @author: Sam Dotson
+        Parameters
+        ----------
+        learning_rate : float
+            How much the weights update due to back propagation of the
+            error/loss function.
+        output_function :
+
+        l2_regularization_scale : float
+            The loss penalty for regularization type l2. If the model
+            attempts to increase the weights, it will only be accepted
+            if there is an equal or greater decrease in the error
+            function.
+        dropout_probability : float
+            The probability that any neuron will be temporarily turned
+            off during training. Example: dropout_probability = 0.4
+            means there is a 40% probability of the neuron turning off.
+        scaler : Tensorflow scaling function
+        batch_size : int
+            'batch_size' is the number of spectra/images being passed
+            through the network at once. For reference, one epoch is
+        output_size : Array/Tuple
+            The desired dimensions of your output, typically [nx1]
+        dense_nodes_encoder : int
+            The desired number of nodes in a dense layer of the encoder.
+        dense_nodes_decoder : int
+            The desired number of nodes in a dense layer of the decoder.
+        activation_function : Tensorflow activation function
+            Example: tf.nn.relu
+        """
+        self.learning_rate = learning_rate
         self.l1_regularization_scale = l1_regularization_scale
         self.dropout_probability = dropout_probability
         self.batch_size = batch_size
@@ -1034,9 +1210,13 @@ class dae_model_features(object):
 
 class CAE(tf.keras.Model, BaseClass):
     """
-    Class info
+    FUNCTIONS
+
+    Under the class -- list the member functions and a short
+    summary of what they do!
 
     """
+
     def __init__(self, model_features):
         super(CAE, self).__init__()
         """
@@ -1051,7 +1231,6 @@ class CAE(tf.keras.Model, BaseClass):
         output_function = model_features.output_function
         cnn_filters_encoder = model_features.cnn_filters_encoder
         cnn_kernel_encoder = model_features.cnn_kernel_encoder
-        cnn_strides_encoder = model_features.cnn_strides_encoder
         pool_size_encoder = model_features.pool_size_encoder
         pool_strides_encoder = model_features.pool_strides_encoder
         cnn_filters_decoder = model_features.cnn_filters_decoder
@@ -1092,7 +1271,7 @@ class CAE(tf.keras.Model, BaseClass):
 
         # Define hidden layers for encoder
         self.conv_layers_decoder = {}
-        for layer in range(len(cnn_filters_decoder)-1):
+        for layer in range(len(cnn_filters_decoder) - 1):
             self.conv_layers_decoder[str(layer)] = tf.layers.Conv1D(
                 filters=cnn_filters_decoder[layer],
                 kernel_size=cnn_kernel_decoder[layer],
@@ -1100,7 +1279,7 @@ class CAE(tf.keras.Model, BaseClass):
                 padding='same',
                 kernel_initializer=kernel_initializer,
                 activation=activation_function)
-        self.conv_layers_decoder[str(layer+1)] = tf.layers.Conv1D(
+        self.conv_layers_decoder[str(layer + 1)] = tf.layers.Conv1D(
             filters=cnn_filters_decoder[-1],
             kernel_size=cnn_kernel_decoder[-1],
             strides=cnn_strides_decoder[-1],
@@ -1129,8 +1308,7 @@ class CAE(tf.keras.Model, BaseClass):
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1], 1])
-        layer_list = list(self.conv_layers_encoder.keys())
-        layer_list.sort()
+        layer_list = sorted(self.conv_layers_encoder.keys())
         for layer in layer_list:
             x = self.conv_layers_encoder[str(layer)](x)
             x = self.pool_layers_encoder[str(layer)](x)
@@ -1157,12 +1335,11 @@ class CAE(tf.keras.Model, BaseClass):
 
         """
         x = encoding
-        layer_list = list(self.conv_layers_decoder.keys())
-        layer_list.sort()
+        layer_list = sorted(self.conv_layers_decoder.keys())
         for layer in layer_list:
             x = tf.reshape(x, (x.shape[0], x.shape[1], x.shape[2], 1))
             # upscale image by 2x
-            x = resize_images(x, [x.shape[1]*2, 1])
+            x = resize_images(x, [x.shape[1] * 2, 1])
             x = tf.reshape(x, (x.shape[0], x.shape[1], x.shape[2]))
             x = self.conv_layers_decoder[str(layer)](x)
             # 'decoder conv ' + str(x.shape)
@@ -1226,7 +1403,7 @@ class CAE(tf.keras.Model, BaseClass):
 class cae_model_features(object):
 
     def __init__(self,
-                 learining_rate,
+                 learning_rate,
                  encoder_trainable,
                  batch_size,
                  scaler,
@@ -1242,7 +1419,68 @@ class cae_model_features(object):
                  cnn_kernel_decoder,
                  cnn_strides_decoder
                  ):
-        self.learining_rate = learining_rate
+        """
+        @Author: sam dotson
+        Parameters
+        ----------
+        learning_rate : float
+            How much the weights update due to back propagation of the
+            error/loss function.
+        encoder_trainable : boolean
+            If true, optimization will be applied and weights will be
+            updated.
+            False is used for prediction.
+        output_function :
+
+        l2_regularization_scale : float
+            The loss penalty for regularization type l2. If the model
+            attempts to increase the weights, it will only be accepted
+            if there is an equal or greater decrease in the error
+            function.
+        dropout_probability : float
+            The probability that any neuron will be temporarily turned
+            off during training. Example: dropout_probability = 0.4
+            means there is a 40% probability of the neuron turning off.
+        scaler : Tensorflow scaling function
+        batch_size : int
+            'batch_size' is the number of spectra/images being passed
+            through the network at once. For reference, one epoch is
+            the size of all training data.
+        Pooling : Tensorflow pooling function
+        cnn_filters_encoder : int
+            The number of filters in a convolutional layer.
+        cnn_kernel_encoder : int or 1D array of type int
+            Passing int will assume a square filter of size int x int.
+            The values of an array will be taken as the desired dimens-
+            ion size of the filter.
+        cnn_strides_encoder: int
+            The stride size of each filter. How far it shifts per
+            iteration. Typically stride size is one.
+        pool_size_encoder : int or array/tuple
+            'int':
+                Creates a square pool.
+            'array' or 'tuple':
+                Creates a pool the size of elements in your tuple.
+        pool_strides_encoder : int
+            How much the pool shifts per iteration. Typically stride
+            is 2.
+        cnn_filters_decoder : int
+            The number of filters in a convolutional layer.
+        cnn_kernel_decoder : int or 1D array of type int
+            Passing int will assume a square filter of size int x int.
+            The values of an array will be taken as the desired dimens-
+            ion size of the filter.
+        cnn_strides_decoder : int
+            The stride size of each filter. How far it shifts per
+            iteration. Typically stride size is one.
+        output_size : Array/Tuple
+            The desired dimensions of your output, typically [nx1]
+        dense_nodes : int
+            The desired number of nodes in a dense layer.
+        activation_function : Tensorflow activation function
+            Example: tf.nn.relu
+        """
+        self.learning_rate = learning_rate
         self.encoder_trainable = encoder_trainable
         self.batch_size = batch_size
         self.scaler = scaler
@@ -1294,11 +1532,11 @@ def generate_random_cae_architecture(cnn_filters_encoder_choices,
     cnn_filters_encoder = cnn_filters_encoder_choices[
         cnn_filters_encoder_choice]
     cnn_kernel_encoder = cnn_kernel_encoder_choices[
-        cnn_kernel_encoder_choice]*(len(cnn_filters_encoder_choices))
-    cnn_strides_encoder = (1,)*(len(cnn_filters_encoder_choices))
-    pool_size_encoder = pool_size_encoder_choices[pool_size_encoder_choice]*(
+        cnn_kernel_encoder_choice] * (len(cnn_filters_encoder_choices))
+    cnn_strides_encoder = (1,) * (len(cnn_filters_encoder_choices))
+    pool_size_encoder = pool_size_encoder_choices[pool_size_encoder_choice] * (
         len(cnn_filters_encoder_choices))
-    pool_strides_encoder = (2,)*(len(cnn_filters_encoder_choices))
+    pool_strides_encoder = (2,) * (len(cnn_filters_encoder_choices))
 
     # #############
     # ## Decoder ##
@@ -1308,21 +1546,21 @@ def generate_random_cae_architecture(cnn_filters_encoder_choices,
     cnn_strides_decoder = cnn_strides_encoder
 
     model_features = cae_model_features(
-            encoder_trainable=None,
-            learining_rate=None,
-            batch_size=None,
-            scaler=None,
-            activation_function=None,
-            output_function=None,
-            Pooling=None,
-            cnn_filters_encoder=cnn_filters_encoder,
-            cnn_kernel_encoder=cnn_kernel_encoder,
-            cnn_strides_encoder=cnn_strides_encoder,
-            pool_size_encoder=pool_size_encoder,
-            pool_strides_encoder=pool_strides_encoder,
-            cnn_filters_decoder=cnn_filters_decoder,
-            cnn_kernel_decoder=cnn_kernel_decoder,
-            cnn_strides_decoder=cnn_strides_decoder)
+        encoder_trainable=None,
+        learning_rate=None,
+        batch_size=None,
+        scaler=None,
+        activation_function=None,
+        output_function=None,
+        Pooling=None,
+        cnn_filters_encoder=cnn_filters_encoder,
+        cnn_kernel_encoder=cnn_kernel_encoder,
+        cnn_strides_encoder=cnn_strides_encoder,
+        pool_size_encoder=pool_size_encoder,
+        pool_strides_encoder=pool_strides_encoder,
+        cnn_filters_decoder=cnn_filters_decoder,
+        cnn_kernel_decoder=cnn_kernel_decoder,
+        cnn_strides_decoder=cnn_strides_decoder)
 
     return model_features
 
@@ -1352,6 +1590,57 @@ def train_earlystop(training_data,
                     augment_testing_data=False,
                     fit_batch_verbose=5,
                     record_train_errors=False,):
+    """
+    @Author: Sam Dotson
+    Trains the model to stop early to avoid overfitting.
+
+    Parameters:
+    -----------
+    training_data : numpy matrix, float
+        Data is a [nxm] numpy matrix of unprocessed gamma-ray spectra
+    training_keys : list
+        [nx1] list of keys that correspond to your training data.
+    testing_data : numpy matrix
+        Data is a [nxm] numpy matrix of unprocessed gamma-ray spectra
+    testing_keys : list
+        [nx1] list of keys that correspond to your testing data.
+    model : object
+        The model you are currently training.
+    optimizer : tensorflow optimizer in tf.train.*
+    num_epochs : int
+        Total number of epochs training is allowed to run.
+    obj_cost : string
+        Main cost function the algorithm minimizes. examples are
+        'self.mse' or 'self.cross_entropy'.
+    earlystop_cost_fn : Tensorflow earlystop function
+        Cost function used for early stopping. Examples are
+        ``self.f1_error``, ``self.mse``, and ``self.cross_entropy``.
+    earlystop_patience : int, optional
+        Number of epochs training is allowed to run without improvment.
+        If 0, training will run until max_time or num_epochs is passed.
+    data_augmentation : function
+            Function used to apply data augmentation each training iteration.
+    not_learning_patience : int, optional
+        Max number of epochs to wait before checking if model is not
+        learning.
+    not_learning_threshold : float, optional
+        If error at epoch ``not_learning_patience`` is above this, training
+    verbose : int, optional
+        Frequency that the errors are printed per iteration.
+    augment_testing_data : boolean, optional
+        Decides whether to augment testing data. Default is False.
+    fit_batch_verbose : int, optional
+        The frequency that the output of fit_batch is printed.
+    record_train_errors : boolean, optional
+        Decides whether to record training error. Default is False.
+        If True, will print model errors after each epoch.
+
+    Returns:
+    --------
+    costfunctionerr_test :
+
+    earlystoperr_test :
+    """
 
     costfunctionerr_test, earlystoperr_test = [], []
 
@@ -1389,9 +1678,29 @@ def train_earlystop(training_data,
 
 
 def save_model(folder_name, model_id, model, model_features):
+    """
+    @Author: Sam Dotson
+    Allows the model to be saved after training and uploaded for later use.
+
+    Parameters:
+    -----------
+    folder_name : string
+    Name of folder where the model is to be saved.
+    model_id : string
+    model identifier that will be used again when loading the model.
+    model : object
+    The variable that contains the instance of the neural network
+    that you want to save.
+    model_features : object
+    Variable that contains all of the features of your model.
+
+    Returns:
+    --------
+    Nothing. This function simply saves the model.
+    """
     saver = tfe.Saver(model.variables)
-    saver.save(folder_name+'/'+model_id)
-    with open(folder_name+'/'+model_id+'_features', 'w') as f:
+    saver.save(folder_name + '/' + model_id)
+    with open(folder_name + '/' + model_id + '_features', 'w') as f:
         pickle.dump(model_features, f)
 
 
@@ -1400,14 +1709,29 @@ def load_model(model_folder,
                model_class,
                training_data_length=1024,
                training_key_length=57):
+    """
+    @Author: Sam Dotson
+    Loads a previously saved model.
 
+    Parameters:
+    -----------
+    model_folder : string
+        Name of folder where the model exists.
+
+
+    Returns:
+    --------
+    model : object
+        The model that you have previously trained.
+    new_model_features.scaler : tensorflow scaling function
+    """
     # load model features (number of layers, nodes)
-    with open('./'+model_folder+'/'+model_id+'_features') as f:
+    with open('./' + model_folder + '/' + model_id + '_features') as f:
         new_model_features = pickle.load(f)
 
     # Initialize variables by running a single training iteration
     tf.reset_default_graph()
-    optimizer = tf.train.AdamOptimizer(new_model_features.learining_rate)
+    optimizer = tf.train.AdamOptimizer(new_model_features.learning_rate)
     model = model_class(new_model_features)
 
     dummy_data = np.ones([10, training_data_length])
@@ -1427,7 +1751,7 @@ def load_model(model_folder,
 
     # Restore saved variables
     saver = tfe.Saver(model.variables)
-    saver.restore('./'+model_folder+'/'+model_id)
+    saver.restore('./' + model_folder + '/' + model_id)
 
     return model, new_model_features.scaler
 

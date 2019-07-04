@@ -5,13 +5,13 @@ API
 Classes
 -------
 
-.. currentmodule:: shablona
+.. currentmodule:: annsa
 
 .. autosummary::
    :template: class.rst
    :toctree: gen_api
 
-   Model
+   DNN
 
 
 Functions
@@ -21,6 +21,4 @@ Functions
    :template: function.rst
    :toctree: gen_api
 
-   transform_data
-   cumgauss
-   opt_err_func
+   f1_error
