@@ -16,17 +16,43 @@ background_locations = ['albuquerque',
 def load_template_spectra_from_folder(parent_folder,
                                       spectrum_identifier,
                                       normalization=None):
-    '''
-    inputs: partent_folder, spectrum_identifier
-    output: dictionary containing all template spectra from a folder.
-
+    """
     Load template spectrum data into a dictionary. This allows templates from
     different folders to be loaded into different dictionaries.
-    '''
+
+    Parameters:
+    -----------
+    parent_folder : string
+        Name of folder or path
+    spectrum_identifier : string
+        Radioactive source identifier. Ex: '235U'
+    normalization : string or boolean
+        Default = None
+        Accepts: 'normalheight', 'normalarea', None
+        How the dataset should be normalized.
+
+    Returns:
+    --------
+    temp_dict : Dictionary containing all template spectra from a folder.
+
+    """
 
     temp_dict = {}
 
     def normalize_spectrum(ID):
+        """
+        Normalizes the spectrum data.
+
+        Parameters:
+        -----------
+        ID : string
+            The ID key for the radioactive source in your spectrum.
+
+        Returns:
+        --------
+        temp_dict : Dictionary
+            Contains all normalized datasets.
+        """
         temp_spectrum = an.read_spectrum(
             parent_folder + ID + spectrum_identifier)
         if np.max(temp_spectrum) == 0:
@@ -38,7 +64,7 @@ def load_template_spectra_from_folder(parent_folder,
         elif normalization == 'normalarea':
             return temp_spectrum / np.sum(temp_spectrum)
 
-    for i in range(len(an.isotopes)-3):
+    for i in range(len(an.isotopes) - 3):
         temp_dict[an.isotopes[i]] = normalize_spectrum(
             an.isotopes_sources_GADRAS_ID[i])
     return temp_dict
@@ -49,6 +75,26 @@ def load_templates(template_settings,
                    normalization='normalarea',
                    spectrum_identifier="_10uC_spectrum.spe"
                    ):
+    """
+    Loads spectrum templates from a local directory to be used to simulate
+    training data.
+
+    Parameters:
+    -----------
+    template_settings : 1D array of type string
+        Contains information about the detector settings used in locating
+        the dataset.
+    templates_folder : string
+        Name of the parent folder or path to the dataset you want.
+    normalization: type string or None
+        Default = 'normalarea'
+        Accepts: 'normalheight', 'normalarea', None
+        How the dataset should be normalized.
+
+    Returns:
+    --------
+    """
+
     spectral_templates = {}
 
     for setting in template_settings:
@@ -58,19 +104,34 @@ def load_templates(template_settings,
             normalization)
 
     def normalize_spectrum(location, normalization=None):
-            temp_spectrum = an.read_spectrum(
-                templates_folder +
-                '/background/background-' +
-                location +
-                '.spe')
-            if np.max(temp_spectrum) == 0:
-                print(ID + ' Contains no values')
-            if normalization is None:
-                return temp_spectrum
-            elif normalization == 'normalheight':
-                return temp_spectrum/np.max(temp_spectrum)
-            elif normalization == 'normalarea':
-                return temp_spectrum/np.sum(temp_spectrum)
+        """
+        Normalizes the spectrum data.
+
+        Parameters:
+        -----------
+        location : 'string'
+            Name of location for template background radiation.
+
+        normalization : string or boolean
+            Default = None
+            Accepts: 'normalheight', 'normalarea', None
+            How the dataset should be normalized.
+
+        Returns:
+        --------
+        Normalized temp_spectrum.
+        """
+        temp_spectrum = an.read_spectrum(templates_folder +
+                                         '/background/background-' +
+                                         location + '.spe')
+        if np.max(temp_spectrum) == 0:
+            print('spectrum contains no values')
+        if normalization is None:
+            return temp_spectrum
+        elif normalization == 'normalheight':
+            return temp_spectrum / np.max(temp_spectrum)
+        elif normalization == 'normalarea':
+            return temp_spectrum / np.sum(temp_spectrum)
 
     background_locations = ['albuquerque',
                             'chicago',
@@ -94,6 +155,32 @@ def simulate_template_dataset(isotope_list,
                               spectral_templates,
                               template_parameters,
                               output_separate_background=False):
+    """
+    Uses template to generate new training set and keys.
+
+    Parameters:
+    -----------
+    isotope_list: 1D array of type string
+        A list of the names of each isotope in the spectra.
+    spectral_template_settings : dictionary
+        A dictionary containing the settings for template creation.
+    spectral_templates : dictionary
+        Contains source and background data.
+    template_parameters : dictionary
+        contains the parameters for generating a spectrum.
+    output_separate_background : boolean, optional
+        Decides whether to output the background spectra, separately.
+        Default is False.
+
+    Returns:
+    --------
+    all_source_spectra : list
+        A list containing all the source spectra.
+    all_background_spectra : list, optional
+        If output_separate_background is set to True, this is not output.
+    all_keys : list
+        Contains a list of all keys corresponding to the each spectrum.
+    """
 
     integration_times = template_parameters['integration_times']
     signal_to_backgrounds = template_parameters['signal_to_backgrounds']
@@ -130,7 +217,8 @@ def simulate_template_dataset(isotope_list,
                             spectral_template_setting][isotope]
                         source_template = griddata(range(1024),
                                                    source_template,
-                                                   calibration*np.arange(1024),
+                                                   calibration *
+                                                   np.arange(1024),
                                                    method='cubic',
                                                    fill_value=0.0)
                         source_template[0:LLD] = 0
@@ -145,13 +233,13 @@ def simulate_template_dataset(isotope_list,
                         background_template = griddata(
                             range(1024),
                             background_template,
-                            calibration*np.arange(1024),
+                            calibration * np.arange(1024),
                             method='cubic',
                             fill_value=0.0)
                         background_template[0:LLD] = 0
                         background_template[background_template < 0] = 0
                         background_template /= np.sum(background_template)
-                        background_template *= integration_time*background_cps
+                        background_template *= integration_time * background_cps
 
                         if not output_separate_background:
                             all_source_spectra.append(
@@ -165,10 +253,10 @@ def simulate_template_dataset(isotope_list,
 
                         print(('\1b[2k\r'), end=' ')
                         print(('Isotope %s, template %s,'
-                              '%s total spectra simulated' % (
-                                  isotope,
-                                  spectral_template_setting,
-                                  total_spectra)), end=' ')
+                               '%s total spectra simulated' % (
+                                   isotope,
+                                   spectral_template_setting,
+                                   total_spectra)), end=' ')
     all_source_spectra = np.array(all_source_spectra)
     all_keys = np.array(all_keys)
     if not output_separate_background:
@@ -187,6 +275,36 @@ def create_template_parameters(
         calibration_division,
         print_divisions=False,
         division_offset=False):
+    """
+    Generates a list of parameters for template.
+
+    Parameters:
+    -----------
+    integration_time_range : list, tuple, float, int
+        A list of two floats that give the start and end points.
+    integration_time_division : int
+        Number of divisions for the integration time.
+    signal_to_background_range : list, tuple, float, int
+        A list of two floats that give the start and end points.
+    signal_to_background_division : int
+        Number of divisions for the signal_to_background.
+    calibration_range : list, tuple, float, int
+        A list of two floats that give the start and end points.
+    calibration_division :
+        Number of divisions for the calibration.
+    print_divisions : Boolean, optional
+        If true, prints the divisions. Default is false.
+    division_offset : Boolean, optional
+        If true, offsets all divisions by removing the last element
+        of the spaces defined by the range and divisions, and
+        adding to it a list of np.diff(x)/2.0
+
+    Returns:
+    --------
+    template_parameters : dictionary
+        Returns a dictionary containing the parameters needed to
+        generate a spectrum from a template.
+    """
 
     integration_times = np.logspace(
         np.log10(integration_time_range[0]),
@@ -198,17 +316,17 @@ def create_template_parameters(
         np.log10(signal_to_background_range[1]),
         signal_to_background_division)
 
-    calibrations = np.linspace(1.19*calibration_range[0],
-                               1.19*calibration_range[1],
+    calibrations = np.linspace(1.19 * calibration_range[0],
+                               1.19 * calibration_range[1],
                                calibration_division)
 
     if division_offset:
         integration_times = \
-            integration_times[:-1]+np.diff(integration_times)/2.0
+            integration_times[:-1] + np.diff(integration_times) / 2.0
         signal_to_backgrounds = \
-            signal_to_backgrounds[:-1]+np.diff(signal_to_backgrounds)/2.0
+            signal_to_backgrounds[:-1] + np.diff(signal_to_backgrounds) / 2.0
         calibrations = \
-            calibrations[:-1]+np.diff(calibrations)/2.0
+            calibrations[:-1] + np.diff(calibrations) / 2.0
 
     if print_divisions:
         print("integration_times\n" + str(integration_times))

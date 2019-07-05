@@ -2,9 +2,6 @@ from __future__ import print_function
 import tensorflow as tf
 import pickle
 import numpy as np
-import os
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer
 
 from annsa.model_classes import (cnn1d_model_features,
                                  CNN1D,
@@ -147,10 +144,9 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
         pool_strides=cae_features.pool_strides_encoder,
         dense_nodes=cnn_dense_nodes,
         activation_function=activation_function,
-        )
+    )
 
     CNN_model = CNN1D(model_features_CNN)
-    optimizer = tf.train.AdamOptimizer(model_features_CNN.learining_rate)
 
     # need to do a forward pass to initialize weights
     dummy_data = np.zeros(1024)
@@ -234,3 +230,4 @@ def load_pretrained_dae_into_dnn(dae_features_filename,
         DNN_model.layers[i].set_weights(DAE_model.layers[i].get_weights())
 
     return DNN_model, model_features_DNN
+
