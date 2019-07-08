@@ -788,6 +788,10 @@ class CNN1D(tf.keras.Model, BaseClass):
         Define here the layers used during the forward-pass of the neural
         network.
 
+        Parameters:
+        -----------
+        model_features : instance of cnn1d_model_features class.
+            Contains all of the features of the model.
         """
 
         #=========================Notes======================#
@@ -827,9 +831,11 @@ class CNN1D(tf.keras.Model, BaseClass):
             kernel_initializer = glorot_normal()
 
         # creates the convolutional layers.
+        # convolution layers are functions that will be called
+        # by passing data to them.
         self.conv_layers = {}
         self.pool_layers = {}
-        for layer in range(len(cnn_filters)): #Read: for each
+        for layer in range(len(cnn_filters)):
             self.conv_layers[str(layer)] = tf.layers.Conv1D(
                 filters=cnn_filters[layer],
                 kernel_size=cnn_kernel[layer],
@@ -914,13 +920,13 @@ class CNN1D(tf.keras.Model, BaseClass):
 
         """
         transformed_data = self.scaler.transform(input_data)
-        # any function in the sklearn.makepipeline has a method .transform
+        # any function in the sklearn.makepipeline has a method `transform`.
         # transformed_data prepares the data to be passed through a network.
-        tf_data = tf.reshape(x, [-1, transformed_data.shape[1], 1])
+        tf_data = tf.reshape(transformed_data, [-1, transformed_data.shape[1], 1])
         # tf data indicates that it can be used in a tensorflow pipeline.
         for layer in self.conv_layers.keys():
-            tf_data = self.conv_layers[str(layer)](tf_data)
-            tf_data = self.pool_layers[str(layer)](tf_data)
+            tf_data = self.conv_layers[str(layer)](tf_data) # convolves the data
+            tf_data = self.pool_layers[str(layer)](tf_data) # pools the output
         flattened_data = tf.layers.flatten(tf_data)
         # flattening reduces the dimensionality of the data so that it can be
         # classified.
