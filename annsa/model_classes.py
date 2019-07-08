@@ -826,7 +826,7 @@ class CNN1D(tf.keras.Model, BaseClass):
         else:
             kernel_initializer = glorot_normal()
 
-        #creates the convolutional layers.
+        # creates the convolutional layers.
         self.conv_layers = {}
         self.pool_layers = {}
         for layer in range(len(cnn_filters)): #Read: for each
@@ -843,6 +843,7 @@ class CNN1D(tf.keras.Model, BaseClass):
                 strides=pool_strides[layer],
                 padding='same')
 
+        # creates the dense layers
         self.dense_layers = {}
         self.drop_layers = {}
         for layer in range(len(dense_nodes)):
@@ -912,16 +913,23 @@ class CNN1D(tf.keras.Model, BaseClass):
             of classes. If used as autoencoder l is equal to m.
 
         """
-        x = self.scaler.transform(input_data) #any function in the sklearn.makepipeline has a method .transform
-        x = tf.reshape(x, [-1, x.shape[1], 1])
+        transformed_data = self.scaler.transform(input_data)
+        # any function in the sklearn.makepipeline has a method .transform
+        # transformed_data prepares the data to be passed through a network.
+        tf_data = tf.reshape(x, [-1, transformed_data.shape[1], 1])
+        # tf data indicates that it can be used in a tensorflow pipeline.
         for layer in self.conv_layers.keys():
-            x = self.conv_layers[str(layer)](x)
-            x = self.pool_layers[str(layer)](x)
-        x = tf.layers.flatten(x)
+            tf_data = self.conv_layers[str(layer)](tf_data)
+            tf_data = self.pool_layers[str(layer)](tf_data)
+        flattened_data = tf.layers.flatten(tf_data)
+        # flattening reduces the dimensionality of the data so that it can be
+        # classified.
         for layer in self.dense_layers.keys():
-            x = self.dense_layers[str(layer)](x)
-            x = self.drop_layers[str(layer)](x, training)
-        logits = self.output_layer(x)
+            flattened_data = self.dense_layers[str(layer)](flattened_data)
+            flattened_data = self.drop_layers[str(layer)](flattened_data, training)
+        logits = self.output_layer(flattened_data)
+        # logits is the final output of a single pass through a convolutional
+        # network.
         return logits
 
 
