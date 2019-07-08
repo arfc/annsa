@@ -280,19 +280,19 @@ class BaseClass(object):
             If true will end training. If false training continues.
         """
 
-        # Checks if earlystopping is turned on. 
+        # Checks if earlystopping is turned on.
         if not earlystop_patience:
             return False
 
         #Checks if enough epochs have passed.
-        if earlystop_patience > epoch: 
+        if earlystop_patience > epoch:
             return False
 
         min_error_in_patience_range = np.argmin(earlystop_cost[-earlystop_patience:])
         #Checks if our patience has been exceeded.
         if (min_error_in_patience_range == 0):
         	return True
-        else: 
+        else:
             return False
 
 
@@ -321,32 +321,32 @@ class BaseClass(object):
         Returns:
         -------
         Boolean
-    		If true will end training. If false training continues. 
+    		If true will end training. If false training continues.
         """
 
         if not not_learning_patience:
             return False
 
         if (epoch < not_learning_patience):
-            return False 
+            return False
 
         if (cost[-1] > not_learning_threshold):
             return True
-        else: 
+        else:
             return False
 
     def record_errors(self, earlystop, objective, record_train_errors=False):
         """
         Records errors at an epoch.
-        
+
         Parameters:
         -----------
-        earlystop : dictionary 
+        earlystop : dictionary
             Contains the earlystop cost data for 'train' and 'test'
         objective : dictionary
             Contains the objective cost data for 'train' and 'test'
         record_train_errors : boolean, optional
-            Decides whether training errors should be recorded. 
+            Decides whether training errors should be recorded.
 
         Returns:
         --------
@@ -410,8 +410,8 @@ class BaseClass(object):
         Parameters:
         ----------
         train_dataset : list, float, int
-            Two element list of [data, keys]. 
-            Data is an [nxm] numpy matrix of unprocessed gamma-ray spectra. 
+            Two element list of [data, keys].
+            Data is an [nxm] numpy matrix of unprocessed gamma-ray spectra.
             (n = number of spectra, m = number of channels)
             Keys is a [nxk] matrix of  target outputs.
             (n = number of spectra, k = number of possible sources)
@@ -421,10 +421,10 @@ class BaseClass(object):
             there are only two possible sources, keys will be [nx2].
 
             If data is being trained on an autoencoder, keys will be a list
-            of two matrices 
+            of two matrices
         test_dataset : list, float, int
-            Two element list of [data, keys]. 
-            Data is an [nxm] numpy matrix of unprocessed gamma-ray spectra. 
+            Two element list of [data, keys].
+            Data is an [nxm] numpy matrix of unprocessed gamma-ray spectra.
             (n = number of spectra, m = number of channels)
             Keys is a [nxk] matrix of  target outputs.
             (n = number of spectra, k = number of possible sources)
@@ -449,7 +449,7 @@ class BaseClass(object):
             learning. Not learning is defined by the ``not_learning_threshold``.
         not_learning_threshold : float, optional
             If error at epoch ``not_learning_patience`` is above this, training
-            stops. I.e. the 
+            stops. I.e. the
         obj_cost : function
         earlystop_cost_fctn : function
             Cost function used for early stopping. Examples are
@@ -463,13 +463,13 @@ class BaseClass(object):
             objective_cost : dictionary
                 keys = ['train', 'test']
                 values are lists containing the recorded error values.
-                Length depends on how frequently errors are recorded and the 
-                number of epochs being run. 
+                Length depends on how frequently errors are recorded and the
+                number of epochs being run.
             earlystop_cost : dictionary
                 keys = ['train', 'test']
                 values are lists containing the recorded error values.
-                Length depends on how frequently errors are recorded and the 
-                number of epochs being run. 
+                Length depends on how frequently errors are recorded and the
+                number of epochs being run.
 
             If true will end training. If false training continues.
         """
@@ -563,16 +563,16 @@ class BaseClass(object):
 
             #==============================================
 
-            if self.check_earlystop(epoch, 
+            if self.check_earlystop(epoch,
                                 earlystop_cost['test'],
                                     earlystop_patience):
                 break
 
             if self.not_learning(epoch,
-                 earlystop_cost['test'], 
+                 earlystop_cost['test'],
                  not_learning_patience,
-                 not_learning_threshold): 
-                break    
+                 not_learning_threshold):
+                break
 
         return [objective_cost, earlystop_cost]
 # ##############################################################
@@ -598,7 +598,7 @@ class DNN(tf.keras.Model, BaseClass):
 
     '__init__' : constructor
     'forward_pass' : Runs a forward pass throught the network
-    'loss_fn' : 
+    'loss_fn' :
 
 
 
@@ -732,25 +732,25 @@ class dnn_model_features(object):
         Parameters
         ----------
         learning_rate : float
-            How much the weights update due to back propagation of the 
-            error/loss function. 
+            How much the weights update due to back propagation of the
+            error/loss function.
         l2_regularization_scale : float
-            The loss penalty for regularization type l2. If the model 
+            The loss penalty for regularization type l2. If the model
             attempts to increase the weights, it will only be accepted
-            if there is an equal or greater decrease in the error 
+            if there is an equal or greater decrease in the error
             function.
         dropout_probability : float
-            The probability that any neuron will be temporarily turned 
-            off during training. Example: dropout_probability = 0.4 
-            means there is a 40% probability of the neuron turning off. 
-            batch_size : int 
-            'batch_size' is the number of spectra/images being passed 
-            through the network at once. For reference, one epoch is 
-            the size of all training data. 
+            The probability that any neuron will be temporarily turned
+            off during training. Example: dropout_probability = 0.4
+            means there is a 40% probability of the neuron turning off.
+            batch_size : int
+            'batch_size' is the number of spectra/images being passed
+            through the network at once. For reference, one epoch is
+            the size of all training data.
         output_size : Array/Tuple
             The desired dimensions of your output, typically [nx1]
         dense_nodes : int
-            The desired number of nodes in a dense layer. 
+            The desired number of nodes in a dense layer.
         activation_function : Tensorflow activation function.
             Example: tf.nn.relu
         scaler : tensorflow scaling function
@@ -800,7 +800,7 @@ class CNN1D(tf.keras.Model, BaseClass):
         #
         #
         #================Delete this section later===========#
-        
+
         self.batch_size = model_features.batch_size
         output_size = model_features.output_size
         self.scaler = model_features.scaler
@@ -829,7 +829,7 @@ class CNN1D(tf.keras.Model, BaseClass):
         #creates the convolutional layers.
         self.conv_layers = {}
         self.pool_layers = {}
-        for layer in range(len(cnn_filters)): #Read: for each 
+        for layer in range(len(cnn_filters)): #Read: for each
             self.conv_layers[str(layer)] = tf.layers.Conv1D(
                 filters=cnn_filters[layer],
                 kernel_size=cnn_kernel[layer],
@@ -890,7 +890,7 @@ class CNN1D(tf.keras.Model, BaseClass):
         return loss
 
     def forward_pass(self, input_data, training):
-        """ 
+        """
         Runs a forward-pass through the network. Outputs are defined by
         'output_layer' in the model's structure. The scaler is applied
         here.
@@ -899,7 +899,8 @@ class CNN1D(tf.keras.Model, BaseClass):
         -----------
         input_data : [nxm] matrix of unprocessed gamma-ray spectra. n is
             number of samples, m is length of a spectrum
-        training : Binary (True or False). If true, dropout is applied.
+        training : Boolean
+            If true, dropout is applied.
             When training weights this needs to be true for dropout to
             work.
 
@@ -927,7 +928,7 @@ class CNN1D(tf.keras.Model, BaseClass):
 class cnn1d_model_features(object):
 
     """
-    Defines the features of a CNN model. 
+    Defines the features of a CNN model.
     """
 
     def __init__(self,
@@ -955,42 +956,42 @@ class cnn1d_model_features(object):
         Parameters
         ----------
         learning_rate : float
-            How much the weights update due to back propagation of the 
-            error/loss function. 
+            How much the weights update due to back propagation of the
+            error/loss function.
         trainable : boolean
             If true, optimization will be applied and weights will be
-            updated. 
-            False is used for prediction. 
-        output_function : 
+            updated.
+            False is used for prediction.
+        output_function :
 
         l2_regularization_scale : float
-            The loss penalty for regularization type l2. If the model 
+            The loss penalty for regularization type l2. If the model
             attempts to increase the weights, it will only be accepted
-            if there is an equal or greater decrease in the error 
+            if there is an equal or greater decrease in the error
             function.
         dropout_probability : float
-            The probability that any neuron will be temporarily turned 
-            off during training. Example: dropout_probability = 0.4 
-            means there is a 40% probability of the neuron turning off. 
+            The probability that any neuron will be temporarily turned
+            off during training. Example: dropout_probability = 0.4
+            means there is a 40% probability of the neuron turning off.
         scaler : Tensorflow scaling function
-        batch_size : int 
-            'batch_size' is the number of spectra/images being passed 
-            through the network at once. For reference, one epoch is 
-            the size of all training data. 
+        batch_size : int
+            'batch_size' is the number of spectra/images being passed
+            through the network at once. For reference, one epoch is
+            the size of all training data.
         Pooling : Tensorflow pooling function
         cnn_filters : tuple or int
-            The number of filters in a convolutional layer. Length of 
-            `cnn_filters` gives the number of layers. 
+            The number of filters in a convolutional layer. Length of
+            `cnn_filters` gives the number of layers.
         cnn_kernel : int or 1D array of type int
             Passing int will assume a square filter of size int x int.
             The values of an array will be taken as the desired dimens-
             ion size of the filter.
         cnn_strides: list
-            The stride size of each filter. How far it shifts per 
-            iteration. Typically stride size is one. 
+            The stride size of each filter. How far it shifts per
+            iteration. Typically stride size is one.
         pool_size : int or array/tuple
             'int':
-                Creates a square pool. 
+                Creates a square pool.
             'array' or 'tuple':
                 Creates a pool the size of elements in your tuple.
                 pool_strides : int
@@ -999,7 +1000,7 @@ class cnn1d_model_features(object):
         output_size : Array/Tuple
             The desired dimensions of your output, typically [nx1]
         dense_nodes : int
-            The desired number of nodes in a dense layer. 
+            The desired number of nodes in a dense layer.
         activation_function : Tensorflow activation function
             Example: tf.nn.relu
 
@@ -1032,7 +1033,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     @author: Sam Dotson
 
     Parameters:
-    ----------- 
+    -----------
     cnn_filters_choices : 1-D array-like or int
         Input a choice of ..............
 
@@ -1054,7 +1055,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     pool_size_choice = choice(pool_size_choices)
 
     cnn_kernel = cnn_kernel_choice*(len(cnn_filters))
-    cnn_strides = (1,)*(len(cnn_filters)) #returns 
+    cnn_strides = (1,)*(len(cnn_filters)) #returns
     pool_size = pool_size_choice*(len(cnn_filters))
     pool_strides = (2,)*(len(cnn_filters))
 
@@ -1213,14 +1214,14 @@ class DAE(tf.keras.Model, BaseClass):
         return decoding
 
     def total_activity(self, input_data, training=False):
-        """ 
+        """
         Calculates the total network activity (l1 activation) on
         some input data.
-            
+
         Parameters:
         -----------
             input_data : 2D tensor of shape (n_samples, n_features).
-        
+
         Returns:
         --------
         average_activity : float
@@ -1328,7 +1329,7 @@ class dae_model_features(object):
             off during training. Example: dropout_probability = 0.4
             means there is a 40% probability of the neuron turning off.
         scaler : Tensorflow scaling function
-        batch_size : int 
+        batch_size : int
             'batch_size' is the number of spectra/images being passed
             through the network at once. For reference, one epoch is
         output_size : Array/Tuple
@@ -1360,13 +1361,13 @@ class dae_model_features(object):
 # ##############################################################
 
 
-class CAE(tf.keras.Model, BaseClass): 
+class CAE(tf.keras.Model, BaseClass):
     """
     FUNCTIONS
 
     Under the class -- list the member functions and a short
     summary of what they do!
-    
+
     """
     def __init__(self, model_features):
         super(CAE, self).__init__()
@@ -1582,7 +1583,7 @@ class cae_model_features(object):
             error/loss function.
         encoder_trainable : boolean
             If true, optimization will be applied and weights will be
-            updated. 
+            updated.
             False is used for prediction.
         output_function :
 
@@ -1596,10 +1597,10 @@ class cae_model_features(object):
             off during training. Example: dropout_probability = 0.4
             means there is a 40% probability of the neuron turning off.
         scaler : Tensorflow scaling function
-        batch_size : int 
+        batch_size : int
             'batch_size' is the number of spectra/images being passed
             through the network at once. For reference, one epoch is
-            the size of all training data. 
+            the size of all training data.
         Pooling : Tensorflow pooling function
         cnn_filters_encoder : int
             The number of filters in a convolutional layer.
@@ -1609,10 +1610,10 @@ class cae_model_features(object):
             ion size of the filter.
         cnn_strides_encoder: int
             The stride size of each filter. How far it shifts per
-            iteration. Typically stride size is one. 
+            iteration. Typically stride size is one.
         pool_size_encoder : int or array/tuple
             'int':
-                Creates a square pool. 
+                Creates a square pool.
             'array' or 'tuple':
                 Creates a pool the size of elements in your tuple.
         pool_strides_encoder : int
@@ -1783,7 +1784,7 @@ def train_earlystop(training_data,
     augment_testing_data : boolean, optional
         Decides whether to augment testing data. Default is False.
     fit_batch_verbose : int, optional
-        The frequency that the output of fit_batch is printed. 
+        The frequency that the output of fit_batch is printed.
     record_train_errors : boolean, optional
         Decides whether to record training error. Default is False.
         If True, will print model errors after each epoch.
@@ -1831,4 +1832,3 @@ def train_earlystop(training_data,
                                      float(earlystoperr_test[-1])))
 
     return costfunctionerr_test, earlystoperr_test
-    

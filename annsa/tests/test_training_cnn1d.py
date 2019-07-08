@@ -19,15 +19,15 @@ tf.enable_eager_execution()
 def construct_cnn1d():
     """
     Constructs a convolutional neural network and tests construction
-    functions. 
+    functions.
 
     Returns:
     --------
     model_features : class cnn1d_model_features
         Contains all features of the CNN1D model
 
-    optimizer : 
-    An Operation that updates the variables in var_list. 
+    optimizer :
+    An Operation that updates the variables in var_list.
     If global_step was not None, that operation also increments
     global_step. See documentation for tf.train.Optimizer
 
@@ -65,7 +65,7 @@ def test_cnn1d_construction():
 
     Returns: Nothing
 
-    Note: _ = something --> Initializes 'something', but does not 
+    Note: _ = something --> Initializes 'something', but does not
                             store anything in memory.
     """
     _, _, _ = construct_cnn1d()
@@ -75,7 +75,6 @@ def test_cnn1d_construction():
 def test_cnn1d_training():
     """
     Testing the convolutional neural network class and training function.
-
     Returns : Nothing
     """
 
@@ -97,13 +96,12 @@ def test_cnn1d_training():
         data_augmentation=model.default_data_augmentation,)
     pass
 
-
-
 def test_forward_pass():
+    """
+    Tests that the network is convolving and/or learning.
+    """
+
     pass
-
-
-
 
 
 def test_fit_batch():
@@ -114,4 +112,7 @@ def test_fit_batch():
 
 def test_train_earlystop():
     tf.reset_default_graph()
+    pass
+
+def test_loss_fn():
     pass

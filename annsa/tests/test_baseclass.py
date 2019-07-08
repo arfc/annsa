@@ -1,13 +1,13 @@
 from annsa.model_classes import BaseClass
-import numpy as np 
-import matplotlib.pyplot as plt 
+import numpy as np
+import matplotlib.pyplot as plt
 from annsa.template_sampling import make_random_spectrum
 
 def construct_baseclass():
     base = BaseClass()
 
     return base
-    
+
 def test_construct_baseclass():
 
     _ = construct_baseclass()
@@ -45,7 +45,7 @@ def test_check_earlystop_case1():
     earlystop_patience = 0
     epoch = 5
     stopped = base.check_earlystop(epoch, earlystop_cost[:epoch], earlystop_patience)
-    assert(stopped==False), "With earlystopping_patience=0, check_earlystop should return False.")
+    assert(stopped==False), "With earlystopping_patience=0, check_earlystop should return False."
 
 def test_check_earlystop_case2():
     """case 2: not enough epochs have passed"""
