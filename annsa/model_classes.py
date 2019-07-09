@@ -232,9 +232,11 @@ class BaseClass(object):
 
         Parameters:
         ----------
-        train_dataset_tensor : 2D tensor, float
+        train_dataset_tensor : tensorflow tensor
             Input tensor of shape (n_samples, n_features). Tensor is
             unprocessed gamma-ray spectra (counts per channel).
+            Try using tf.data.Dataset.from_tensor_slices() to process
+            and format data.
         obj_cost : function
             Main cost function the algorithm minimizes. examples are
             'self.mse' or 'self.cross_entropy'.
@@ -996,6 +998,11 @@ class cnn1d_model_features(object):
         cnn_filters : tuple or int
             The number of filters in a convolutional layer. Length of
             `cnn_filters` gives the number of layers.
+            E.g. (5, 4) would be a network with two convolutional layers
+            where the first layer has a depth of 5 and the second layer
+            has a depth of 4. For concreteness, depth means that there
+            are 4 or 5 filters of the same size. Size of the filter is
+            determined by `cnn_kernel`.
         cnn_kernel : int or 1D array of type int
             Passing int will assume a square filter of size int x int.
             The values of an array will be taken as the desired dimens-
