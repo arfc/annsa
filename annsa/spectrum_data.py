@@ -1,5 +1,8 @@
 import pandas as pd
 # from annsa.template_sampling import make_random_spectrum
+import matplotlib.pyplot as plt
+import numpy as np
+import csv
 import os
 
 class SpectrumData(object):
@@ -8,87 +11,150 @@ class SpectrumData(object):
 	that needs to be analyzed by using annsa
 	"""
 	def __init__(self,
-				filename,
-				folder=False,
+				folder=None,
 				ae=False,
 				csv=False,
+				output_name=None,
 				online=False):
 		"""
 		Generates a data object of type SpectrumData.
 
 		Parameters:
 		-----------
-		filename : string
-			This is the path including the name of the file
-			that contains your raw data.
-		folder : boolean
-			This says whether filename leads to a folder of
-			data, or a single dataset.
-			Default is false
+		folder : string
+			This working directory with all of your data.
+			If no directory is given, data must be added one
+			file at a time.
+			Default is None.
 		ae : boolean
 			This says whether the data should be processed
 			for autoencoders or not.
-			Default is false.
+			Default is False.
 		csv : boolean
-			If you are inputting data from a csv file this
-			should be true.
-			Default is false.
+			If you want to save the data as a single csv file.
+			Default is False.
+		output_name : string
+			The name of the file and path you want for your
+			data output.
 		online : boolean, optional
 			Whether or not the data set should be sampled by
 			using online_data_augmentation or not.
 		"""
 		super(SpectrumData, self).__init__()
 
-		self.keys = ['Isotope', 'Distance', 'Height', 'Shielding',
-		'Area Density', 'FWHM', 'Spectrum']
-		self.filename = filename
-		self.dataframe = pd.DataFrame()
+		self.data = {'Isotope':[],'Distance':[],'Height':[],'Shielding':[],
+		'Area Density':[],'FWHM':[],'Spectra':[]}
+		self.labels = self.data['Isotope']
+		self.spectra = self.data['Spectra']
+		self.folder = folder
+		self.df=None
+		self.dataset = [[],[]] # training labels and training data
+		if folder != None:
+			directory = os.fsencode(folder)
+			for file in os.listdir(directory):
+				filename = os.fsdecode(file)
+				if filename.endswith(".spe"):
+					isotope, _  = self.parse_fname(filename)
+					spectrum = self.get_spectrum(filename)
+					self.dataset[0].append(isotope)
+					self.dataset[1].append(spectrum)
 
-		# if not folder:
-		# 	row =
-		# 	pass
 
-	def add_column(self):
+
+		if csv:
+			self.df = pd.DataFrame({'Isotopes' : self.dataset[0],
+			'Spectra' : self.dataset[1]})
+			self.df.to_csv("/home/samgdotson/Research/data_test.csv")
+			print(self.df)
+			# self.dict_to_csv(output_name)
+
+	def add_column(self, key, values):
 		"""
 		Adds a column of data to the spectrum dataframe.
+
+		Parameters:
+		-----------
+		key : string
+			The name of the data you want to add
+		values : any
+			The values that go with the new key. Can be
+			single value or list of values.
 		"""
+
+		self.data[key] = [values]
 		pass
 
-	def add_row(self):
+	def add_data(self, fname):
 		"""
 		Adds a row of data to the spectrum dataframe.
 		This is useful if you want to add more data to
 		an existing dataframe.
 		"""
-		#gets the keys from the file name
-		values = self.parse_fname(self.filename)
+		# if self.folder != None:
+		# 	fname = self.folder+"/"+fname
+		# # Read in the data from the file
+		# spectrum = self.get_spectrum(fname)
+		# # Gets the keys from the file name
+		# values = self.parse_fname(fname)
+		# values.append(spectrum)
+		# # Adds values to the existing data
+		# for key,value in zip(list(self.data.keys()), values):
+		# 	self.data[key].append(value)
 
-		#read in the data from the file
+		pass
+
+
+
+	def plot_spectrum(self, index):
+		"""
+		Plots the spectrum of an isotope given a particular
+		index (row number).
+
+		Parameters:
+		-----------
+		index : int
+			The row number of the spectrum you want to plot.
+		"""
+
+		row = self.df.iloc[index, :]
+		label = self.df['Isotopes'][index]
+		counts = self.df['Spectra'][index]
+		# label = self.data['Isotope'][index]
+		# counts = self.data['Spectra'][index]
+		channels = np.arange(0, len(counts), 1)
+		plt.plot(channels, counts, label=label)
+		plt.show()
+		pass
+
+	def get_spectrum(self, filename):
+		"""
+		Retrieves the spectrum data from a file.
+
+		Parameters:
+		-----------
+		filename : string
+			The path to the file.
+
+		Returns:
+		--------
+		spectrum : numpy array, dtype=float
+			The raw counts of the spectrum.
+		"""
+		if self.folder != None:
+			filename = self.folder+"/"+filename
+
 		spectrum = []
-		file = open(self.filename)
+		file = open(filename)
 		for line in file:
-			# print(line)
 			spectrum.append(line.rstrip())
 		file.close()
 
 		spectrum = spectrum[9:1033]
 		spectrum = [float(count) for count in spectrum]
-		values.append(spectrum) #spectrum is a list
+		spectrum = np.array(spectrum)
 
-		dictionary = {}
+		return spectrum
 
-		for key,value in zip(self.keys, values):
-			dictionary.update({key : value})
-
-		# print(dictionary)
-
-		# row = pd.DataFrame(dictionary)
-
-		#adds the row to the bottom of the dataframe
-		# frames = [self.dataframe, row]
-		# self.dataframe = pd.concat(frames)
-
-		pass
 
 	def parse_fname(self, filename):
 		"""
@@ -109,17 +175,23 @@ class SpectrumData(object):
 			based on the standardized file naming
 			convention.
 		"""
-		#gets rid of the file extension
-		parameters = os.path.splitext(self.filename)[0]
-		#splits into values by '_'
+		if self.folder != None:
+			filename = self.folder+"/"+filename
+		# gets rid of the file extension
+		parameters = os.path.splitext(filename)[0]
+
+		# isolates the file name from the path
+		parameters = parameters.split('/')[-1]
+
+		# splits into values by '_'
 		parameters = parameters.split('_')
-		#converts strings to floats if appropriate.
+
+		# converts strings to floats if appropriate.
 		for index in range(len(parameters)):
 			if '.' in parameters[index]:
 				parameters[index] = float(parameters[index])
-
-		print(parameters)
-		return parameters
+		isotopes = parameters[0]
+		return isotopes, parameters
 
 	def make_dataframe(self):
 		"""
@@ -128,6 +200,19 @@ class SpectrumData(object):
 		"""
 		# name = os.path.splitext(self.filename)[0]
 		pass
+
+	def dict_to_csv(self, output_name):
+		"""
+		Writes the dictionary to a csv file.
+		"""
+		if not output_name.endswith(".csv"):
+			output_name = output_name + ".csv"
+		with open(output_name, 'w') as file:
+			for key in self.data.keys():
+				file.write("%s,%s\n"%(key, self.data[key]))
+
+		pass
+
 
 	# def sample_dataframe(self, **kwargs):
 	# 	"""
@@ -165,9 +250,21 @@ class SpectrumData(object):
 if __name__ == '__main__':
 
 	spectrum_folder = "/home/samgdotson/Research/annsa/annsa/spectra_templates/shielded-templates-200keV"
+	test_folder = "/home/samgdotson/Research/annsa/annsa/test_data"
 	single_spectrum = "/home/samgdotson/Research/annsa/annsa/spectra_templates/shielded-templates-200keV/99MTc_75.0_50.0_none_0_9.0.spe"
-	data = SpectrumData(single_spectrum)
+	second_spectrum = "/home/samgdotson/Research/annsa/annsa/spectra_templates/shielded-templates-200keV/51CR_50.0_50.0_alum_1.82_9.0.spe"
+	data = SpectrumData()
+	data.add_data(single_spectrum)
+	data.add_data(second_spectrum)
+	print(data.data)
 
-	data.add_row()
+
+	test_data = SpectrumData(folder=test_folder, csv=True,
+	output_name = "/home/samgdotson/Research/data_test.csv")
+
+	test_data.plot_spectrum(2)
+	# all_data = SpectrumData(folder=spectrum_folder, csv=True,
+	# output_name = "/home/samgdotson/Research/data_test.csv")
+
 
 	pass
