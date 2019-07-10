@@ -1,5 +1,5 @@
 import pandas as pd
-from annsa.template_sampling import make_random_spectrum
+# from annsa.template_sampling import make_random_spectrum
 import os
 
 class SpectrumData(object):
@@ -44,6 +44,10 @@ class SpectrumData(object):
 		self.filename = filename
 		self.dataframe = pd.DataFrame()
 
+		# if not folder:
+		# 	row =
+		# 	pass
+
 	def add_column(self):
 		"""
 		Adds a column of data to the spectrum dataframe.
@@ -57,23 +61,32 @@ class SpectrumData(object):
 		an existing dataframe.
 		"""
 		#gets the keys from the file name
-		values = parse_fname(self.filename)
+		values = self.parse_fname(self.filename)
 
 		#read in the data from the file
-		value.append(spectrum) #spectrum is a list
+		spectrum = []
+		file = open(self.filename)
+		for line in file:
+			# print(line)
+			spectrum.append(line.rstrip())
+		file.close()
+
+		spectrum = spectrum[9:1033]
+		spectrum = [float(count) for count in spectrum]
+		values.append(spectrum) #spectrum is a list
 
 		dictionary = {}
 
-		for key in self.keys:
-			i = 0
-			dictionary[key] = values[i]
-			i += 1
+		for key,value in zip(self.keys, values):
+			dictionary.update({key : value})
 
-		row = pd.DataFrame(dictionary)
+		# print(dictionary)
+
+		# row = pd.DataFrame(dictionary)
 
 		#adds the row to the bottom of the dataframe
-		frames = [self.dataframe, row]
-		self.dataframe = pd.concat(frames)
+		# frames = [self.dataframe, row]
+		# self.dataframe = pd.concat(frames)
 
 		pass
 
@@ -105,6 +118,7 @@ class SpectrumData(object):
 			if '.' in parameters[index]:
 				parameters[index] = float(parameters[index])
 
+		print(parameters)
 		return parameters
 
 	def make_dataframe(self):
@@ -147,3 +161,13 @@ class SpectrumData(object):
 	# 	"""
 	#
 	# 	pass
+
+if __name__ == '__main__':
+
+	spectrum_folder = "/home/samgdotson/Research/annsa/annsa/spectra_templates/shielded-templates-200keV"
+	single_spectrum = "/home/samgdotson/Research/annsa/annsa/spectra_templates/shielded-templates-200keV/99MTc_75.0_50.0_none_0_9.0.spe"
+	data = SpectrumData(single_spectrum)
+
+	data.add_row()
+
+	pass
