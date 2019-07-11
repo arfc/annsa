@@ -1,7 +1,11 @@
 from __future__ import print_function
 from __future__ import absolute_import
 import numpy as np
-from . import annsa as an
+# from . import annsa as an
+import annsa as an
+
+print(help(an))
+
 
 background_locations = ['albuquerque',
                         'chicago',
@@ -28,11 +32,11 @@ def load_template_spectra_from_folder(parent_folder,
     normalization : string or boolean
         Default = None
         Accepts: 'normalheight', 'normalarea', None
-        How the dataset should be normalized. 
+        How the dataset should be normalized.
 
     Returns:
     --------
-    temp_dict : Dictionary 
+    temp_dict : Dictionary
         Contains all template spectra from a folder.
     """
 
@@ -64,7 +68,7 @@ def load_template_spectra_from_folder(parent_folder,
     return temp_dict
 
 
-def load_templates(normalization=None): 
+def load_templates(normalization=None):
     """
     Automatically loads a series of templates from pre-determined directories.
     Deprecated.
@@ -77,9 +81,9 @@ def load_templates(normalization=None):
         Accepts: 'normalheight', 'normalarea', None
         How the dataset should be normalized.
 
-    Returns: 
+    Returns:
     --------
-    spectral_templates : Dictionary 
+    spectral_templates : Dictionary
         Contains all template spectra from predefined folders.
     """
     spectral_templates = {}
@@ -153,7 +157,7 @@ def load_templates(normalization=None):
         """
         Normalizes the spectrum data.
 
-        Parameters: 
+        Parameters:
         -----------
         location : 'string'
             Name of location for template background radiation.
@@ -167,16 +171,16 @@ def load_templates(normalization=None):
         --------
         Normalized temp_spectrum.
         """
-            temp_spectrum = an.read_spectrum(
-                './templates/background/background-'+location+'.spe')
-            if np.max(temp_spectrum) == 0:
-                print(ID + ' Contains no values')
-            if normalization is None:
-                return temp_spectrum
-            elif normalization == 'normalheight':
-                return temp_spectrum/np.max(temp_spectrum)
-            elif normalization == 'normalarea':
-                return temp_spectrum/np.sum(temp_spectrum)
+    temp_spectrum = an.read_spectrum(
+        './templates/background/background-'+location+'.spe')
+    if np.max(temp_spectrum) == 0:
+        print(ID + ' Contains no values')
+    if normalization is None:
+        return temp_spectrum
+    elif normalization == 'normalheight':
+        return temp_spectrum/np.max(temp_spectrum)
+    elif normalization == 'normalarea':
+        return temp_spectrum/np.sum(temp_spectrum)
 
     for location in background_locations:
         spectral_templates['background'][location] = normalize_spectrum(

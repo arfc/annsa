@@ -44,29 +44,47 @@ class SpectrumData(object):
 
 		self.data = {'Isotope':[],'Distance':[],'Height':[],'Shielding':[],
 		'Area Density':[],'FWHM':[],'Spectra':[]}
-		self.labels = self.data['Isotope']
-		self.spectra = self.data['Spectra']
+		# self.labels = self.dataset[0]
+		# self.spectra = self.dataset[1]
 		self.folder = folder
 		self.df=None
 		self.dataset = [[],[]] # training labels and training data
+		self.dataframe = pd.DataFrame()
+
+#==========================This needs to be a function==========================
 		if folder != None:
+			# Opens the folder
 			directory = os.fsencode(folder)
+			# Iterates through the files in the directory
 			for file in os.listdir(directory):
+				# Gets the file name itself, the path is appended in each func
 				filename = os.fsdecode(file)
+				# If the file is a .spe file with spectrum data, then ...
 				if filename.endswith(".spe"):
+					# Grabs the isotope parameter
 					isotope, _  = self.parse_fname(filename)
+					# Pulls the spectrum out of the file and into a numpy array.
 					spectrum = self.get_spectrum(filename)
+					# Dataset implementation...
 					self.dataset[0].append(isotope)
 					self.dataset[1].append(spectrum)
 
+			labels = self.dataset[0]
+			spectra = self.dataset[1]
+			data_dict = {'Isotopes' : labels}
+			for spectrum in spectra:
+				for channel, count in enumerate(spectrum):
+					if str(channel) not in data_dict.keys():
+						data_dict[str(channel)] = []
+					data_dict[str(channel)].append(count)
 
+			# Pandas DataFrame implementation...
+			self.dataframe = pd.DataFrame(data_dict)
 
-		if csv:
-			self.df = pd.DataFrame({'Isotopes' : self.dataset[0],
-			'Spectra' : self.dataset[1]})
-			self.df.to_csv("/home/samgdotson/Research/data_test.csv")
-			print(self.df)
-			# self.dict_to_csv(output_name)
+			if csv:
+				self.dataframe.to_csv(output_name)
+				print(self.df)
+#===============================================================================
 
 	def add_column(self, key, values):
 		"""
@@ -190,8 +208,8 @@ class SpectrumData(object):
 		for index in range(len(parameters)):
 			if '.' in parameters[index]:
 				parameters[index] = float(parameters[index])
-		isotopes = parameters[0]
-		return isotopes, parameters
+
+		return parameters
 
 	def make_dataframe(self):
 		"""
@@ -253,18 +271,19 @@ if __name__ == '__main__':
 	test_folder = "/home/samgdotson/Research/annsa/annsa/test_data"
 	single_spectrum = "/home/samgdotson/Research/annsa/annsa/spectra_templates/shielded-templates-200keV/99MTc_75.0_50.0_none_0_9.0.spe"
 	second_spectrum = "/home/samgdotson/Research/annsa/annsa/spectra_templates/shielded-templates-200keV/51CR_50.0_50.0_alum_1.82_9.0.spe"
-	data = SpectrumData()
-	data.add_data(single_spectrum)
-	data.add_data(second_spectrum)
-	print(data.data)
+	# data = SpectrumData()
+	# data.add_data(single_spectrum)
+	# data.add_data(second_spectrum)
+	# print(data.data)
 
 
-	test_data = SpectrumData(folder=test_folder, csv=True,
-	output_name = "/home/samgdotson/Research/data_test.csv")
-
-	test_data.plot_spectrum(2)
-	# all_data = SpectrumData(folder=spectrum_folder, csv=True,
+	# test_data = SpectrumData(folder=test_folder, csv=True,
 	# output_name = "/home/samgdotson/Research/data_test.csv")
+	#
+	# test_data.plot_spectrum(2)
+
+	# all_data = SpectrumData(folder=spectrum_folder, csv=True,
+	# output_name = "/home/samgdotson/Research/all_data.csv")
 
 
 	pass
