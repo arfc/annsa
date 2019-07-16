@@ -45,28 +45,28 @@ def test_check_earlystop_case1():
     earlystop_patience = 0
     epoch = 5
     stopped = base.check_earlystop(epoch, earlystop_cost[:epoch], earlystop_patience)
-    assert(stopped==False), "With earlystopping_patience=0, check_earlystop should return False."
+    assert not stopped, "With earlystopping_patience=0, check_earlystop should return False."
 
 def test_check_earlystop_case2():
     """case 2: not enough epochs have passed"""
     earlystop_patience = 70
     epoch = 69
     stopped = base.check_earlystop(epoch, earlystop_cost[:epoch], earlystop_patience)
-    assert(stopped==False), "If epoch < patience, check_earlystop should return False."
+    assert not stopped, "If epoch < patience, check_earlystop should return False."
 
 def test_check_earlystop_case3():
     """case 3: early stopping should be applied."""
     earlystop_patience = 5
     epoch = 69
     stopped = base.check_earlystop(epoch, earlystop_cost[:epoch], earlystop_patience)
-    assert (stopped==True), "Early stopping should have applied and did not."
+    assert stopped, "Early stopping should have applied and did not."
 
 def test_check_earlystop_case4():
     """case 4: early stopping was applied too soon"""
     earlystop_patience = 5
     epoch = 50
     stopped = base.check_earlystop(epoch, earlystop_cost[:epoch], earlystop_patience)
-    assert (stopped==False), "Early stopping was applied too early."
+    assert not stopped, "Early stopping was applied too early."
 
 #not_learning unit tests
 def test_not_learning_case1():
@@ -75,7 +75,7 @@ def test_not_learning_case1():
     not_learning_threshold = 10
     epoch = 5
     stopped = base.not_learning(epoch, not_learning_cost[:epoch], not_learning_patience, not_learning_threshold)
-    assert (stopped==False), "Not learning is turned off, should not have stopped."
+    assert not stopped, "Not learning is turned off, should not have stopped."
 
 def test_not_learning_case2():
     """case 2: not enough epochs have passed"""
@@ -83,7 +83,7 @@ def test_not_learning_case2():
     not_learning_threshold = 10
     epoch = 6
     stopped = base.not_learning(epoch, not_learning_cost[:epoch], not_learning_patience, not_learning_threshold)
-    assert (stopped==False), "Not learning applied too early. epoch < patience."
+    assert not stopped, "Not learning applied too early. epoch < patience."
 
 def test_not_learning_case3():
     """case 3: not learning should be applied."""
@@ -91,4 +91,4 @@ def test_not_learning_case3():
     not_learning_threshold = 10
     epoch = 6
     stopped = base.not_learning(epoch, not_learning_cost[:epoch], not_learning_patience, not_learning_threshold)
-    assert (stopped==True), "Not learning should have applied and did not."
+    assert stopped, "Not learning should have applied and did not."
