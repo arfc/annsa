@@ -265,12 +265,56 @@ class SpectrumData(object):
 	#
 	# 	pass
 
+#========================Non-member functions===================
+def plot_spectrum(spectrum, title):
+	"""
+	Plots the spectrum of an isotope given a particular
+	index (row number).
+
+	Parameters:
+	-----------
+	index : int
+		The row number of the spectrum you want to plot.
+	"""
+	print("inside the plot function")
+	channels = np.arange(0, len(spectrum), 1)
+	plt.plot(channels, spectrum)
+	plt.title(title)
+	plt.show()
+	pass
+
+def get_spectrum(filename):
+	"""
+	Retrieves the spectrum data from a file.
+
+	Parameters:
+	-----------
+	filename : string
+		The path to the file.
+
+	Returns:
+	--------
+	spectrum : numpy array, dtype=float
+		The raw counts of the spectrum.
+	"""
+	spectrum = []
+	file = open(filename)
+	for line in file:
+		spectrum.append(line.rstrip())
+	file.close()
+
+	spectrum = spectrum[9:1033]
+	spectrum = [float(count) for count in spectrum]
+	spectrum = np.array(spectrum)
+
+	return spectrum
+
 if __name__ == '__main__':
 
 	spectrum_folder = "/home/samgdotson/Research/annsa/annsa/spectra_templates/shielded-templates-200keV"
 	test_folder = "/home/samgdotson/Research/annsa/annsa/test_data"
 	single_spectrum = "/home/samgdotson/Research/annsa/annsa/spectra_templates/shielded-templates-200keV/99MTc_75.0_50.0_none_0_9.0.spe"
-	second_spectrum = "/home/samgdotson/Research/annsa/annsa/spectra_templates/shielded-templates-200keV/51CR_50.0_50.0_alum_1.82_9.0.spe"
+	second_spectrum = "/home/samgdotson/Research/annsa/annsa/spectra_templates/shielded-templates-200keV/235U_100.0_175.0_none_0_7.0.spe"
 	# data = SpectrumData()
 	# data.add_data(single_spectrum)
 	# data.add_data(second_spectrum)
@@ -284,6 +328,26 @@ if __name__ == '__main__':
 
 	# all_data = SpectrumData(folder=spectrum_folder, csv=True,
 	# output_name = "/home/samgdotson/Research/all_data.csv")
+
+	background_spectrum = "/home/samgdotson/Research/spectra_templates/background-templates/albuquerque_6.0_0.spe"
+
+	mtc099 = get_spectrum(second_spectrum)
+	newmex = get_spectrum(background_spectrum)
+	combined = mtc099 + newmex
+
+	t1 = "background only"
+	t2 = "spectrum only"
+	t3 = "spectrum + background"
+
+	plot_spectrum(newmex, t1)
+	plot_spectrum(mtc099, t2)
+	plot_spectrum(combined, t3)
+
+
+
+
+
+
 
 
 	pass

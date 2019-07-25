@@ -796,17 +796,6 @@ class CNN1D(tf.keras.Model, BaseClass):
             Contains all of the features of the model.
         """
 
-        #=========================Notes======================#
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #================Delete this section later===========#
-
         self.batch_size = model_features.batch_size
         output_size = model_features.output_size
         self.scaler = model_features.scaler
@@ -880,7 +869,7 @@ class CNN1D(tf.keras.Model, BaseClass):
             same as n in input. l is the number of elements in each
             output . If using one-hot encoding l is equal to number
             of classes. If used as autoencoder l is equal to m.
-        cost : string
+        cost : function
             Main cost function the algorithm minimizes. examples are
             'self.mse' or 'self.cross_entropy'.
         training : bool, optional
