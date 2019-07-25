@@ -1,15 +1,11 @@
 from __future__ import absolute_import, division, print_function
-import os.path as op
 import numpy as np
 import tensorflow as tf
-import annsa as an
 
-from sklearn.datasets import make_classification
-from sklearn.preprocessing import LabelBinarizer, FunctionTransformer
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
 
-from annsa.model_classes import (cnn1d_model_features,
-                                 generate_random_cnn1d_architecture,
+from annsa.model_classes import (generate_random_cnn1d_architecture,
                                  CNN1D)
 from annsa.load_dataset import load_dataset
 
@@ -37,8 +33,8 @@ def construct_cnn1d():
     """
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
 
-    cnn_filters_choices = ((4, 1), (8, 1)) #choose either 4x1 or 8x1 filter.
-    cnn_kernel_choices = ((8, ), (4, )) #choose either 8xn or 4xn kernel size.
+    cnn_filters_choices = ((4, 1), (8, 1))  # choose either 4x1 or 8x1 filter
+    cnn_kernel_choices = ((8, ), (4, ))  # choose either 8xn or 4xn kernel size
     pool_size_choices = ((8, ), (4, ))
     model_features = generate_random_cnn1d_architecture(cnn_filters_choices,
                                                         cnn_kernel_choices,
@@ -64,9 +60,6 @@ def test_cnn1d_construction():
     Tests the construction of a convolution neural network.
 
     Returns: Nothing
-
-    Note: _ = something --> Initializes 'something', but does not
-                            store anything in memory.
     """
     _, _, _ = construct_cnn1d()
     pass
@@ -96,11 +89,16 @@ def test_cnn1d_training():
         data_augmentation=model.default_data_augmentation,)
     pass
 
+<<<<<<< HEAD
 def test_forward_pass():
     """
     Tests that the network is convolving and/or learning.
     """
 
+=======
+
+def test_forward_pass():
+>>>>>>> e7cc036d07af9e9c80e0e03f419175938201c17d
     pass
 
 
@@ -110,9 +108,13 @@ def test_fit_batch():
     model_features, optimizer, model = construct_cnn1d()
     pass
 
+
 def test_train_earlystop():
     tf.reset_default_graph()
     pass
+<<<<<<< HEAD
 
 def test_loss_fn():
     pass
+=======
+>>>>>>> e7cc036d07af9e9c80e0e03f419175938201c17d

@@ -51,17 +51,17 @@ def load_template_spectra_from_folder(parent_folder,
         if normalization is None:
             return temp_spectrum
         elif normalization == 'normalheight':
-            return temp_spectrum/np.max(temp_spectrum)
+            return temp_spectrum / np.max(temp_spectrum)
         elif normalization == 'normalarea':
-            return temp_spectrum/np.sum(temp_spectrum)
+            return temp_spectrum / np.sum(temp_spectrum)
 
-        #ASSERT
-        #Add an assertion if the argument is misspelled or incorrect.
-        #It should throw an error saying "hey this isn't an option."
-        #Will make debugging easier if your error is that normaheight
-        #isn't normalheight.
+        # ASSERT
+        # Add an assertion if the argument is misspelled or incorrect.
+        # It should throw an error saying "hey this isn't an option."
+        # Will make debugging easier if your error is that normaheight
+        # isn't normalheight.
 
-    for i in range(len(an.isotopes)-3):
+    for i in range(len(an.isotopes) - 3):
         temp_dict[an.isotopes[i]] = normalize_spectrum(
             an.isotopes_sources_GADRAS_ID[i])
 
@@ -171,19 +171,21 @@ def load_templates(normalization=None):
         --------
         Normalized temp_spectrum.
         """
-    temp_spectrum = an.read_spectrum(
-        './templates/background/background-'+location+'.spe')
-    if np.max(temp_spectrum) == 0:
-        print(ID + ' Contains no values')
-    if normalization is None:
-        return temp_spectrum
-    elif normalization == 'normalheight':
-        return temp_spectrum/np.max(temp_spectrum)
-    elif normalization == 'normalarea':
-        return temp_spectrum/np.sum(temp_spectrum)
+        temp_spectrum = an.read_spectrum('./templates/' +
+                                         'background/background-' +
+                                         location + '.spe')
+        if np.max(temp_spectrum) == 0:
+            print('spectrum contains no values')
+        if normalization is None:
+            return temp_spectrum
+        elif normalization == 'normalheight':
+            return temp_spectrum / np.max(temp_spectrum)
+        elif normalization == 'normalarea':
+            return temp_spectrum / np.sum(temp_spectrum)
 
     for location in background_locations:
         spectral_templates['background'][location] = normalize_spectrum(
             location, normalization)
 
     return spectral_templates
+

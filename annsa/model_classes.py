@@ -3,7 +3,6 @@ import pickle
 import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.eager as tfe
-from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import f1_score
 from tensorflow.image import resize_images
 from tensorflow.keras.initializers import he_normal, glorot_normal
@@ -71,6 +70,8 @@ class BaseClass(object):
             model's prediction given the inputs and the ground-truth
             target.
         """
+        if targets.shape[1] > 1:
+            targets = self.scaler.transform(targets)
 
         logits = self.forward_pass(input_data, training=training)
         cross_entropy_loss = tf.reduce_mean(
@@ -104,9 +105,9 @@ class BaseClass(object):
         """
         # check if targets are a spectrum
         if targets.shape[1] > 1:
-            targets_scaled = self.scaler.transform(targets)
+            targets = self.scaler.transform(targets)
         model_predictions = self.forward_pass(input_data, training=training)
-        return tf.losses.mean_squared_error(targets_scaled, model_predictions)
+        return tf.losses.mean_squared_error(targets, model_predictions)
 
     def f1_error(self, input_data, targets, training=False, average='micro'):
         """
@@ -226,7 +227,6 @@ class BaseClass(object):
                     obj_cost,
                     optimizer,
                     data_augmentation):
-
         """
         Trains model on a single epoch using mini-batch training.
 
@@ -252,16 +252,16 @@ class BaseClass(object):
         """
         for (input_data, target) in tfe.Iterator(
                 train_dataset_tensor.shuffle(int(1e8)).batch(self.batch_size)):
-                input_data = data_augmentation(input_data)
-                # check if data_augmentation returns separate source and
-                # background
-                if input_data.shape[1] == 2:
-                    target = input_data[:, 1]
-                    input_data = input_data[:, 0]
-                grads = self.grads_fn(input_data,
-                                      target,
-                                      obj_cost)
-                optimizer.apply_gradients(zip(grads, self.variables))
+            input_data = data_augmentation(input_data)
+            # check if data_augmentation returns separate source and
+            # background
+            if input_data.shape[1] == 2:
+                target = input_data[:, 1]
+                input_data = input_data[:, 0]
+            grads = self.grads_fn(input_data,
+                                  target,
+                                  obj_cost)
+            optimizer.apply_gradients(zip(grads, self.variables))
         return None
 
     def check_earlystop(self, epoch, earlystop_cost, earlystop_patience):
@@ -285,18 +285,21 @@ class BaseClass(object):
         # Checks if earlystopping is turned on.
         if not earlystop_patience:
             return False
-
-        #Checks if enough epochs have passed.
+        # Checks if enough epochs have passed.
         if earlystop_patience > epoch:
             return False
 
-        min_error_in_patience_range = np.argmin(earlystop_cost[-earlystop_patience:])
-        #Checks if our patience has been exceeded.
+        min_error_in_patience_range = np.argmin(
+            earlystop_cost[-earlystop_patience:])
+        # Checks if our patience has been exceeded.
         if (min_error_in_patience_range == 0):
+<<<<<<< HEAD
         	return True
+=======
+            return True
+>>>>>>> e7cc036d07af9e9c80e0e03f419175938201c17d
         else:
             return False
-
 
     def not_learning(self,
                      epoch,
@@ -309,13 +312,13 @@ class BaseClass(object):
         Parameters:
         ----------
         epoch : int
-        	The current epoch.
+            The current epoch.
         cost : narray, float
             Array of cost values for each iteration used for early stopping.
                 not_learning_patience : int
         not_learning_patience : int
             Max number of epochs to wait before checking if model is not
-            learning. Not learning is defined by the ``not_learning_threshold``.
+            learning. Not learning is defined by ``not_learning_threshold``.
         not_learning_threshold : float
             If error at epoch ``not_learning_patience`` is above this, training
             stops.
@@ -354,8 +357,6 @@ class BaseClass(object):
         --------
 
         """
-
-
         if earlystop_patience:
             if record_train_errors:
                 earlystop_cost['train'].append(
@@ -385,10 +386,6 @@ class BaseClass(object):
                          testing_key,
                          obj_cost,
                          training=False))
-
-
-
-
         pass
 
     def fit_batch(self,
@@ -449,10 +446,10 @@ class BaseClass(object):
             Number of epochs training is allowed to run without improvment.
         not_learning_patience : int, optional
             Max number of epochs to wait before checking if model is not
-            learning. Not learning is defined by the ``not_learning_threshold``.
+            learning. Not learning is defined by ``not_learning_threshold``.
         not_learning_threshold : float, optional
             If error at epoch ``not_learning_patience`` is above this, training
-            stops. I.e. the
+            stops.
         obj_cost : function
         earlystop_cost_fctn : function
             Cost function used for early stopping. Examples are
@@ -498,13 +495,10 @@ class BaseClass(object):
 
         for epoch in range(num_epochs):
 
-            #============================================================
-            # Train through one epoch
             self.train_epoch(train_dataset_tensor,
                              obj_cost,
                              optimizer,
                              data_augmentation)
-            #============================================================
 
             if record_train_errors:
                 training_data_aug = data_augmentation(training_data)
@@ -522,9 +516,6 @@ class BaseClass(object):
                 testing_key = testing_data[:, 1]
                 testing_data = testing_data[:, 0]
 
-            # Record errors at each epoch
-            # def record_errors
-            #===============================================
             if earlystop_patience:
                 if record_train_errors:
                     earlystop_cost['train'].append(
@@ -554,31 +545,28 @@ class BaseClass(object):
                              testing_key,
                              obj_cost,
                              training=False))
-            #==============================================
 
             # Print errors at end of epoch
-            # def print_errors
-            #==============================================
-            if (print_errors and ((epoch+1) % verbose == 0)) is True:
+            if (print_errors and ((epoch + 1) % verbose == 0)) is True:
                 print('Epoch %d: CostFunc loss: %3.2f %3.2f, '
                       'EarlyStop loss: %3.2f %3.2f' % (
-                          epoch+1,
+                          epoch + 1,
                           objective_cost['train'][-1],
                           objective_cost['test'][-1],
                           earlystop_cost['train'][-1],
                           earlystop_cost['test'][-1]))
 
-            #==============================================
-
-            if self.check_earlystop(epoch,
-                                earlystop_cost['test'],
-                                    earlystop_patience):
+            if self.check_earlystop(
+                    epoch,
+                    earlystop_cost['test'],
+                    earlystop_patience):
                 break
 
-            if self.not_learning(epoch,
-                 earlystop_cost['test'],
-                 not_learning_patience,
-                 not_learning_threshold):
+            if self.not_learning(
+                    epoch,
+                    earlystop_cost['test'],
+                    not_learning_patience,
+                    not_learning_threshold):
                 break
 
         return [objective_cost, earlystop_cost]
@@ -605,11 +593,9 @@ class DNN(tf.keras.Model, BaseClass):
 
     '__init__' : constructor
     'forward_pass' : Runs a forward pass throught the network
-    'loss_fn' :
-
-
-
+    'loss_fn' : Defines the objective function used to update weights
     """
+
     def __init__(self, model_features):
         """
         Initializes dnn structure with model features.
@@ -631,6 +617,7 @@ class DNN(tf.keras.Model, BaseClass):
         self.batch_size = model_features.batch_size
         self.scaler = model_features.scaler
         output_size = model_features.output_size
+        output_function = model_features.output_function
         activation_function = model_features.activation_function
         regularizer = tf.contrib.layers.l2_regularizer(
             scale=self.l2_regularization_scale)
@@ -652,7 +639,8 @@ class DNN(tf.keras.Model, BaseClass):
                 kernel_regularizer=regularizer)
             self.drop_layers[str(layer)] = tf.layers.Dropout(
                 dropout_probability)
-        self.output_layer = tf.layers.Dense(output_size, activation=None)
+        self.output_layer = tf.layers.Dense(
+            output_size, activation=output_function)
 
     def forward_pass(self, input_data, training):
         """
@@ -722,17 +710,16 @@ class dnn_model_features(object):
     '__init__' : Constructor
     """
 
-
     def __init__(self, learning_rate,
                  l2_regularization_scale,
                  dropout_probability,
                  batch_size,
                  output_size,
+                 output_function,
                  dense_nodes,
                  activation_function,
                  scaler
                  ):
-
         """
         @author: Sam Dotson
 
@@ -769,6 +756,7 @@ class dnn_model_features(object):
         self.dropout_probability = dropout_probability
         self.batch_size = batch_size
         self.output_size = output_size
+        self.output_function = output_function
         self.dense_nodes = dense_nodes
         self.activation_function = activation_function
         self.scaler = scaler
@@ -809,7 +797,6 @@ class CNN1D(tf.keras.Model, BaseClass):
         output_function = model_features.output_function
         cnn_filters = model_features.cnn_filters
         cnn_kernel = model_features.cnn_kernel
-        cnn_strides = model_features.cnn_strides
         pool_size = model_features.pool_size
         pool_strides = model_features.pool_strides
         Pooling = model_features.Pooling
@@ -827,8 +814,6 @@ class CNN1D(tf.keras.Model, BaseClass):
             kernel_initializer = glorot_normal()
 
         # creates the convolutional layers.
-        # convolution layers are functions that will be called
-        # by passing data to them.
         self.conv_layers = {}
         self.pool_layers = {}
         for layer in range(len(cnn_filters)):
@@ -915,11 +900,8 @@ class CNN1D(tf.keras.Model, BaseClass):
             of classes. If used as autoencoder l is equal to m.
 
         """
-        transformed_data = self.scaler.transform(input_data)
-        # any function in the sklearn.makepipeline has a method `transform`.
-        # transformed_data prepares the data to be passed through a network.
-        tf_data = tf.reshape(transformed_data, [-1, transformed_data.shape[1], 1])
-        # tf data indicates that it can be used in a tensorflow pipeline.
+        x = self.scaler.transform(input_data)
+        x = tf.reshape(x, [-1, x.shape[1], 1])
         for layer in self.conv_layers.keys():
             tf_data = self.conv_layers[str(layer)](tf_data) # convolves the data
             tf_data = self.pool_layers[str(layer)](tf_data) # pools the output
@@ -959,7 +941,6 @@ class cnn1d_model_features(object):
                  dense_nodes,
                  activation_function,
                  ):
-
         """
         @Author: Sam Dotson
 
@@ -992,11 +973,6 @@ class cnn1d_model_features(object):
         cnn_filters : tuple or int
             The number of filters in a convolutional layer. Length of
             `cnn_filters` gives the number of layers.
-            E.g. (5, 4) would be a network with two convolutional layers
-            where the first layer has a depth of 5 and the second layer
-            has a depth of 4. For concreteness, depth means that there
-            are 4 or 5 filters of the same size. Size of the filter is
-            determined by `cnn_kernel`.
         cnn_kernel : int or 1D array of type int
             Passing int will assume a square filter of size int x int.
             The values of an array will be taken as the desired dimens-
@@ -1068,38 +1044,36 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     cnn_filters = choice(cnn_filters_choices)
     cnn_kernel_choice = choice(cnn_kernel_choices)
     pool_size_choice = choice(pool_size_choices)
-
-    cnn_kernel = cnn_kernel_choice*(len(cnn_filters))
-    cnn_strides = (1,)*(len(cnn_filters)) #returns
-    pool_size = pool_size_choice*(len(cnn_filters))
-    pool_strides = (2,)*(len(cnn_filters))
-
+    cnn_kernel = cnn_kernel_choice * (len(cnn_filters))
+    cnn_strides = (1,) * (len(cnn_filters))
+    pool_size = pool_size_choice * (len(cnn_filters))
+    pool_strides = (2,) * (len(cnn_filters))
     number_layers = np.random.randint(1, 4)
     dense_nodes = (10**np.random.uniform(1,
-                                         np.log10(1024/(2**len(
+                                         np.log10(1024 / (2**len(
                                              cnn_filters))),
                                          number_layers)).astype('int')
     dense_nodes = np.sort(dense_nodes)
     dense_nodes = np.flipud(dense_nodes)
 
     model_features = cnn1d_model_features(
-            trainable=None,
-            learning_rate=None,
-            batch_size=None,
-            output_size=None,
-            scaler=None,
-            activation_function=None,
-            output_function=None,
-            Pooling=None,
-            l2_regularization_scale=None,
-            dropout_probability=None,
-            cnn_filters=cnn_filters,
-            cnn_kernel=cnn_kernel,
-            cnn_strides=cnn_strides,
-            pool_size=pool_size,
-            pool_strides=pool_strides,
-            dense_nodes=dense_nodes
-            )
+        trainable=None,
+        learning_rate=None,
+        batch_size=None,
+        output_size=None,
+        scaler=None,
+        activation_function=None,
+        output_function=None,
+        Pooling=None,
+        l2_regularization_scale=None,
+        dropout_probability=None,
+        cnn_filters=cnn_filters,
+        cnn_kernel=cnn_kernel,
+        cnn_strides=cnn_strides,
+        pool_size=pool_size,
+        pool_strides=pool_strides,
+        dense_nodes=dense_nodes
+    )
 
     return model_features
 
@@ -1121,7 +1095,6 @@ class DAE(tf.keras.Model, BaseClass):
     summary of what they do!
 
     """
-
 
     def __init__(self, model_features):
         super(DAE, self).__init__()
@@ -1254,7 +1227,7 @@ class DAE(tf.keras.Model, BaseClass):
             x = self.dense_layers_decoder[str(layer)](x)
             activity += np.sum(np.abs(x))
             x = self.dropout_layers_encoder[str(layer)](x, training)
-        average_activity = activity/int(input_data.shape[0])
+        average_activity = activity / int(input_data.shape[0])
         return average_activity
 
     def forward_pass(self, input_data, training):
@@ -1384,6 +1357,7 @@ class CAE(tf.keras.Model, BaseClass):
     summary of what they do!
 
     """
+
     def __init__(self, model_features):
         super(CAE, self).__init__()
         """
@@ -1398,7 +1372,6 @@ class CAE(tf.keras.Model, BaseClass):
         output_function = model_features.output_function
         cnn_filters_encoder = model_features.cnn_filters_encoder
         cnn_kernel_encoder = model_features.cnn_kernel_encoder
-        cnn_strides_encoder = model_features.cnn_strides_encoder
         pool_size_encoder = model_features.pool_size_encoder
         pool_strides_encoder = model_features.pool_strides_encoder
         cnn_filters_decoder = model_features.cnn_filters_decoder
@@ -1439,7 +1412,7 @@ class CAE(tf.keras.Model, BaseClass):
 
         # Define hidden layers for encoder
         self.conv_layers_decoder = {}
-        for layer in range(len(cnn_filters_decoder)-1):
+        for layer in range(len(cnn_filters_decoder) - 1):
             self.conv_layers_decoder[str(layer)] = tf.layers.Conv1D(
                 filters=cnn_filters_decoder[layer],
                 kernel_size=cnn_kernel_decoder[layer],
@@ -1447,7 +1420,7 @@ class CAE(tf.keras.Model, BaseClass):
                 padding='same',
                 kernel_initializer=kernel_initializer,
                 activation=activation_function)
-        self.conv_layers_decoder[str(layer+1)] = tf.layers.Conv1D(
+        self.conv_layers_decoder[str(layer + 1)] = tf.layers.Conv1D(
             filters=cnn_filters_decoder[-1],
             kernel_size=cnn_kernel_decoder[-1],
             strides=cnn_strides_decoder[-1],
@@ -1476,8 +1449,7 @@ class CAE(tf.keras.Model, BaseClass):
         """
         x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1], 1])
-        layer_list = list(self.conv_layers_encoder.keys())
-        layer_list.sort()
+        layer_list = sorted(self.conv_layers_encoder.keys())
         for layer in layer_list:
             x = self.conv_layers_encoder[str(layer)](x)
             x = self.pool_layers_encoder[str(layer)](x)
@@ -1504,17 +1476,16 @@ class CAE(tf.keras.Model, BaseClass):
 
         """
         x = encoding
-        layer_list = list(self.conv_layers_decoder.keys())
-        layer_list.sort()
+        layer_list = sorted(self.conv_layers_decoder.keys())
         for layer in layer_list:
             x = tf.reshape(x, (x.shape[0], x.shape[1], x.shape[2], 1))
             # upscale image by 2x
-            x = resize_images(x, [x.shape[1]*2, 1])
+            x = resize_images(x, [x.shape[1] * 2, 1])
             x = tf.reshape(x, (x.shape[0], x.shape[1], x.shape[2]))
             x = self.conv_layers_decoder[str(layer)](x)
-            'decoder conv ' + str(x.shape)
+            # 'decoder conv ' + str(x.shape)
         decoding = tf.reshape(x, (x.shape[0], x.shape[1]))
-        'decoder FINAL ' + str(x.shape)
+        # 'decoder FINAL ' + str(x.shape)
         return decoding
 
     def forward_pass(self, input_data, training):
@@ -1702,11 +1673,11 @@ def generate_random_cae_architecture(cnn_filters_encoder_choices,
     cnn_filters_encoder = cnn_filters_encoder_choices[
         cnn_filters_encoder_choice]
     cnn_kernel_encoder = cnn_kernel_encoder_choices[
-        cnn_kernel_encoder_choice]*(len(cnn_filters_encoder_choices))
-    cnn_strides_encoder = (1,)*(len(cnn_filters_encoder_choices))
-    pool_size_encoder = pool_size_encoder_choices[pool_size_encoder_choice]*(
+        cnn_kernel_encoder_choice] * (len(cnn_filters_encoder_choices))
+    cnn_strides_encoder = (1,) * (len(cnn_filters_encoder_choices))
+    pool_size_encoder = pool_size_encoder_choices[pool_size_encoder_choice] * (
         len(cnn_filters_encoder_choices))
-    pool_strides_encoder = (2,)*(len(cnn_filters_encoder_choices))
+    pool_strides_encoder = (2,) * (len(cnn_filters_encoder_choices))
 
     # #############
     # ## Decoder ##
@@ -1716,21 +1687,21 @@ def generate_random_cae_architecture(cnn_filters_encoder_choices,
     cnn_strides_decoder = cnn_strides_encoder
 
     model_features = cae_model_features(
-            encoder_trainable=None,
-            learning_rate=None,
-            batch_size=None,
-            scaler=None,
-            activation_function=None,
-            output_function=None,
-            Pooling=None,
-            cnn_filters_encoder=cnn_filters_encoder,
-            cnn_kernel_encoder=cnn_kernel_encoder,
-            cnn_strides_encoder=cnn_strides_encoder,
-            pool_size_encoder=pool_size_encoder,
-            pool_strides_encoder=pool_strides_encoder,
-            cnn_filters_decoder=cnn_filters_decoder,
-            cnn_kernel_decoder=cnn_kernel_decoder,
-            cnn_strides_decoder=cnn_strides_decoder)
+        encoder_trainable=None,
+        learning_rate=None,
+        batch_size=None,
+        scaler=None,
+        activation_function=None,
+        output_function=None,
+        Pooling=None,
+        cnn_filters_encoder=cnn_filters_encoder,
+        cnn_kernel_encoder=cnn_kernel_encoder,
+        cnn_strides_encoder=cnn_strides_encoder,
+        pool_size_encoder=pool_size_encoder,
+        pool_strides_encoder=pool_strides_encoder,
+        cnn_filters_decoder=cnn_filters_decoder,
+        cnn_kernel_decoder=cnn_kernel_decoder,
+        cnn_strides_decoder=cnn_strides_decoder)
 
     return model_features
 
@@ -1838,8 +1809,6 @@ def train_earlystop(training_data,
         costfunctionerr_test.append(
             objective_cost['test'][-earlystop_patience])
         earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
-
-
 
     if verbose is True:
         print("Test error at early stop: Objectives fctn: {0:.2f} Early stop"
