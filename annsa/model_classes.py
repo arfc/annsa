@@ -405,7 +405,8 @@ class BaseClass(object):
                   earlystop_cost_fn=None,
                   data_augmentation=None,
                   augment_testing_data=False,
-                  record_train_errors=False,):
+                  record_train_errors=False,
+                  nn_type='nn',):
         """
         Function used to train the model.
 
@@ -458,6 +459,10 @@ class BaseClass(object):
             ``self.f1_error``, ``self.mse``, and ``self.cross_entropy``.
         data_augmentation : function
             Function used to apply data augmentation each training iteration.
+        nn_type : string
+            Indicates the type of neural network being used.
+            Default is 'nn.'
+            Accepts: 'nn' for neural network, 'ae' for autoencoder
 
         Returns
         -------
@@ -504,10 +509,10 @@ class BaseClass(object):
             if record_train_errors:
                 training_data_aug = data_augmentation(training_data)
 
-
             # check if data_augmentation returns separate source and background
             # this conditional is only used for autoencoders.
             # NOTE: Autoencoder keys will have shape == 2
+
             if record_train_errors:
                 if training_data_aug.shape[1] == 2:
                     training_key = training_data_aug[:, 1]
