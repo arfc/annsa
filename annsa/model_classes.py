@@ -762,6 +762,23 @@ class dnn_model_features(object):
         self.activation_function = activation_function
         self.scaler = scaler
 
+        def to_dict(self):
+            '''
+            Returns a dictionary of the class parameters.
+            '''
+            return {
+                'learning_rate': self.learning_rate,
+                'l2_regularization_scale': self.l2_regularization_scale,
+                'dropout_probability': self.dropout_probability,
+                'batch_size': self.batch_size,
+                'output_size': self.output_size,
+                'output_function': self.output_function,
+                'dense_nodes': self.dense_nodes,
+                'activation_function': self.activation_function,
+                'scaler': self.scaler,
+            }
+        
+        
 # ##############################################################
 # ##############################################################
 # ##############################################################

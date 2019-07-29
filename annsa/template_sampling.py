@@ -153,7 +153,7 @@ def make_random_spectrum(source_data,
     if type(source_data) == np.ndarray:
         source_data = tf.convert_to_tensor(source_data)
 
-    #Checks if a single spectrum. 
+    # Checks if a single spectrum.
     if tf.contrib.framework.is_tensor(source_data):
         source_spectrum = source_data
         fwhm = source_spectrum.numpy()[0]
@@ -161,12 +161,12 @@ def make_random_spectrum(source_data,
         if np.count_nonzero(source_spectrum) > 0:
             source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
             source_spectrum = apply_LLD(source_spectrum, LLD)
-            source_spectrum /= np.sum(source_spectrum) #normalizes
-            source_spectrum *= source_counts #rescales
+            source_spectrum /= np.sum(source_spectrum)  # normalizes
+            source_spectrum *= source_counts  # rescales
         else:
             source_spectrum = source_spectrum[:1024]
 
-    #if the source data is a pandas dataframe.
+    # if the source data is a pandas dataframe.
     else:
         for key, value in kwargs.items():
             source_data = source_data[source_data[key] == value]
@@ -175,11 +175,11 @@ def make_random_spectrum(source_data,
         #    np.count_nonzero(source_spectrum) == 1024):
         #    # resample if template is non-background and empty
         # turns the selected spectrum into a ndarray
-        source_spectrum = source_data.sample().values[0][6:] 
+        source_spectrum = source_data.sample().values[0][6:]
         source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
         source_spectrum = apply_LLD(source_spectrum, LLD)
-        source_spectrum /= np.sum(source_spectrum) #normalizes 
-        source_spectrum *= source_counts #rescales
+        source_spectrum /= np.sum(source_spectrum)  # normalizes
+        source_spectrum *= source_counts  # rescales
         if 'fwhm' in kwargs:
             fwhm = kwargs['fwhm']
 
@@ -210,8 +210,8 @@ def online_data_augmentation_easy():
         return np.random.uniform(0.5, 2)
 
     def calibration():
-        return [np.random.uniform(0,10),
-                np.random.uniform(2800/3000, 3200/3000),
+        return [np.random.uniform(0, 10),
+                np.random.uniform(2700/3000, 3300/3000),
                 0]
 
     return integration_time, background_cps, signal_to_background, calibration
@@ -228,11 +228,11 @@ def online_data_augmentation_full():
         return np.random.poisson(200)
 
     def signal_to_background():
-        return np.random.uniform(0.1, 2)
+        return np.random.uniform(0.1, 3)
 
     def calibration():
         return [np.random.uniform(0, 10),
-                np.random.uniform(2500/3000, 3500/3000),
+                np.random.uniform(2400/3000, 3600/3000),
                 0]
 
     return integration_time, background_cps, signal_to_background, calibration
@@ -372,4 +372,3 @@ def online_data_augmentation_ae(background_dataset,
                              tf.double)])
         return tf.convert_to_tensor(output_data)
     return online_data_augmentation
-
