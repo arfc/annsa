@@ -89,16 +89,10 @@ def test_cnn1d_training():
         data_augmentation=model.default_data_augmentation,)
     pass
 
-<<<<<<< HEAD
 def test_forward_pass():
     """
     Tests that the network is convolving and/or learning.
     """
-
-=======
-
-def test_forward_pass():
->>>>>>> e7cc036d07af9e9c80e0e03f419175938201c17d
     pass
 
 
@@ -112,9 +106,3 @@ def test_fit_batch():
 def test_train_earlystop():
     tf.reset_default_graph()
     pass
-<<<<<<< HEAD
-
-def test_loss_fn():
-    pass
-=======
->>>>>>> e7cc036d07af9e9c80e0e03f419175938201c17d
