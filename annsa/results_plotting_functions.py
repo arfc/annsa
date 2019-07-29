@@ -9,6 +9,28 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import f1_score
 from scipy.stats import mode
 
+
+def read_final_errors(file_path, *args):
+    """
+    Reads errors from multiple .npy files
+
+    Inputs
+        file_path : string
+            Path to the folder containing error .npy files
+        *args : Pandas DataFrame
+            Numpy array of one-hot spectral keys corresponding to all_spectra
+
+    Outputs
+        f1_scores : dict
+            Dictionary containing F1 scores and model_id
+    """
+    final_errors = []
+    for model_id in args:
+        final_errors = np.append(final_errors,
+                                 np.load(file_path+model_id+'.npy'))
+    return final_errors
+
+
 def hyperparameter_efficiency_plot(accuracy):
     """
     Input: Vector of some accuracy metric. Vector length must be a power of 2.
@@ -167,7 +189,7 @@ def make_dataset(source_dataset,
         dataset['backgrounds'].append(background_spectrum)
         dataset['keys'].append('background')
     isotopes_processed += 1
-    print(isotopes_processed, end = '\r')
+    print(isotopes_processed, end='\r')
 
     all_spectra = [x + y for x, y in zip(dataset['sources'],
                                          dataset['backgrounds'])]
@@ -405,7 +427,8 @@ def plot_f1_scores_bagged(dataframe,
                           **kwargs
                           ):
     '''
-    Plots the F1 scores for model's in model_ids given some dataframe of spectra.
+    Plots the F1 scores for model's in model_ids given some dataframe of
+    spectra.
 
     Inputs
         dataframe : Pandas DataFrame
@@ -428,7 +451,7 @@ def plot_f1_scores_bagged(dataframe,
     mlb = LabelBinarizer()
     keys = list(set(dataframe['isotope']))
     mlb.fit(keys)
-    
+
     f1_scores_models = {}
     for key, value in kwargs.items():
         dataframe = dataframe[dataframe[key] == value]
@@ -437,17 +460,18 @@ def plot_f1_scores_bagged(dataframe,
         for var in sorted(set(dataframe[indep_variable])):
 
             subset = dataframe[indep_variable] == var
-            tmp_f1_score = f1_score_bagged([model_id],
-                                all_models,
-                                np.vstack(dataframe[subset]['spectrum'].to_numpy()),
-                                mlb.transform(dataframe['isotope'])[subset],)
+            tmp_f1_score = f1_score_bagged(
+                [model_id],
+                all_models,
+                np.vstack(dataframe[subset]['spectrum'].to_numpy()),
+                mlb.transform(dataframe['isotope'])[subset], )
             tmp_f1_scores.append(tmp_f1_score[model_id])
 
         # f1_scores_models[model_id] = tmp_f1_scores
         if plot_label:
-            plt.plot(tmp_f1_scores, label = plot_label)
+            plt.plot(tmp_f1_scores, label=plot_label)
         else:
-            plt.plot(tmp_f1_scores, label = model_id)
+            plt.plot(tmp_f1_scores, label=model_id)
     plt.legend()
     plt.xlabel(indep_variable)
     plt.ylabel('F1 Score')
