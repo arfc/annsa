@@ -9,10 +9,12 @@ def construct_baseclass():
 
     return base
 
+
 def test_construct_baseclass():
 
     _ = construct_baseclass()
     pass
+
 
 # define the epochs
 epochs = np.arange(1, 100, 1)
@@ -59,6 +61,7 @@ def test_check_earlystop_case1():
                  "check_earlystop should return False.")
     assert not stopped, error_msg
 
+
 def test_check_earlystop_case2():
     """case 2: not enough epochs have passed"""
     earlystop_patience = 70
@@ -69,6 +72,7 @@ def test_check_earlystop_case2():
         earlystop_patience)
     error_msg = "If epoch < patience, check_earlystop should return False."
     assert not stopped, error_msg
+
 
 def test_check_earlystop_case3():
     """case 3: early stopping should be applied."""
@@ -81,6 +85,7 @@ def test_check_earlystop_case3():
     error_msg = "Early stopping should have applied and did not."
     assert stopped, error_msg
 
+
 def test_check_earlystop_case4():
     """case 4: early stopping was applied too soon"""
     earlystop_patience = 5
@@ -91,6 +96,7 @@ def test_check_earlystop_case4():
         earlystop_patience)
     error_msg = "Early stopping was applied too early."
     assert not stopped, error_msg
+
 
 # not_learning unit tests
 def test_not_learning_case1():
@@ -106,6 +112,7 @@ def test_not_learning_case1():
     error_msg = "Not learning is turned off, should not have stopped."
     assert not stopped, error_msg
 
+
 def test_not_learning_case2():
     """case 2: not enough epochs have passed"""
     not_learning_patience = 7
@@ -118,6 +125,7 @@ def test_not_learning_case2():
         not_learning_threshold)
     error_msg = "Not learning applied too early. epoch < patience."
     assert not stopped, error_msg
+
 
 def test_not_learning_case3():
     """case 3: not learning should be applied."""

@@ -89,9 +89,6 @@ def test_cnn1d_training():
         data_augmentation=model.default_data_augmentation,)
     pass
 
-def test_forward_pass():
-    pass
-
 
 def test_fit_batch():
 

@@ -361,7 +361,7 @@ class BaseClass(object):
                                       training=False))
             else:
                 earlystop_cost['train'].append(0)
-            earlystop_cost['test'].append(
+                earlystop_cost['test'].append(
                 earlystop_cost_fn(testing_data,
                                   testing_key,
                                   training=False))
@@ -377,7 +377,7 @@ class BaseClass(object):
                              training=False))
         else:
             objective_cost['train'].append(0)
-        objective_cost['test'].append(
+            objective_cost['test'].append(
             self.loss_fn(testing_data,
                          testing_key,
                          obj_cost,
@@ -520,7 +520,7 @@ class BaseClass(object):
                                           training=False))
                 else:
                     earlystop_cost['train'].append(0)
-                earlystop_cost['test'].append(
+                    earlystop_cost['test'].append(
                     earlystop_cost_fn(testing_data,
                                       testing_key,
                                       training=False))
@@ -536,7 +536,7 @@ class BaseClass(object):
                                  training=False))
             else:
                 objective_cost['train'].append(0)
-            objective_cost['test'].append(
+                objective_cost['test'].append(
                 self.loss_fn(testing_data,
                              testing_key,
                              obj_cost,
@@ -899,8 +899,8 @@ class CNN1D(tf.keras.Model, BaseClass):
         x = self.scaler.transform(input_data)
         tf_data = tf.reshape(x, [-1, x.shape[1], 1])
         for layer in self.conv_layers.keys():
-            tf_data = self.conv_layers[str(layer)](tf_data) # convolves the data
-            tf_data = self.pool_layers[str(layer)](tf_data) # pools the output
+            tf_data = self.conv_layers[str(layer)](tf_data)  # convolves the data
+            tf_data = self.pool_layers[str(layer)](tf_data)  # pools the output
         flattened_data = tf.layers.flatten(tf_data)
         # flattening reduces the dimensionality of the data so that it can be
         # classified.
@@ -911,6 +911,7 @@ class CNN1D(tf.keras.Model, BaseClass):
         # logits is the final output of a single pass through a convolutional
         # network.
         return logits
+
 
 class cnn1d_model_features(object):
 

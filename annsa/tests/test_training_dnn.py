@@ -55,23 +55,10 @@ def test_dnn_construction():
     _, _, _ = construct_dnn()
     pass
 
-
-
-#unit tests
-
-#add a test for the following:
-
-#forward_pass
-
-#
-
-
-#integration tests
 def test_dnn_training():
     """
     Testing the dense neural network class and training function.
     """
-
     tf.reset_default_graph()
     model_features, optimizer, model = construct_dnn()
     train_dataset, test_dataset = load_dataset()
