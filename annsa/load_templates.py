@@ -54,13 +54,7 @@ def load_template_spectra_from_folder(parent_folder,
             return temp_spectrum / np.max(temp_spectrum)
         elif normalization == 'normalarea':
             return temp_spectrum / np.sum(temp_spectrum)
-
-        # ASSERT
-        # Add an assertion if the argument is misspelled or incorrect.
-        # It should throw an error saying "hey this isn't an option."
-        # Will make debugging easier if your error is that normaheight
-        # isn't normalheight.
-
+            
     for i in range(len(an.isotopes) - 3):
         temp_dict[an.isotopes[i]] = normalize_spectrum(
             an.isotopes_sources_GADRAS_ID[i])

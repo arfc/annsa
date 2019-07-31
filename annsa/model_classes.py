@@ -293,11 +293,7 @@ class BaseClass(object):
             earlystop_cost[-earlystop_patience:])
         # Checks if our patience has been exceeded.
         if (min_error_in_patience_range == 0):
-<<<<<<< HEAD
         	return True
-=======
-            return True
->>>>>>> e7cc036d07af9e9c80e0e03f419175938201c17d
         else:
             return False
 
