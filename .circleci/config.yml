@@ -47,9 +47,19 @@ jobs:
           command: |
             . venv/bin/activate
             py.test
-            py.test --flake8 annsa
 
       - store_artifacts:
           path: test-reports
           destination: test-reports
-          
+     
+      # run flake8
+      - run:
+          name: run flake
+          command: |
+            . venv/bin/activate
+            py.test --flake8 annsa
+
+     # - store_artifacts:
+      #    path: test-reports
+       #   destination: test-reports
+ 
