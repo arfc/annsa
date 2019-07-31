@@ -47,10 +47,6 @@ jobs:
           command: |
             . venv/bin/activate
             py.test
-
-          name: run flake
-          command: |
-            . venv/bin/activate
             py.test --flake8 annsa
 
       - store_artifacts:
