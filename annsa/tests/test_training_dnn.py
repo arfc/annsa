@@ -89,6 +89,3 @@ def test_dnn_training():
         earlystop_cost_fn=model.f1_error,
         data_augmentation=model.default_data_augmentation,)
     pass
-
-
-

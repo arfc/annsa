@@ -897,7 +897,7 @@ class CNN1D(tf.keras.Model, BaseClass):
 
         """
         x = self.scaler.transform(input_data)
-        x = tf.reshape(x, [-1, x.shape[1], 1])
+        tf_data = tf.reshape(x, [-1, x.shape[1], 1])
         for layer in self.conv_layers.keys():
             tf_data = self.conv_layers[str(layer)](tf_data) # convolves the data
             tf_data = self.pool_layers[str(layer)](tf_data) # pools the output
@@ -911,7 +911,6 @@ class CNN1D(tf.keras.Model, BaseClass):
         # logits is the final output of a single pass through a convolutional
         # network.
         return logits
-
 
 class cnn1d_model_features(object):
 
