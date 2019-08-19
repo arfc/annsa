@@ -90,22 +90,3 @@ def test_cnn1d_training():
         earlystop_cost_fn=model.f1_error,
         data_augmentation=model.default_data_augmentation,)
     pass
-
-
-
-def test_forward_pass():
-    pass
-
-
-
-
-
-def test_fit_batch():
-
-    tf.reset_default_graph()
-    model_features, optimizer, model = construct_cnn1d()
-    pass
-
-def test_train_earlystop():
-    tf.reset_default_graph()
-    pass
