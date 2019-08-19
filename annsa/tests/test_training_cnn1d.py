@@ -11,7 +11,6 @@ from annsa.load_dataset import load_dataset
 
 tf.enable_eager_execution()
 
-
 def construct_cnn1d():
     """
     Constructs a convolutional neural network and tests construction
@@ -54,7 +53,6 @@ def construct_cnn1d():
     model = CNN1D(model_features)
     return model_features, optimizer, model
 
-
 def test_cnn1d_construction():
     """
     Tests the construction of a convolution neural network.
@@ -64,7 +62,6 @@ def test_cnn1d_construction():
     """
     _, _, _ = construct_cnn1d()
     pass
-
 
 def test_cnn1d_training():
     """
