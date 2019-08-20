@@ -55,7 +55,7 @@ def test_check_earlystop_case1():
     stopped = base.check_earlystop(epoch,
                                    earlystop_cost[:epoch],
                                    earlystop_patience)
-    assert(if stopped is False), ("With earlystopping_patience=0,
+    assert(if stopped is False), ("With earlystopping_patience=0",
                                   "check_earlystop should return False.")
 
 
@@ -66,7 +66,7 @@ def test_check_earlystop_case2():
     stopped = base.check_earlystop(epoch,
                                    earlystop_cost[:epoch],
                                    earlystop_patience)
-    assert(if stopped is False), ("If epoch < patience,
+    assert(if stopped is False), ("If epoch < patience",
                                   "check_earlystop should return False.")
 
 
