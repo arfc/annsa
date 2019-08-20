@@ -87,6 +87,7 @@ def gen_random_data():
 
     return name, (data + noise)
 
+
 dataset = [[], []]
 for x in range(1000):
     name, data = gen_random_data()
@@ -95,4 +96,3 @@ for x in range(1000):
 
 df = pd.DataFrame({'function': dataset[0], 'data': dataset[1]})
 df.to_csv("noisy_sinusoidal_data.csv")
-

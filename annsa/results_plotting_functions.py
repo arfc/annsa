@@ -27,7 +27,7 @@ def read_final_errors(file_path, *args):
     final_errors = []
     for model_id in args:
         final_errors = np.append(final_errors,
-                                 np.load(file_path+model_id + '.npy'))
+                                 np.load(file_path + model_id + '.npy'))
     return final_errors
 
 
@@ -242,7 +242,7 @@ def make_spectra_dataframe(source_dataset,
     columns.append('spectrum')
 
     for i, combination in enumerate(combinations):
-        print('combo '+str(i + 1) + ' of ' + str(len(combinations)), end='\r')
+        print('combo ' + str(i + 1) + ' of ' + str(len(combinations)), end='\r')
         all_spectra, all_keys = make_dataset(
             source_dataset,
             background_dataset,

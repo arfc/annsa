@@ -114,7 +114,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
         pool_size=pool_size,
         pool_strides=pool_strides,
         dense_nodes=dense_nodes
-        )
+    )
 
     return model_features
 
@@ -147,7 +147,7 @@ def make_conv1d_model(all_keys_binarized):
         (32,),
         (4, 8, 16),
         (8, 16, 32),
-        )
+    )
 
     cnn_kernel_choices = ((2,), (4,), (8,), (16,))
     pool_size_choices = ((2,), (4,), (8,), (16,))
@@ -156,7 +156,7 @@ def make_conv1d_model(all_keys_binarized):
         cnn_filters_choices=cnn_filters_choices,
         cnn_kernel_choices=cnn_kernel_choices,
         pool_size_choices=pool_size_choices,
-        )
+    )
     model_features.trainable = True
     model_features.learining_rate = 10 ** np.random.uniform(-4, -1)
     model_features.batch_size = 2 ** np.random.randint(4, 6)

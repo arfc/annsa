@@ -217,7 +217,7 @@ def load_pretrained_dae_into_dnn(dae_features_filename,
         scaler=DAE_model.scaler,
         dense_nodes=dense_nodes,
         activation_function=dae_features.activation_function,
-        )
+    )
 
     DNN_model = DNN(model_features_DNN)
 

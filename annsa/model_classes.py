@@ -1,5 +1,4 @@
 from __future__ import print_function
-import pickle
 import tensorflow as tf
 import numpy as np
 import tensorflow.contrib.eager as tfe
