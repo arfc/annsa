@@ -1,5 +1,4 @@
 from __future__ import print_function
-import numpy as np
 
 
 def read_spectrum(filename,
@@ -29,7 +28,7 @@ def read_spectrum(filename,
         spec_len_index = index + 1
         spec_index = index + 2
         spec_len = filecontent[spec_len_index]
-    except:
+    except UnicodeDecodeError:
         with open(filename, 'rb') as myFile:
             filecontent = myFile.readlines()
         for index, line in enumerate(filecontent):
