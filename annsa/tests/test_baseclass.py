@@ -55,7 +55,7 @@ def test_check_earlystop_case1():
     stopped = base.check_earlystop(epoch,
                                    earlystop_cost[:epoch],
                                    earlystop_patience)
-    assert(if stopped is False), ("With earlystopping_patience=0"
+    assert(stopped is False), ("With earlystopping_patience=0"
                                   "check_earlystop should return False.")
 
 
@@ -66,7 +66,7 @@ def test_check_earlystop_case2():
     stopped = base.check_earlystop(epoch,
                                    earlystop_cost[:epoch],
                                    earlystop_patience)
-    assert(if stopped is False), ("If epoch < patience"
+    assert(stopped is False), ("If epoch < patience"
                                   "check_earlystop should return False.")
 
 
@@ -77,7 +77,7 @@ def test_check_earlystop_case3():
     stopped = base.check_earlystop(epoch,
                                    earlystop_cost[:epoch],
                                    earlystop_patience)
-    assert(if stopped is True), (
+    assert(stopped is True), (
         "if epoch>patience, early stopping should occur.")
 
 
@@ -88,7 +88,7 @@ def test_check_earlystop_case4():
     stopped = base.check_earlystop(epoch,
                                    earlystop_cost[:epoch],
                                    earlystop_patience)
-    assert(if stopped is False), (
+    assert(stopped is False), (
         "If epoch>patience, early stopping should occur.")
 
 
@@ -102,7 +102,7 @@ def test_not_learning_case1():
                                 not_learning_cost[:epoch],
                                 not_learning_patience,
                                 not_learning_threshold)
-    assert(if stopped is False), (
+    assert(stopped is False), (
         "Not learning is turned off, should not have stopped.")
 
 
@@ -115,7 +115,7 @@ def test_not_learning_case2():
                                 not_learning_cost[:epoch],
                                 not_learning_patience,
                                 not_learning_threshold)
-    assert(if stopped is False), (
+    assert(stopped is False), (
         "Not learning applied too early. epoch < patience.")
 
 
@@ -128,5 +128,5 @@ def test_not_learning_case3():
                                 not_learning_cost[:epoch],
                                 not_learning_patience,
                                 not_learning_threshold)
-    assert(if stopped is True), (
+    assert(stopped is True), (
         "Not learning should have applied and did not.")
