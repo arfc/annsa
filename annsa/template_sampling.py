@@ -16,7 +16,7 @@ def random_background_template_with_FWHM(background_dataset, FWHM, cosmic=0):
     Returns:
     --------
         random_background_spectrum : vector
-            The full background spectrum
+            The full background spectrum template
     """
 
     background_choices = background_dataset[
@@ -36,22 +36,22 @@ def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
     Parameters:
     -----------
         spectrum_template : vector (1x1194)
-            The spectrums template
+            The spectral template
         a : float
             Constant rebinning term
         b : float
-            Linear rebinning term
+            Linear rebinning term, also known as gain
         c : float
             Quadratic rebinning term
     Returns:
     --------
-        rebinned_spectrum_template : vector (1x1194)
+        rebinned_spectrum_template : vector (1x1024)
             The rebinned spectrum template
     """
+    spec_len = len(spectrum_template)
+    new_bin_positions = a + b * np.arange(spec_len) + c * np.arange(spec_len)**2
 
-    new_bin_positions = a + b * np.arange(1194) + c * np.arange(1194)**2
-
-    spectrum_template = griddata(np.arange(1194),
+    spectrum_template = griddata(np.arange(spec_len),
                                  spectrum_template,
                                  new_bin_positions,
                                  method='cubic',
@@ -211,7 +211,7 @@ def online_data_augmentation_easy():
 
     def calibration():
         return [np.random.uniform(0, 10),
-                np.random.uniform(2700/3000, 3300/3000),
+                np.random.uniform(2700 / 3000, 3300 / 3000),
                 0]
 
     return integration_time, background_cps, signal_to_background, calibration
@@ -222,7 +222,7 @@ def online_data_augmentation_full():
     Returns data augmentation parameters for the full dataset setting
     '''
     def integration_time():
-        return 10**np.random.uniform(np.log10(10), np.log10(3600))
+        return 10 ** np.random.uniform(np.log10(10), np.log10(3600))
 
     def background_cps():
         return np.random.poisson(200)
@@ -232,7 +232,7 @@ def online_data_augmentation_full():
 
     def calibration():
         return [np.random.uniform(0, 10),
-                np.random.uniform(2400/3000, 3600/3000),
+                np.random.uniform(2400 / 3000, 3600 / 3000),
                 0]
 
     return integration_time, background_cps, signal_to_background, calibration

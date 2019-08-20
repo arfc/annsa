@@ -6,7 +6,6 @@ from annsa.model_classes import (dnn_model_features,
                                  DNN,
                                  CNN1D,
                                  CAE,
-                                 DAE,
                                  )
 import tensorflow as tf
 from sklearn.pipeline import make_pipeline
@@ -86,15 +85,15 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     pool_size_choice = choice(pool_size_choices)
 
     cnn_kernel = cnn_kernel_choice*(len(cnn_filters))
-    cnn_strides = (1,)*(len(cnn_filters))
+    cnn_strides = (1,) * (len(cnn_filters))
     pool_size = pool_size_choice*(len(cnn_filters))
-    pool_strides = (2,)*(len(cnn_filters))
+    pool_strides = (2,) * (len(cnn_filters))
 
     number_layers = np.random.randint(1, 4)
-    dense_nodes = (10**np.random.uniform(1,
-                                         np.log10(1024/(2**len(
-                                             cnn_filters))),
-                                         number_layers)).astype('int')
+    dense_nodes = (10 ** np.random.uniform(
+        1,
+        np.log10(1024/(2 ** len(cnn_filters))),
+        number_layers)).astype('int')
     dense_nodes = np.sort(dense_nodes)
     dense_nodes = np.flipud(dense_nodes)
 
@@ -159,19 +158,19 @@ def make_conv1d_model(all_keys_binarized):
         pool_size_choices=pool_size_choices,
         )
     model_features.trainable = True
-    model_features.learining_rate = 10**np.random.uniform(-4, -1)
-    model_features.batch_size = 2**np.random.randint(4, 6)
+    model_features.learining_rate = 10 ** np.random.uniform(-4, -1)
+    model_features.batch_size = 2 ** np.random.randint(4, 6)
     model_features.output_size = all_keys_binarized.shape[1]
     model_features.scaler = choice(scaler_choices)
 
     model_features.activation_function = tf.nn.relu
     model_features.output_function = None
     model_features.Pooling = tf.layers.MaxPooling1D
-    model_features.l2_regularization_scale = 10**np.random.uniform(-3, 0)
+    model_features.l2_regularization_scale = 10 ** np.random.uniform(-3, 0)
     model_features.dropout_probability = np.random.uniform(0, 1)
     model_features.pool_strides = ((2, 2, 2))
     number_layers = choice([1, 2, 3])
-    dense_nodes = 2**np.random.randint(4, 8, number_layers)
+    dense_nodes = 2 ** np.random.randint(4, 8, number_layers)
     dense_nodes = np.sort(dense_nodes)
     dense_nodes = np.flipud(dense_nodes)
     model_features.dense_nodes = dense_nodes
@@ -217,20 +216,20 @@ def make_cae1d_model():
 
     model_features = cae_model_features(
         encoder_trainable=True,
-        learning_rate=10**np.random.uniform(-4, -1),
-        batch_size=2**np.random.randint(4, 6),
+        learning_rate=10 ** np.random.uniform(-4, -1),
+        batch_size=2 ** np.random.randint(4, 6),
         scaler=scaler_choice,
         activation_function=tf.nn.tanh,
         output_function=None,
         Pooling=tf.layers.MaxPooling1D,
         cnn_filters_encoder=cnn_filters_encoder_choice,
         cnn_kernel_encoder=(cnn_kernel_encoder_choice,)*num_cnn_filters,
-        cnn_strides_encoder=(1, )*num_cnn_filters,
-        pool_size_encoder=pool_size_choice*num_cnn_filters,
-        pool_strides_encoder=(2, )*num_cnn_filters,
+        cnn_strides_encoder=(1, ) * num_cnn_filters,
+        pool_size_encoder=pool_size_choice * num_cnn_filters,
+        pool_strides_encoder=(2, ) * num_cnn_filters,
         cnn_filters_decoder=cnn_filters_encoder_choice,
         cnn_kernel_decoder=(cnn_kernel_encoder_choice,)*num_cnn_filters,
-        cnn_strides_decoder=(1, )*num_cnn_filters)
+        cnn_strides_decoder=(1, ) * num_cnn_filters)
 
     model = CAE(model_features)
 

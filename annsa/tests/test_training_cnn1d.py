@@ -11,6 +11,7 @@ from annsa.load_dataset import load_dataset
 
 tf.enable_eager_execution()
 
+
 def construct_cnn1d():
     """
     Constructs a convolutional neural network and tests construction
@@ -32,8 +33,8 @@ def construct_cnn1d():
     """
     scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
 
-    cnn_filters_choices = ((4, 1), (8, 1)) #choose either 4x1 or 8x1 filter.
-    cnn_kernel_choices = ((8, ), (4, )) #choose either 8xn or 4xn kernel size.
+    cnn_filters_choices = ((4, 1), (8, 1))  # choose either 4x1 or 8x1 filter.
+    cnn_kernel_choices = ((8, ), (4, ))  # choose either 8xn or 4xn kernel size.
     pool_size_choices = ((8, ), (4, ))
     model_features = generate_random_cnn1d_architecture(cnn_filters_choices,
                                                         cnn_kernel_choices,
@@ -53,6 +54,7 @@ def construct_cnn1d():
     model = CNN1D(model_features)
     return model_features, optimizer, model
 
+
 def test_cnn1d_construction():
     """
     Tests the construction of a convolution neural network.
@@ -62,6 +64,7 @@ def test_cnn1d_construction():
     """
     _, _, _ = construct_cnn1d()
     pass
+
 
 def test_cnn1d_training():
     """

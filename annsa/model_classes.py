@@ -47,7 +47,7 @@ class BaseClass(object):
         class_predictions = tf.argmax(model_predictions, axis=-1)
         return class_predictions
 
-    def cross_entropy(self, input_data, targets, training):
+    def cross_entropy(self, input_data, targets, training=False):
         """
         Computes the cross entropy error on some data and target.
 
@@ -80,7 +80,7 @@ class BaseClass(object):
                 logits=logits))
         return cross_entropy_loss
 
-    def mse(self, input_data, targets, training):
+    def mse(self, input_data, targets, training=False):
         """
         Computes the mean squared error on some data and target.
 
@@ -280,21 +280,21 @@ class BaseClass(object):
             If true will end training. If false training continues.
         """
 
-        # Checks if earlystopping is turned on. 
+        # Checks if earlystopping is turned on.
         if not earlystop_patience:
             return False
 
-        #Checks if enough epochs have passed.
-        if earlystop_patience > epoch: 
+        # Checks if enough epochs have passed.
+        if earlystop_patience > epoch:
             return False
 
-        min_error_in_patience_range = np.argmin(earlystop_cost[-earlystop_patience:])
-        #Checks if our patience has been exceeded.
+        min_error_in_patience_range = np.argmin(
+            earlystop_cost[-earlystop_patience:])
+        # Checks if our patience has been exceeded.
         if (min_error_in_patience_range == 0):
-        	return True
-        else: 
+            return True
+        else:
             return False
-
 
     def not_learning(self,
                      epoch,
@@ -307,13 +307,14 @@ class BaseClass(object):
         Parameters:
         ----------
         epoch : int
-        	The current epoch.
+            The current epoch.
         cost : narray, float
             Array of cost values for each iteration used for early stopping.
                 not_learning_patience : int
         not_learning_patience : int
             Max number of epochs to wait before checking if model is not
-            learning. Not learning is defined by the ``not_learning_threshold``.
+            learning. Not learning is defined by the
+            ``not_learning_threshold``.
         not_learning_threshold : float
             If error at epoch ``not_learning_patience`` is above this, training
             stops.
@@ -321,38 +322,37 @@ class BaseClass(object):
         Returns:
         -------
         Boolean
-    		If true will end training. If false training continues. 
+            If true will end training. If false training continues.
         """
 
         if not not_learning_patience:
             return False
 
         if (epoch < not_learning_patience):
-            return False 
+            return False
 
         if (cost[-1] > not_learning_threshold):
             return True
-        else: 
+        else:
             return False
 
     def record_errors(self, earlystop, objective, record_train_errors=False):
         """
         Records errors at an epoch.
-        
+
         Parameters:
         -----------
-        earlystop : dictionary 
+        earlystop : dictionary
             Contains the earlystop cost data for 'train' and 'test'
         objective : dictionary
             Contains the objective cost data for 'train' and 'test'
         record_train_errors : boolean, optional
-            Decides whether training errors should be recorded. 
+            Decides whether training errors should be recorded.
 
         Returns:
         --------
 
         """
-
 
         if earlystop_patience:
             if record_train_errors:
@@ -383,10 +383,6 @@ class BaseClass(object):
                          testing_key,
                          obj_cost,
                          training=False))
-
-
-
-
         pass
 
     def fit_batch(self,
@@ -410,8 +406,8 @@ class BaseClass(object):
         Parameters:
         ----------
         train_dataset : list, float, int
-            Two element list of [data, keys]. 
-            Data is an [nxm] numpy matrix of unprocessed gamma-ray spectra. 
+            Two element list of [data, keys].
+            Data is an [nxm] numpy matrix of unprocessed gamma-ray spectra.
             (n = number of spectra, m = number of channels)
             Keys is a [nxk] matrix of  target outputs.
             (n = number of spectra, k = number of possible sources)
@@ -421,10 +417,10 @@ class BaseClass(object):
             there are only two possible sources, keys will be [nx2].
 
             If data is being trained on an autoencoder, keys will be a list
-            of two matrices 
+            of two matrices
         test_dataset : list, float, int
-            Two element list of [data, keys]. 
-            Data is an [nxm] numpy matrix of unprocessed gamma-ray spectra. 
+            Two element list of [data, keys].
+            Data is an [nxm] numpy matrix of unprocessed gamma-ray spectra.
             (n = number of spectra, m = number of channels)
             Keys is a [nxk] matrix of  target outputs.
             (n = number of spectra, k = number of possible sources)
@@ -449,7 +445,7 @@ class BaseClass(object):
             learning. Not learning is defined by ``not_learning_threshold``.
         not_learning_threshold : float, optional
             If error at epoch ``not_learning_patience`` is above this, training
-            stops. I.e. the 
+            stops. I.e. the
         obj_cost : function
         earlystop_cost_fctn : function
             Cost function used for early stopping. Examples are
@@ -463,13 +459,13 @@ class BaseClass(object):
             objective_cost : dictionary
                 keys = ['train', 'test']
                 values are lists containing the recorded error values.
-                Length depends on how frequently errors are recorded and the 
-                number of epochs being run. 
+                Length depends on how frequently errors are recorded and the
+                number of epochs being run.
             earlystop_cost : dictionary
                 keys = ['train', 'test']
                 values are lists containing the recorded error values.
-                Length depends on how frequently errors are recorded and the 
-                number of epochs being run. 
+                Length depends on how frequently errors are recorded and the
+                number of epochs being run.
 
             If true will end training. If false training continues.
         """
@@ -491,17 +487,16 @@ class BaseClass(object):
 
         for epoch in range(num_epochs):
 
-            #============================================================
+            # ============================================================
             # Train through one epoch
             self.train_epoch(train_dataset_tensor,
                              obj_cost,
                              optimizer,
                              data_augmentation)
-            #============================================================
+            # ============================================================
 
             if record_train_errors:
                 training_data_aug = data_augmentation(training_data)
-
 
             # check if data_augmentation returns separate source and background
             # this conditional is only used for autoencoders.
@@ -517,7 +512,7 @@ class BaseClass(object):
 
             # Record errors at each epoch
             # def record_errors
-            #===============================================
+            # ===============================================
             if earlystop_patience:
                 if record_train_errors:
                     earlystop_cost['train'].append(
@@ -557,16 +552,16 @@ class BaseClass(object):
                           earlystop_cost['train'][-1],
                           earlystop_cost['test'][-1]))
 
-            if self.check_earlystop(epoch, 
-                                earlystop_cost['test'],
+            if self.check_earlystop(epoch,
+                                    earlystop_cost['test'],
                                     earlystop_patience):
                 break
 
             if self.not_learning(epoch,
-                 earlystop_cost['test'], 
-                 not_learning_patience,
-                 not_learning_threshold): 
-                break    
+                                 earlystop_cost['test'],
+                                 not_learning_patience,
+                                 not_learning_threshold):
+                break
 
         return [objective_cost, earlystop_cost]
 # ##############################################################
@@ -641,7 +636,8 @@ class DNN(tf.keras.Model, BaseClass):
                 kernel_regularizer=regularizer)
             self.drop_layers[str(layer)] = tf.layers.Dropout(
                 dropout_probability)
-        self.output_layer = tf.layers.Dense(output_size, activation=output_function)
+        self.output_layer = tf.layers.Dense(output_size,
+                                            activation=output_function)
 
     def forward_pass(self, input_data, training):
         """
@@ -777,8 +773,7 @@ class dnn_model_features(object):
                 'activation_function': self.activation_function,
                 'scaler': self.scaler,
             }
-        
-        
+
 # ##############################################################
 # ##############################################################
 # ##############################################################
@@ -802,18 +797,6 @@ class CNN1D(tf.keras.Model, BaseClass):
         network.
 
         """
-
-        #=========================Notes======================#
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #
-        #================Delete this section later===========#
-        
         self.batch_size = model_features.batch_size
         output_size = model_features.output_size
         self.scaler = model_features.scaler
@@ -838,10 +821,10 @@ class CNN1D(tf.keras.Model, BaseClass):
         else:
             kernel_initializer = glorot_normal()
 
-        #creates the convolutional layers.
+        # creates the convolutional layers.
         self.conv_layers = {}
         self.pool_layers = {}
-        for layer in range(len(cnn_filters)): #Read: for each 
+        for layer in range(len(cnn_filters)):  # Read: for each
             self.conv_layers[str(layer)] = tf.layers.Conv1D(
                 filters=cnn_filters[layer],
                 kernel_size=cnn_kernel[layer],
@@ -923,7 +906,7 @@ class CNN1D(tf.keras.Model, BaseClass):
             of classes. If used as autoencoder l is equal to m.
 
         """
-        x = self.scaler.transform(input_data) 
+        x = self.scaler.transform(input_data)
         x = tf.reshape(x, [-1, x.shape[1], 1])
         for layer in self.conv_layers.keys():
             x = self.conv_layers[str(layer)](x)
@@ -1369,13 +1352,13 @@ class dae_model_features(object):
 # ##############################################################
 
 
-class CAE(tf.keras.Model, BaseClass): 
+class CAE(tf.keras.Model, BaseClass):
     """
     FUNCTIONS
 
     Under the class -- list the member functions and a short
     summary of what they do!
-    
+
     """
 
     def __init__(self, model_features):
@@ -1830,12 +1813,9 @@ def train_earlystop(training_data,
             objective_cost['test'][-earlystop_patience])
         earlystoperr_test.append(earlystop_cost['test'][-earlystop_patience])
 
-
-
     if verbose is True:
         print("Test error at early stop: Objectives fctn: {0:.2f} Early stop"
               "fctn: {0:.2f}".format(float(costfunctionerr_test[-1]),
                                      float(earlystoperr_test[-1])))
 
     return costfunctionerr_test, earlystoperr_test
-

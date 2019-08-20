@@ -1,19 +1,17 @@
-import matplotlib.pyplot as plt
 import os
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer, LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import StratifiedShuffleSplit
-import pickle
 import numpy as np
 import pandas as pd
-from random import choice
 
-from annsa.model_classes import train_earlystop, CNN1D, DNN
-from annsa.template_sampling import *
+from annsa.model_classes import train_earlystop
 from annsa.load_dataset import load_easy, load_full, dataset_to_spectrakeys
 from annsa.load_pretrained_network import (load_features,
                                            load_pretrained_dae_into_dnn,
                                            load_pretrained_cae_into_cnn,)
+from annsa.template_sampling import (online_data_augmentation_full,
+                                     online_data_augmentation_easy,
+                                     online_data_augmentation_vanilla)
 
 
 def training_wrapper(GPU_device_id,
@@ -69,15 +67,9 @@ def training_wrapper(GPU_device_id,
     os.environ["CUDA_VISIBLE_DEVICES"] = GPU_device_id
 
     import tensorflow as tf
-    import tensorflow.contrib.eager as tfe
     tf.enable_eager_execution()
 
     # ## Training Data Construction
-
-    background_dataset_location = ('../../source-interdiction/'
-                                   'training_testing_data/'
-                                   'background_template_dataset.csv'
-                                   )
 
     source_dataset_location = ('../../source-interdiction/'
                                'training_testing_data/'
@@ -161,7 +153,7 @@ def training_wrapper(GPU_device_id,
             sss = StratifiedShuffleSplit(n_splits=5, train_size=train_size)
             k = 0
             for train_index, _ in sss.split(training_spectra, training_keys):
-                print('Running through fold '+str(k))
+                print('Running through fold ' + str(k))
                 training_keys_binarized = mlb.fit_transform(
                     training_keys.reshape([training_keys.shape[0], 1]))
                 testing_keys_binarized = mlb.transform(testing_keys)
@@ -196,7 +188,7 @@ def training_wrapper(GPU_device_id,
                 k += 1
 
             all_errors.append(k_folds_errors)
-            np.save('./final-models/final_test_errors_'+model_id_save_as,
+            np.save('./final-models/final_test_errors_' + model_id_save_as,
                     all_errors)
 
     else:
@@ -233,5 +225,5 @@ def training_wrapper(GPU_device_id,
         k += 1
 
         all_errors.append(k_folds_errors)
-        np.save('./final-models/final_test_errors_'+model_id_save_as,
+        np.save('./final-models/final_test_errors_' + model_id_save_as,
                 all_errors)

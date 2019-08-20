@@ -76,4 +76,3 @@ def test_cae_training():
         earlystop_cost_fn=model.mse,
         data_augmentation=model.default_data_augmentation,)
     pass
-

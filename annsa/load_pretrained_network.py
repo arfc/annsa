@@ -83,7 +83,7 @@ def load_trained_model(model_class,
 def load_pretrained_cae_into_cnn(cae_features_filename,
                                  cae_weights_filename,
                                  cnn_dense_nodes=[128],
-                                 learining_rate=1e-4,
+                                 learning_rate=1e-4,
                                  batch_size=32,
                                  output_size=30,
                                  activation_function=tf.nn.tanh,
@@ -99,7 +99,7 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
             Filname location of the file containing the CAE pretrained weights
         cnn_dense_nodes : list, int (optional)
             List of integers describing the dense part of the CNN
-        learining_rate : float (optional)
+        learning_rate : float (optional)
             Learning rate for the CNN
         batch_size : int (optional)
             Training batch size for the CNN
@@ -128,7 +128,7 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
     _ = CAE_model.encoder([dummy_data])
 
     model_features_CNN = cnn1d_model_features(
-        learining_rate=learining_rate,
+        learning_rate=learning_rate,
         trainable=True,
         batch_size=batch_size,
         output_size=output_size,
@@ -161,7 +161,7 @@ def load_pretrained_cae_into_cnn(cae_features_filename,
 def load_pretrained_dae_into_dnn(dae_features_filename,
                                  dae_weights_filename,
                                  dnn_dense_nodes=[128],
-                                 learining_rate=1e-4,
+                                 learning_rate=1e-4,
                                  batch_size=32,
                                  output_size=30,
                                  activation_function=tf.nn.tanh,
@@ -177,7 +177,7 @@ def load_pretrained_dae_into_dnn(dae_features_filename,
             Filname location of the file containing the DAE pretrained weights
         dnn_dense_nodes : list, int (optional)
             List of integers describing the untrained dense part of the DNN
-        learining_rate : float (optional)
+        learning_rate : float (optional)
             Learning rate for the DNN
         batch_size : int (optional)
             Training batch size for the DNN
@@ -208,7 +208,7 @@ def load_pretrained_dae_into_dnn(dae_features_filename,
     dense_nodes = DAE_model.dense_nodes_encoder + dnn_dense_nodes
 
     model_features_DNN = dnn_model_features(
-        learining_rate=learining_rate,
+        learning_rate=learning_rate,
         batch_size=batch_size,
         output_size=output_size,
         output_function=None,
@@ -216,13 +216,12 @@ def load_pretrained_dae_into_dnn(dae_features_filename,
         dropout_probability=dropout_probability,
         scaler=DAE_model.scaler,
         dense_nodes=dense_nodes,
-        activation_function=activation_function,
+        activation_function=dae_features.activation_function,
         )
 
     DNN_model = DNN(model_features_DNN)
-    optimizer = tf.train.AdamOptimizer(model_features_DNN.learining_rate)
 
-    # need to do a forward pass to initialize weights
+    # Do a forward pass to initialize weights
     dummy_data = np.zeros(1024)
     _ = DNN_model.predict_class([dummy_data])
 
@@ -230,4 +229,3 @@ def load_pretrained_dae_into_dnn(dae_features_filename,
         DNN_model.layers[i].set_weights(DAE_model.layers[i].get_weights())
 
     return DNN_model, model_features_DNN
-

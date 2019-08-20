@@ -56,17 +56,6 @@ def test_dnn_construction():
     pass
 
 
-
-#unit tests
-
-#add a test for the following:
-
-#forward_pass
-
-#
-
-
-#integration tests
 def test_dnn_training():
     """
     Testing the dense neural network class and training function.
@@ -89,6 +78,3 @@ def test_dnn_training():
         earlystop_cost_fn=model.f1_error,
         data_augmentation=model.default_data_augmentation,)
     pass
-
-
-
