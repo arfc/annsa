@@ -20,7 +20,7 @@ epochs = np.arange(1, 100, 1)
 # negative linear
 not_learning_cost = [(-1 * epoch) + len(epochs) for epoch in epochs]
 # 1/sqrt(x) + x
-earlystop_cost = [(len(epochs) / np.sqrt(epoch) + epoch/10 - 4)
+earlystop_cost = [(len(epochs) / np.sqrt(epoch) + epoch / 10 - 4)
                   for epoch in epochs]
 
 
@@ -43,7 +43,7 @@ def test_default_data_augmentation():
 
 def test_poisson_data_augmentation():
     mean = np.mean(random_spectrum)
-    assert(abs(lam - mean)/lam < 1), (
+    assert(abs(lam - mean) / lam < 1), (
         "Poisson data augmentation is not poisson sampling.")
 
 
@@ -56,7 +56,7 @@ def test_check_earlystop_case1():
                                    earlystop_cost[:epoch],
                                    earlystop_patience)
     assert(stopped is False), ("With earlystopping_patience=0"
-                                  "check_earlystop should return False.")
+                               "check_earlystop should return False.")
 
 
 def test_check_earlystop_case2():
@@ -67,7 +67,7 @@ def test_check_earlystop_case2():
                                    earlystop_cost[:epoch],
                                    earlystop_patience)
     assert(stopped is False), ("If epoch < patience"
-                                  "check_earlystop should return False.")
+                               "check_earlystop should return False.")
 
 
 def test_check_earlystop_case3():

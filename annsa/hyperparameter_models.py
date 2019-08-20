@@ -84,37 +84,37 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     cnn_kernel_choice = choice(cnn_kernel_choices)
     pool_size_choice = choice(pool_size_choices)
 
-    cnn_kernel = cnn_kernel_choice*(len(cnn_filters))
+    cnn_kernel = cnn_kernel_choice * (len(cnn_filters))
     cnn_strides = (1,) * (len(cnn_filters))
-    pool_size = pool_size_choice*(len(cnn_filters))
+    pool_size = pool_size_choice * (len(cnn_filters))
     pool_strides = (2,) * (len(cnn_filters))
 
     number_layers = np.random.randint(1, 4)
     dense_nodes = (10 ** np.random.uniform(
         1,
-        np.log10(1024/(2 ** len(cnn_filters))),
+        np.log10(1024 / (2 ** len(cnn_filters))),
         number_layers)).astype('int')
     dense_nodes = np.sort(dense_nodes)
     dense_nodes = np.flipud(dense_nodes)
 
     model_features = cnn1d_model_features(
-            trainable=None,
-            learining_rate=None,
-            batch_size=None,
-            output_size=None,
-            scaler=None,
-            activation_function=None,
-            output_function=None,
-            Pooling=None,
-            l2_regularization_scale=None,
-            dropout_probability=None,
-            cnn_filters=cnn_filters,
-            cnn_kernel=cnn_kernel,
-            cnn_strides=cnn_strides,
-            pool_size=pool_size,
-            pool_strides=pool_strides,
-            dense_nodes=dense_nodes
-            )
+        trainable=None,
+        learining_rate=None,
+        batch_size=None,
+        output_size=None,
+        scaler=None,
+        activation_function=None,
+        output_function=None,
+        Pooling=None,
+        l2_regularization_scale=None,
+        dropout_probability=None,
+        cnn_filters=cnn_filters,
+        cnn_kernel=cnn_kernel,
+        cnn_strides=cnn_strides,
+        pool_size=pool_size,
+        pool_strides=pool_strides,
+        dense_nodes=dense_nodes
+        )
 
     return model_features
 
@@ -138,16 +138,16 @@ def make_conv1d_model(all_keys_binarized):
     """
 
     cnn_filters_choices = (
-                           (4, 8),
-                           (8, 16),
-                           (16, 32),
-                           (4,),
-                           (8,),
-                           (16,),
-                           (32,),
-                           (4, 8, 16),
-                           (8, 16, 32),
-                          )
+        (4, 8),
+        (8, 16),
+        (16, 32),
+        (4,),
+        (8,),
+        (16,),
+        (32,),
+        (4, 8, 16),
+        (8, 16, 32),
+        )
 
     cnn_kernel_choices = ((2,), (4,), (8,), (16,))
     pool_size_choices = ((2,), (4,), (8,), (16,))
@@ -223,12 +223,12 @@ def make_cae1d_model():
         output_function=None,
         Pooling=tf.layers.MaxPooling1D,
         cnn_filters_encoder=cnn_filters_encoder_choice,
-        cnn_kernel_encoder=(cnn_kernel_encoder_choice,)*num_cnn_filters,
+        cnn_kernel_encoder=(cnn_kernel_encoder_choice,) * num_cnn_filters,
         cnn_strides_encoder=(1, ) * num_cnn_filters,
         pool_size_encoder=pool_size_choice * num_cnn_filters,
         pool_strides_encoder=(2, ) * num_cnn_filters,
         cnn_filters_decoder=cnn_filters_encoder_choice,
-        cnn_kernel_decoder=(cnn_kernel_encoder_choice,)*num_cnn_filters,
+        cnn_kernel_decoder=(cnn_kernel_encoder_choice,) * num_cnn_filters,
         cnn_strides_decoder=(1, ) * num_cnn_filters)
 
     model = CAE(model_features)

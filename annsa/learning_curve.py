@@ -80,8 +80,8 @@ def training_wrapper(GPU_device_id,
         source_dataset = pd.read_csv(source_dataset_location)
         if difficulty_setting == 'easy':
             source_dataset, training_spectra, training_keys = load_easy(
-                                                            source_dataset,
-                                                            background_dataset)
+                source_dataset,
+                background_dataset)
         if difficulty_setting == 'full':
             source_dataset, training_spectra, training_keys = load_full(
                 source_dataset, background_dataset)
@@ -147,7 +147,7 @@ def training_wrapper(GPU_device_id,
 
     if train_sizes:
         for train_size in train_sizes:
-            print('\n\nRunning through training size '+str(train_size))
+            print('\n\nRunning through training size ' + str(train_size))
             k_folds_errors = []
 
             sss = StratifiedShuffleSplit(n_splits=5, train_size=train_size)

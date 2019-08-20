@@ -31,7 +31,7 @@ def gen_coeffs(degree):
     where a is the coefficient and b is the shift.
     """
     coeffs = []
-    for deg in range(degree+1):
+    for deg in range(degree + 1):
         a = np.random.uniform(-1, 1, 2)
         coeffs.append(a)
     return coeffs
@@ -76,7 +76,7 @@ def gen_random_data():
     choice = np.random.randint(0, 2)
     func = funcs[choice]
 
-    x = np.linspace(0, 2*np.pi, 100)
+    x = np.linspace(0, 2 * np.pi, 100)
     noise = np.random.uniform(0, 0.5, 100)
     data = func(x)
 
@@ -85,7 +85,7 @@ def gen_random_data():
     else:
         name = 'sin'
 
-return name, (data+noise)
+    return name, (data + noise)
 
 dataset = [[], []]
 for x in range(1000):
@@ -95,3 +95,4 @@ for x in range(1000):
 
 df = pd.DataFrame({'function': dataset[0], 'data': dataset[1]})
 df.to_csv("noisy_sinusoidal_data.csv")
+

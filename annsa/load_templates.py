@@ -184,4 +184,3 @@ def load_templates(normalization=None):
             location, normalization)
 
     return spectral_templates
-

@@ -108,8 +108,8 @@ def load_full(source_dataset, background_dataset):
             blank_spectra.append(blank_spectra_tmp)
 
     source_dataset = source_dataset.append(pd.DataFrame(
-                        blank_spectra,
-                        columns=source_dataset.columns))
+        blank_spectra,
+        columns=source_dataset.columns))
 
     spectra_dataset = source_dataset.values[:, 5:].astype('float64')
     all_keys = source_dataset['isotope'].values
@@ -134,7 +134,7 @@ def dataset_to_spectrakeys(dataset):
 
 def load_dataset(kind='nn'):
     """
-    Generates dummy data using 'sklearn.datasets.make_classification()'. 
+    Generates dummy data using 'sklearn.datasets.make_classification()'.
     See 'make_classification' documentation for more details.
 
     Parameters:
@@ -189,4 +189,3 @@ def load_dataset(kind='nn'):
         test_dataset = [testing_data, testing_data]
 
     return train_dataset, test_dataset
-

@@ -27,7 +27,7 @@ def read_final_errors(file_path, *args):
     final_errors = []
     for model_id in args:
         final_errors = np.append(final_errors,
-                                 np.load(file_path+model_id+'.npy'))
+                                 np.load(file_path+model_id + '.npy'))
     return final_errors
 
 
@@ -44,7 +44,7 @@ def hyperparameter_efficiency_plot(accuracy):
     boxplot_values = []
 
     # remove excess values
-    accuracy = accuracy[0:np.int(2**np.floor(np.log2(len(accuracy))))]
+    accuracy = accuracy[0:np.int(2 ** np.floor(np.log2(len(accuracy))))]
 
     number_boxplots = int(np.log2(len(accuracy)))
 
@@ -123,7 +123,8 @@ def make_dataset(source_dataset,
                  cal_b=1.0,
                  cal_c=0.0,
                  background_cps=200,
-                 total_spectra=1e1):
+                 total_spectra=1e1,
+                 shieldingdensity=0.0):
     """
     Makes a dataset of spectra based on template source and background spectra
     and a number of options.
@@ -168,6 +169,7 @@ def make_dataset(source_dataset,
                 isotope=isotope,
                 sourceheight=sourceheight,
                 sourcedist=sourcedist,
+                shieldingdensity=shieldingdensity,
                 fwhm=fwhm)
             dataset['sources'].append(source_spectrum)
             dataset['backgrounds'].append(background_spectrum)
@@ -184,6 +186,7 @@ def make_dataset(source_dataset,
             signal_to_background=0.0,
             calibration=calibration,
             isotope=isotope,
+            shieldingdensity=0.0,
             fwhm=fwhm,)
         dataset['sources'].append(source_spectrum)
         dataset['backgrounds'].append(background_spectrum)
@@ -231,7 +234,6 @@ def make_spectra_dataframe(source_dataset,
                     for combination in itertools.product(*values)]
 
     output_row = []
-    f1_scores = []
 
     columns = []
     for key, value in kwargs.items():
@@ -240,7 +242,7 @@ def make_spectra_dataframe(source_dataset,
     columns.append('spectrum')
 
     for i, combination in enumerate(combinations):
-        print('combo '+str(i+1)+' of '+str(len(combinations)), end='\r')
+        print('combo '+str(i + 1) + ' of ' + str(len(combinations)), end='\r')
         all_spectra, all_keys = make_dataset(
             source_dataset,
             background_dataset,
@@ -253,6 +255,7 @@ def make_spectra_dataframe(source_dataset,
             cal_a=combination['cal_a'],
             cal_b=combination['cal_b'],
             cal_c=combination['cal_c'],
+            shieldingdensity=combination['shieldingdensity'],
             background_cps=combination['background_cps'],)
 
         all_spectra = np.random.poisson(all_spectra)
@@ -452,7 +455,6 @@ def plot_f1_scores_bagged(dataframe,
     keys = list(set(dataframe['isotope']))
     mlb.fit(keys)
 
-    f1_scores_models = {}
     for key, value in kwargs.items():
         dataframe = dataframe[dataframe[key] == value]
     for model_id in model_ids:
