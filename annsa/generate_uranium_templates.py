@@ -1,8 +1,6 @@
 from __future__ import print_function
 import numpy as np
 from numpy.random import choice
-from scipy.interpolate import griddata
-from annsa.annsa import read_spectrum
 from annsa.template_sampling import (apply_LLD,
                                      poisson_sample_template,
                                      rebin_spectrum,)
@@ -125,7 +123,7 @@ def generate_uenriched_spectrum(uranium_templates,
             uranium_templates[template_id], 10)
 
     total_background_counts = background_cps * integration_time
-    total_source_counts = total_background_counts*source_background_ratio
+    total_source_counts = total_background_counts * source_background_ratio
     background_dataset = background_dataset[background_dataset['fwhm'] == 6.5]
     background_spectrum = background_dataset.sample().values[0][3:]
     background_spectrum = np.array(background_spectrum, dtype='float64')
@@ -146,7 +144,7 @@ def generate_uenriched_spectrum(uranium_templates,
     u238_phs = u238_phsg * (1 - enrichment_level)
     u232_phs = u232_phsg
     uxry_phs = uxry_phsg * enrichment_level
-    normalized_phs = u235_phs+u238_phs+u232_phs+uxry_phs
+    normalized_phs = np.sum([u235_phs, u238_phs, u232_phs, uxry_phs])
 
     # ph
     u235_ph = total_source_counts * u235_phs / normalized_phs
@@ -163,6 +161,7 @@ def generate_uenriched_spectrum(uranium_templates,
     tmp_spectrum += poisson_sample_template(uranium_templates['UXRAY'],
                                             uxry_ph)
 
-    full_spectrum = tmp_spectrum[0:1024]+background_spectrum_sampled[0:1024]
+    full_spectrum = np.sum([tmp_spectrum[0:1024],
+                            background_spectrum_sampled[0:1024]])
 
     return full_spectrum
