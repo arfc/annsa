@@ -8,7 +8,7 @@ def test_read_spectrum_rocky_flats():
     pass
 
 
-def test_read_spectrum2():
+def test_read_spectrum_gadras_template():
     TESTDATA_FILENAME = os.path.join(os.path.dirname(__file__), './data_folder/gadras_template.spe')
     _ = read_spectrum(TESTDATA_FILENAME, float)
     pass
