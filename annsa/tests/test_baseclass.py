@@ -107,7 +107,7 @@ def test_not_learning_case1():
         not_learning_cost[:epoch],
         not_learning_patience,
         not_learning_threshold)
-    error_msg = "Not learning is turned off, should not have stopped."
+    error_msg = "Learning rate is not being checked. Training should continue."
     assert not stopped, error_msg
 
 
@@ -121,7 +121,7 @@ def test_not_learning_case2():
         not_learning_cost[:epoch],
         not_learning_patience,
         not_learning_threshold)
-    error_msg = "Not learning applied too early. epoch < patience."
+    error_msg = "Not enough epochs have passed. Training should continue."
     assert not stopped, error_msg
 
 
@@ -135,5 +135,5 @@ def test_not_learning_case3():
         not_learning_cost[:epoch],
         not_learning_patience,
         not_learning_threshold)
-    error_msg = "Not learning should have applied and did not."
+    error_msg = "The network is not learning and should have stopped."
     assert stopped, error_msg
