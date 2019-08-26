@@ -20,9 +20,8 @@ epochs = np.arange(1, 100, 1)
 # negative linear
 not_learning_cost = [(-1 * epoch) + len(epochs) for epoch in epochs]
 # 1/sqrt(x) + x
-earlystop_cost = [(len(epochs) / np.sqrt(epoch) + epoch / 10 - 4)
-                  for epoch in epochs]
-
+earlystop_cost = [
+    (len(epochs) / np.sqrt(epoch) + epoch / 10 - 4) for epoch in epochs]
 
 # create class
 base = construct_baseclass()
@@ -37,14 +36,15 @@ random_spectrum = np.random.poisson(lam=lam, size=dim)
 # data augmentation unit tests
 def test_default_data_augmentation():
     data_aug = base.default_data_augmentation(random_spectrum)
-    assert(data_aug.all() == random_spectrum.all()), (
-        "Default data augmentation is not identity function.")
+    error_msg = "Default data augmentation is not identity function."
+    assert(data_aug.all() == random_spectrum.all()), error_msg
 
 
 def test_poisson_data_augmentation():
-    mean = np.mean(random_spectrum)
-    assert(abs(lam - mean) / lam < 1), (
-        "Poisson data augmentation is not poisson sampling.")
+    data_aug = base.poisson_data_augmentation(random_spectrum)
+    mean = np.mean(data_aug)
+    error_msg = "Poisson data augmentation is not poisson sampling."
+    assert(abs(lam - mean) / lam < 1), error_msg
 
 
 # check_earlystop unit tests
@@ -55,41 +55,45 @@ def test_check_earlystop_case1():
     stopped = base.check_earlystop(epoch,
                                    earlystop_cost[:epoch],
                                    earlystop_patience)
-    assert(stopped is False), ("With earlystopping_patience=0"
-                               "check_earlystop should return False.")
+    error_msg = ("With earlystopping_patience=0, "
+                 "check_earlystop should return False.")
+    assert not stopped, error_msg
 
 
 def test_check_earlystop_case2():
     """case 2: not enough epochs have passed"""
     earlystop_patience = 70
     epoch = 69
-    stopped = base.check_earlystop(epoch,
-                                   earlystop_cost[:epoch],
-                                   earlystop_patience)
-    assert(stopped is False), ("If epoch < patience"
-                               "check_earlystop should return False.")
+    stopped = base.check_earlystop(
+        epoch,
+        earlystop_cost[:epoch],
+        earlystop_patience)
+    error_msg = "If epoch < patience, check_earlystop should return False."
+    assert not stopped, error_msg
 
 
 def test_check_earlystop_case3():
     """case 3: early stopping should be applied."""
     earlystop_patience = 5
     epoch = 69
-    stopped = base.check_earlystop(epoch,
-                                   earlystop_cost[:epoch],
-                                   earlystop_patience)
-    assert(stopped is True), (
-        "if epoch>patience, early stopping should occur.")
+    stopped = base.check_earlystop(
+        epoch,
+        earlystop_cost[:epoch],
+        earlystop_patience)
+    error_msg = "Early stopping should have applied and did not."
+    assert stopped, error_msg
 
 
 def test_check_earlystop_case4():
     """case 4: early stopping was applied too soon"""
     earlystop_patience = 5
     epoch = 50
-    stopped = base.check_earlystop(epoch,
-                                   earlystop_cost[:epoch],
-                                   earlystop_patience)
-    assert(stopped is False), (
-        "If epoch>patience, early stopping should occur.")
+    stopped = base.check_earlystop(
+        epoch,
+        earlystop_cost[:epoch],
+        earlystop_patience)
+    error_msg = "Early stopping was applied too early."
+    assert not stopped, error_msg
 
 
 # not_learning unit tests
@@ -98,12 +102,13 @@ def test_not_learning_case1():
     not_learning_patience = 0
     not_learning_threshold = 10
     epoch = 5
-    stopped = base.not_learning(epoch,
-                                not_learning_cost[:epoch],
-                                not_learning_patience,
-                                not_learning_threshold)
-    assert(stopped is False), (
-        "Not learning is turned off, should not have stopped.")
+    stopped = base.not_learning(
+        epoch,
+        not_learning_cost[:epoch],
+        not_learning_patience,
+        not_learning_threshold)
+    error_msg = "Not learning is turned off, should not have stopped."
+    assert not stopped, error_msg
 
 
 def test_not_learning_case2():
@@ -111,12 +116,13 @@ def test_not_learning_case2():
     not_learning_patience = 7
     not_learning_threshold = 10
     epoch = 6
-    stopped = base.not_learning(epoch,
-                                not_learning_cost[:epoch],
-                                not_learning_patience,
-                                not_learning_threshold)
-    assert(stopped is False), (
-        "Not learning applied too early. epoch < patience.")
+    stopped = base.not_learning(
+        epoch,
+        not_learning_cost[:epoch],
+        not_learning_patience,
+        not_learning_threshold)
+    error_msg = "Not learning applied too early. epoch < patience."
+    assert not stopped, error_msg
 
 
 def test_not_learning_case3():
@@ -124,9 +130,10 @@ def test_not_learning_case3():
     not_learning_patience = 5
     not_learning_threshold = 10
     epoch = 6
-    stopped = base.not_learning(epoch,
-                                not_learning_cost[:epoch],
-                                not_learning_patience,
-                                not_learning_threshold)
-    assert(stopped is True), (
-        "Not learning should have applied and did not.")
+    stopped = base.not_learning(
+        epoch,
+        not_learning_cost[:epoch],
+        not_learning_patience,
+        not_learning_threshold)
+    error_msg = "Not learning should have applied and did not."
+    assert stopped, error_msg
