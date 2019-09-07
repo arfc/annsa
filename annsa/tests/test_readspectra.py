@@ -10,7 +10,6 @@ def test_read_spectrum_rocky_flats():
     annsa_data_filename = os.path.join(os.path.dirname(__file__), './data_folder/rocky_flats_spectra.spe')
     annsa_spectrum = read_spectrum(annsa_data_filename)
     assert (annsa_spectrum == true_spectrum).all()
-    pass
 
 
 def test_read_spectrum_gadras_template():
