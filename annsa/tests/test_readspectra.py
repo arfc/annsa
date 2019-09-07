@@ -20,4 +20,3 @@ def test_read_spectrum_gadras_template():
     annsa_data_filename = os.path.join(os.path.dirname(__file__), './data_folder/gadras_template.spe')
     annsa_spectrum = read_spectrum(annsa_data_filename, float)
     assert (annsa_spectrum == true_spectrum).all()
-    pass
