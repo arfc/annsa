@@ -136,7 +136,7 @@ def construct_spectrum(spectral_template,
             The manipulated noiseless template.
     """
     spectral_template = spectral_template.flatten()
-    
+
     a = calibration[0]
     b = calibration[1]
     c = calibration[2]
@@ -219,7 +219,7 @@ def make_random_spectrum(source_data,
         for key, value in kwargs.items():
             source_data = source_data[source_data[key] == value]
 
-        spectral_template= source_data.sample().values[0][6:]
+        spectral_template = source_data.sample().values[0][6:]
         source_spectrum = construct_spectrum(
             spectral_template=spectral_template,
             calibration=calibration,

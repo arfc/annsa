@@ -1,4 +1,4 @@
-from annsa.template_sampling import (rebin_spectrum, 
+from annsa.template_sampling import (rebin_spectrum,
                                      apply_LLD,
                                      construct_spectrum,)
 import numpy as np
