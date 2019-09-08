@@ -49,6 +49,7 @@ def rebin_spectrum(spectrum_template, a=0, b=1, c=0, output_len=1024):
         rebinned_spectrum_template : vector (1x1024)
             The rebinned spectrum template
     """
+    spectrum_template = spectrum_template.flatten()
     spec_len = len(spectrum_template)
     new_bin_positions = a
     new_bin_positions += b * np.arange(spec_len)
@@ -134,6 +135,8 @@ def construct_spectrum(spectral_template,
         spectral_template : vector
             The manipulated noiseless template.
     """
+    spectral_template = spectral_template.flatten()
+    
     a = calibration[0]
     b = calibration[1]
     c = calibration[2]
