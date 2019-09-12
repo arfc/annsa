@@ -1,6 +1,7 @@
 from annsa.template_sampling import (rebin_spectrum,
                                      apply_LLD,
                                      construct_spectrum,)
+from numpy.testing import assert_almost_equal
 import numpy as np
 
 # define lamba = 1000
@@ -32,7 +33,7 @@ def test_construct_spectrum_test_rescale_case1():
     random_spectrum_rescaled = construct_spectrum(
         random_spectrum,
         spectrum_counts=spectrum_counts,)
-    assert(np.sum(random_spectrum_rescaled) == 10.0)
+    assert_almost_equal(np.sum(random_spectrum_rescaled), 10.0)
 
 
 def test_construct_spectrum_test_rescale_case2():
