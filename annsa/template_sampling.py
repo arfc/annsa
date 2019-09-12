@@ -212,7 +212,7 @@ def make_random_spectrum(source_data,
             calibration=calibration,
             LLD=LLD,
             spectrum_counts=source_counts,
-            )
+        )
 
     # if the source data is a pandas dataframe.
     else:
@@ -225,7 +225,7 @@ def make_random_spectrum(source_data,
             calibration=calibration,
             LLD=LLD,
             spectrum_counts=source_counts,
-            )
+        )
 
         if 'fwhm' in kwargs:
             fwhm = kwargs['fwhm']
@@ -237,11 +237,11 @@ def make_random_spectrum(source_data,
         cosmic=0)
     background_counts = background_cps * integration_time
     background_spectrum = construct_spectrum(
-            spectral_template=background_template,
-            calibration=calibration,
-            LLD=LLD,
-            spectrum_counts=background_counts,
-            )
+        spectral_template=background_template,
+        calibration=calibration,
+        LLD=LLD,
+        spectrum_counts=background_counts,
+    )
 
     return source_spectrum, background_spectrum
 
