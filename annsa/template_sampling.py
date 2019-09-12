@@ -111,7 +111,10 @@ def construct_spectrum(spectral_template,
                        output_len=1024,
                        ):
     """
-    This function manipulates a spectral template.
+    This function manipulates a spectral template to change its calibration,
+    low level discriminator, and total counts. The output can be combined with
+    other constructed spectra to create a new noisless spectrum. This can then
+    be Poisson sampled to create a spectrum with realistic counting  statistics.
 
     Parameters:
     -----------
