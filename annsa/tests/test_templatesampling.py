@@ -5,6 +5,7 @@ from numpy.testing import assert_almost_equal
 import numpy as np
 import pytest
 
+
 @pytest.fixture
 def spectrum():
     # define lamba = 1000
@@ -13,6 +14,7 @@ def spectrum():
     lam = 1000
     spectrum = np.random.poisson(lam=lam, size=dim)
     return spectrum
+
 
 # rebinning unit test
 def test_rebinning_size(spectrum):
