@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def spectrum():
     # define lamba = 1000
     # define size = 1x1024(the number of channels)
