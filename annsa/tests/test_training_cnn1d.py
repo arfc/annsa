@@ -14,7 +14,7 @@ tf.enable_eager_execution()
 @pytest.fixture(params=[([],  0.5, 64),
                         ([],  0.5, 1024),
                         ([],  0.999, 1024),
-                        ([10], 0.999, 1024),])
+                        ([10], 0.999, 1024), ])
 def cnn1d(request):
     '''
     Constructs a convolutional neural network with filters
@@ -67,8 +67,8 @@ def toy_dataset():
 # forward pass tests
 @pytest.mark.parametrize('cnn1d',
                          (([],  0.5, 1024),
-                         ([],  0.999, 1024),
-                         ([10], 0.999, 1024)),
+                          ([],  0.999, 1024),
+                          ([10], 0.999, 1024)),
                          indirect=True,)
 def test_forward_pass_0(cnn1d):
     '''case 0: test if output size is correct'''
@@ -166,7 +166,7 @@ def test_dropout_2(cnn1d):
                          (([],  0.5, 64),),
                          indirect=True,)
 def test_training_0(cnn1d, toy_dataset, cost):
-    '''case 0: test if training on toy dataset reduces errors using 
+    '''case 0: test if training on toy dataset reduces errors using
     both error functions'''
     (data, targets_binarized) = toy_dataset
     cost_function = getattr(cnn1d, cost)

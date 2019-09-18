@@ -10,9 +10,10 @@ from annsa.model_classes import DNN, dnn_model_features
 
 tf.enable_eager_execution()
 
+
 @pytest.fixture(params=[(0.5, 1024),
-                        (0.5, 64), 
-                        (0.999, 1024)])
+                        (0.5, 64),
+                        (0.999, 1024), ])
 def dnn(request):
     '''
     Constructs a dense neural network with dense connections
@@ -43,6 +44,7 @@ def dnn(request):
     model.set_weights(weight_ones)
     return model
 
+
 @pytest.fixture()
 def toy_dataset():
     '''
@@ -52,6 +54,7 @@ def toy_dataset():
     mlb = LabelBinarizer()
     targets_binarized = mlb.fit_transform(target)
     return (data, targets_binarized)
+
 
 # forward pass tests
 @pytest.mark.parametrize('dnn',
@@ -123,7 +126,7 @@ def test_dropout_1(dnn):
                          ((0.5, 64),),
                          indirect=True,)
 def test_training_0(dnn, toy_dataset, cost):
-    '''case 0: test if training on toy dataset reduces errors using 
+    '''case 0: test if training on toy dataset reduces errors using
     both error functions'''
     (data, targets_binarized) = toy_dataset
     cost_function = getattr(dnn, cost)
