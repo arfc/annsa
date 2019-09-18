@@ -10,14 +10,16 @@ from annsa.model_classes import (generate_random_cnn1d_architecture,
 tf.enable_eager_execution()
 
 
-@pytest.fixture(params=[[], [10]])
+@pytest.fixture(params=[([],  0.5,),
+                        ([],  0.999,),
+                        ([10], 0.999)])
 def cnn1d(request):
     '''
     Constructs a convolutional neural network with filters
     initialized to ones. Fixture params are either zero or one hidden
     dense layer.
     '''
-    dense_nodes = request.param
+    dense_nodes, dropout_probability = request.param
 
     scaler = make_pipeline(FunctionTransformer(np.abs, validate=False))
     model_features = generate_random_cnn1d_architecture(
@@ -30,7 +32,7 @@ def cnn1d(request):
     model_features.output_size = 2
     model_features.output_function = None
     model_features.l2_regularization_scale = 1e1
-    model_features.dropout_probability = 0.999
+    model_features.dropout_probability = dropout_probability
     model_features.scaler = scaler
     model_features.Pooling = tf.layers.MaxPooling1D
     model_features.activation_function = None
@@ -56,7 +58,7 @@ def test_forward_pass_0(cnn1d):
     assert(output.shape[1] == 2)
 
 
-@pytest.mark.parametrize('cnn1d', [[]], indirect=True,)
+@pytest.mark.parametrize('cnn1d', [([], 0.5)], indirect=True,)
 def test_forward_pass_1(cnn1d):
     '''case 1: Tests response to a spectrum of all ones
     when weight filters are all one. Note, layer before output has an
@@ -68,7 +70,7 @@ def test_forward_pass_1(cnn1d):
 
 
 # loss function tests
-@pytest.mark.parametrize('cnn1d', [[]], indirect=True,)
+@pytest.mark.parametrize('cnn1d', [([], 0.5)], indirect=True,)
 def test_loss_fn_0(cnn1d):
     '''case 0: tests if l2 regularization does not add to the loss_fn
     with hidden dense layers.'''
@@ -81,7 +83,7 @@ def test_loss_fn_0(cnn1d):
     assert(loss == 0.)
 
 
-@pytest.mark.parametrize('cnn1d', [[10]], indirect=True,)
+@pytest.mark.parametrize('cnn1d', [([10], 0.5)], indirect=True,)
 def test_loss_fn_1(cnn1d):
     '''case 1: tests if l2 regularization adds to loss_fn when there are
     dense hidden layers.'''
@@ -95,7 +97,7 @@ def test_loss_fn_1(cnn1d):
 
 
 # dropout test
-@pytest.mark.parametrize('cnn1d', [[]], indirect=True,)
+@pytest.mark.parametrize('cnn1d', [([], 0.999)], indirect=True,)
 def test_dropout_0(cnn1d):
     '''case 0: tests that dropout is not applied when there are no dense
     hidden layers.'''
@@ -106,7 +108,7 @@ def test_dropout_0(cnn1d):
     assert(np.array_equal(o_training_false, o_training_true))
 
 
-@pytest.mark.parametrize('cnn1d', [[10]], indirect=True,)
+@pytest.mark.parametrize('cnn1d', [([10], 0.999)], indirect=True,)
 def test_dropout_1(cnn1d):
     '''case 1: tests that dropout is applied when there are
     dense hidden layers'''
@@ -117,7 +119,7 @@ def test_dropout_1(cnn1d):
     assert(np.array_equal(o_training_false, o_training_true) is False)
 
 
-@pytest.mark.parametrize('cnn1d', [[10]], indirect=True,)
+@pytest.mark.parametrize('cnn1d', [([10], 0.999)], indirect=True,)
 def test_dropout_2(cnn1d):
     '''case 2: tests that dropout is not applied during inference, when
     training is False.'''
