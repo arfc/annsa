@@ -35,12 +35,8 @@ def dnn(request):
     # forward pass to initialize dnn weights
     model.forward_pass(np.ones([1, input_size]), training=False)
     # set weights to ones
-    weight_ones = []
-    for index, weight in enumerate(model.get_weights()):
-        if index % 2 == 0:
-            weight_ones.append(np.ones(weight.shape))
-        else:
-            weight_ones.append(weight)
+    weight_ones = [np.ones(weight.shape) if (index % 2 == 0) else weight for index,
+                   weight in enumerate(model.get_weights())]
     model.set_weights(weight_ones)
     return model
 
