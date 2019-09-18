@@ -4,7 +4,6 @@ import tensorflow as tf
 import pytest
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
-
 from annsa.model_classes import (generate_random_cnn1d_architecture,
                                  CNN1D)
 
@@ -49,7 +48,7 @@ def cnn1d(request):
     model.set_weights(weight_ones)
     return model
 
-
+# forward pass tests
 def test_forward_pass_0(cnn1d):
     '''case 0: test if output size is correct'''
     output = cnn1d.forward_pass(np.ones([1, 1024]), training=False)
@@ -83,7 +82,7 @@ def test_loss_fn_0(cnn1d):
 @pytest.mark.parametrize('cnn1d', [[10]], indirect=True,)
 def test_loss_fn_1(cnn1d):
     '''case 1: tests if l2 regularization adds to loss_fn when there are
-    dense nodes'''
+    dense hidden layers.'''
     loss = cnn1d.loss_fn(
         input_data=np.ones([1, 1024]),
         targets=np.array([[16384, 16384]]),
@@ -113,3 +112,13 @@ def test_dropout_2(cnn1d):
     o_training_true = cnn1d.forward_pass(np.ones([1, 1024]),
                                          training=True).numpy()
     assert(np.array_equal(o_training_false, o_training_true) is False)
+    
+@pytest.mark.parametrize('cnn1d', [[10]], indirect=True,)
+def test_dropout_2(cnn1d):
+    '''case 0: tests that dropout is not applied during inference, when
+    training is False.'''
+    o_training_false_1 = cnn1d.forward_pass(np.ones([1, 1024]),
+                                          training=False).numpy()
+    o_training_false_2 = cnn1d.forward_pass(np.ones([1, 1024]),
+                                         training=False).numpy()
+    assert(np.array_equal(o_training_false_1, o_training_false_2))

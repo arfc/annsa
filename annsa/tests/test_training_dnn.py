@@ -1,80 +1,86 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import tensorflow as tf
-
+import pytest
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
-
-from annsa.model_classes import (dnn_model_features,
-                                 DNN)
-from annsa.load_dataset import load_dataset
+from annsa.model_classes import DNN, dnn_model_features
 
 tf.enable_eager_execution()
 
 
-def construct_dnn():
-    """
-    Constructs a dense neural network and tests construction
-    functions.
-
-    Returns:
-    --------
-    model_features : class dnn_model_features
-        Contains all features of the DNN model
-
-    optimizer :
-    An Operation that updates the variables in var_list.
-    If global_step was not None, that operation also increments
-    global_step. See documentation for tf.train.Optimizer
-
-    model : Class DNN
-        A dense neural network
-    """
-    scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
-
+@pytest.fixture()
+def dnn(request):
+    '''
+    Constructs a dense neural network with dense connections
+    initialized to ones.
+    '''
+    scaler = make_pipeline(FunctionTransformer(np.abs, validate=False))
     model_features = dnn_model_features(
         learning_rate=1e-1,
         l2_regularization_scale=1e-1,
         dropout_probability=0.5,
         batch_size=2**5,
         output_size=2,
-        dense_nodes=[100],
+        dense_nodes=[10],
         output_function=None,
-        activation_function=tf.nn.relu,
+        activation_function=None,
         scaler=scaler)
-
-    optimizer = tf.train.AdamOptimizer(model_features.learning_rate)
     model = DNN(model_features)
-    return model_features, optimizer, model
+    # forward pass to initialize dnn weights
+    model.forward_pass(1*np.ones([1, 1024]), training=False)
+    # set weights to ones
+    weight_ones = []
+    for index, weight in enumerate(model.get_weights()):
+        if index % 2 == 0:
+            weight_ones.append(np.ones(weight.shape))
+        else:
+            weight_ones.append(weight)
+    model.set_weights(weight_ones)
+    return model
+
+# forward pass tests
+def test_forward_pass_0(dnn):
+    '''case 0: test if output size is correct'''
+    output = dnn.forward_pass(np.ones([1, 1024]), training=False)
+    assert(output.shape[1] == 2)
 
 
-def test_dnn_construction():
-    """
-    Tests the construction of the dense neural network.
-    """
-    _, _, _ = construct_dnn()
-    pass
+@pytest.mark.parametrize('dnn', [[]], indirect=True,)
+def test_forward_pass_1(dnn):
+    '''case 1: Tests response to a spectrum of all ones
+    when weight filters are all one. Note, layer before output has
+    10 nodes, each with an activation of 1024. Each of these 10 nodes
+    is added into one output, so each output's value is 10240.'''
+    output = dnn.forward_pass(np.ones([1, 1024]), training=False)
+    output_value = output.numpy()[0][0]
+    assert(output_value == 10240)
+
+# loss function tests
+def test_loss_fn_1(dnn):
+    '''case 1: tests if l2 regularization adds to loss_fn.'''
+    loss = dnn.loss_fn(
+        input_data=np.ones([1, 1024]),
+        targets=np.array([[16384, 16384]]),
+        cost=dnn.mse,
+        training=False)
+    loss = loss
+    assert(loss > 0.)
+
+# dropout test
+def test_dropout_0(dnn):
+    '''case 0: tests that dropout is applied when training.'''
+    o_training_false = dnn.forward_pass(np.ones([1, 1024]),
+                                          training=False).numpy()
+    o_training_true = dnn.forward_pass(np.ones([1, 1024]),
+                                         training=True).numpy()
+    assert(np.array_equal(o_training_false, o_training_true) is False)
 
 
-def test_dnn_training():
-    """
-    Testing the dense neural network class and training function.
-    """
-
-    tf.reset_default_graph()
-    model_features, optimizer, model = construct_dnn()
-    train_dataset, test_dataset = load_dataset()
-    model_features.scaler.fit(train_dataset[0])
-
-    all_loss_train, all_loss_test = model.fit_batch(
-        train_dataset,
-        test_dataset,
-        optimizer,
-        num_epochs=1,
-        earlystop_patience=0,
-        verbose=1,
-        print_errors=0,
-        obj_cost=model.cross_entropy,
-        earlystop_cost_fn=model.f1_error,
-        data_augmentation=model.default_data_augmentation,)
-    pass
+def test_dropout_1(dnn):
+    '''case 1: tests that dropout is not applied in inference, when training is False.'''
+    o_training_false_1 = dnn.forward_pass(np.ones([1, 1024]),
+                                          training=False).numpy()
+    o_training_false_2 = dnn.forward_pass(np.ones([1, 1024]),
+                                         training=False).numpy()
+    assert(np.array_equal(o_training_false_1, o_training_false_2))
