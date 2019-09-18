@@ -608,7 +608,6 @@ class DNN(tf.keras.Model, BaseClass):
 
         """
         x = self.scaler.transform(input_data)
-        x = tf.reshape(x, [-1, 1, x.shape[1]])
         for layer, nodes in enumerate(self.dense_nodes):
             x = self.dense_layers[str(layer)](x)
             x = self.drop_layers[str(layer)](x, training=training)
