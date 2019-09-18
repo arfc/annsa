@@ -11,9 +11,9 @@ from annsa.model_classes import (generate_random_cnn1d_architecture,
 tf.enable_eager_execution()
 
 
-@pytest.fixture(params=[([10],  0.5, 64),
-                        ([],  0.5, 1024),
-                        ([],  0.999, 1024),
+@pytest.fixture(params=[([10], 0.5, 64),
+                        ([], 0.5, 1024),
+                        ([], 0.999, 1024),
                         ([10], 0.999, 1024), ])
 def cnn1d(request):
     '''
@@ -66,8 +66,8 @@ def toy_dataset():
 
 # forward pass tests
 @pytest.mark.parametrize('cnn1d',
-                         (([],  0.5, 1024),
-                          ([],  0.999, 1024),
+                         (([], 0.5, 1024),
+                          ([], 0.999, 1024),
                           ([10], 0.999, 1024)),
                          indirect=True,)
 def test_forward_pass_0(cnn1d):
@@ -77,7 +77,7 @@ def test_forward_pass_0(cnn1d):
 
 
 @pytest.mark.parametrize('cnn1d',
-                         (([],  0.5, 1024),),
+                         (([], 0.5, 1024),),
                          indirect=True,)
 def test_forward_pass_1(cnn1d):
     '''case 1: Tests response to a spectrum of all ones
@@ -91,7 +91,7 @@ def test_forward_pass_1(cnn1d):
 
 # loss function tests
 @pytest.mark.parametrize('cnn1d',
-                         (([],  0.5, 1024),),
+                         (([], 0.5, 1024),),
                          indirect=True,)
 def test_loss_fn_0(cnn1d):
     '''case 0: tests if l2 regularization does not add to the loss_fn
@@ -122,7 +122,7 @@ def test_loss_fn_1(cnn1d):
 
 # dropout test
 @pytest.mark.parametrize('cnn1d',
-                         (([],  0.999, 1024),),
+                         (([], 0.999, 1024),),
                          indirect=True,)
 def test_dropout_0(cnn1d):
     '''case 0: tests that dropout is not applied when there are no dense
@@ -163,7 +163,7 @@ def test_dropout_2(cnn1d):
 # training tests
 @pytest.mark.parametrize('cost', ['mse', 'cross_entropy'])
 @pytest.mark.parametrize('cnn1d',
-                         (([10],  0.5, 64),),
+                         (([10], 0.5, 64),),
                          indirect=True,)
 def test_training_0(cnn1d, toy_dataset, cost):
     '''case 0: test if training on toy dataset reduces errors using
@@ -174,7 +174,7 @@ def test_training_0(cnn1d, toy_dataset, cost):
         (data, targets_binarized),
         (data, targets_binarized),
         optimizer=tf.train.AdamOptimizer(1e-3),
-        num_epochs=5,
+        num_epochs=2,
         obj_cost=cost_function,
         data_augmentation=cnn1d.default_data_augmentation,)
     epoch0_error = objective_cost['test'][0].numpy()
