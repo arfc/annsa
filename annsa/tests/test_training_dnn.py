@@ -28,7 +28,7 @@ def dnn(request):
         scaler=scaler)
     model = DNN(model_features)
     # forward pass to initialize dnn weights
-    model.forward_pass(1*np.ones([1, 1024]), training=False)
+    model.forward_pass(np.ones([1, 1024]), training=False)
     # set weights to ones
     weight_ones = []
     for index, weight in enumerate(model.get_weights()):
@@ -59,8 +59,8 @@ def test_forward_pass_1(dnn):
 
 
 # loss function tests
-def test_loss_fn_1(dnn):
-    '''case 1: tests if l2 regularization adds to loss_fn.'''
+def test_loss_fn_0(dnn):
+    '''case 0: tests if l2 regularization adds to loss_fn.'''
     loss = dnn.loss_fn(
         input_data=np.ones([1, 1024]),
         targets=np.array([[16384, 16384]]),

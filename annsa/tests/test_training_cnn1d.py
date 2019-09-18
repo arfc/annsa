@@ -37,7 +37,7 @@ def cnn1d(request):
     model_features.dense_nodes = dense_nodes
     model = CNN1D(model_features)
     # forward pass to initialize cnn1d weights
-    model.forward_pass(1*np.ones([1, 1024]), training=False)
+    model.forward_pass(np.ones([1, 1024]), training=False)
     # set weights to ones
     weight_ones = []
     for index, weight in enumerate(model.get_weights()):
@@ -47,6 +47,7 @@ def cnn1d(request):
             weight_ones.append(weight)
     model.set_weights(weight_ones)
     return model
+
 
 # forward pass tests
 def test_forward_pass_0(cnn1d):
@@ -64,6 +65,7 @@ def test_forward_pass_1(cnn1d):
     output = cnn1d.forward_pass(np.ones([1, 1024]), training=False)
     output_value = output.numpy()[0][0]
     assert(output_value == 16384)
+
 
 # loss function tests
 @pytest.mark.parametrize('cnn1d', [[]], indirect=True,)
@@ -91,9 +93,10 @@ def test_loss_fn_1(cnn1d):
     loss = loss
     assert(loss > 0.)
 
+
 # dropout test
 @pytest.mark.parametrize('cnn1d', [[]], indirect=True,)
-def test_dropout_1(cnn1d):
+def test_dropout_0(cnn1d):
     '''case 0: tests that dropout is not applied when there are no dense
     hidden layers.'''
     o_training_false = cnn1d.forward_pass(np.ones([1, 1024]),
@@ -104,21 +107,22 @@ def test_dropout_1(cnn1d):
 
 
 @pytest.mark.parametrize('cnn1d', [[10]], indirect=True,)
-def test_dropout_2(cnn1d):
-    '''case 0: tests that dropout is applied when there are
+def test_dropout_1(cnn1d):
+    '''case 1: tests that dropout is applied when there are
     dense hidden layers'''
     o_training_false = cnn1d.forward_pass(np.ones([1, 1024]),
                                           training=False).numpy()
     o_training_true = cnn1d.forward_pass(np.ones([1, 1024]),
                                          training=True).numpy()
     assert(np.array_equal(o_training_false, o_training_true) is False)
-    
+
+
 @pytest.mark.parametrize('cnn1d', [[10]], indirect=True,)
 def test_dropout_2(cnn1d):
-    '''case 0: tests that dropout is not applied during inference, when
+    '''case 2: tests that dropout is not applied during inference, when
     training is False.'''
     o_training_false_1 = cnn1d.forward_pass(np.ones([1, 1024]),
-                                          training=False).numpy()
+                                            training=False).numpy()
     o_training_false_2 = cnn1d.forward_pass(np.ones([1, 1024]),
-                                         training=False).numpy()
+                                            training=False).numpy()
     assert(np.array_equal(o_training_false_1, o_training_false_2))
