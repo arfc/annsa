@@ -30,7 +30,7 @@ def cnn1d(request):
     model_features.output_size = 2
     model_features.output_function = None
     model_features.l2_regularization_scale = 1e1
-    model_features.dropout_probability = 0.5
+    model_features.dropout_probability = 0.999
     model_features.scaler = scaler
     model_features.Pooling = tf.layers.MaxPooling1D
     model_features.activation_function = None
@@ -124,5 +124,5 @@ def test_dropout_2(cnn1d):
     o_training_false_1 = cnn1d.forward_pass(np.ones([1, 1024]),
                                             training=False).numpy()
     o_training_false_2 = cnn1d.forward_pass(np.ones([1, 1024]),
-                                            training=False).numpy()
+                                         training=False).numpy()
     assert(np.array_equal(o_training_false_1, o_training_false_2))

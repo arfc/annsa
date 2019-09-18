@@ -19,7 +19,7 @@ def dnn(request):
     model_features = dnn_model_features(
         learning_rate=1e-1,
         l2_regularization_scale=1e-1,
-        dropout_probability=0.5,
+        dropout_probability=0.999,
         batch_size=2**5,
         output_size=2,
         dense_nodes=[10],
