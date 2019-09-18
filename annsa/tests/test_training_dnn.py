@@ -47,7 +47,6 @@ def test_forward_pass_0(dnn):
     assert(output.shape[1] == 2)
 
 
-@pytest.mark.parametrize('dnn', [[]], indirect=True,)
 def test_forward_pass_1(dnn):
     '''case 1: Tests response to a spectrum of all ones
     when weight filters are all one. Note, layer before output has
