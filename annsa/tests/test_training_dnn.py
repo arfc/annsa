@@ -39,6 +39,7 @@ def dnn(request):
     model.set_weights(weight_ones)
     return model
 
+
 # forward pass tests
 def test_forward_pass_0(dnn):
     '''case 0: test if output size is correct'''
@@ -56,6 +57,7 @@ def test_forward_pass_1(dnn):
     output_value = output.numpy()[0][0]
     assert(output_value == 10240)
 
+
 # loss function tests
 def test_loss_fn_1(dnn):
     '''case 1: tests if l2 regularization adds to loss_fn.'''
@@ -67,20 +69,22 @@ def test_loss_fn_1(dnn):
     loss = loss
     assert(loss > 0.)
 
+
 # dropout test
 def test_dropout_0(dnn):
     '''case 0: tests that dropout is applied when training.'''
     o_training_false = dnn.forward_pass(np.ones([1, 1024]),
-                                          training=False).numpy()
+                                        training=False).numpy()
     o_training_true = dnn.forward_pass(np.ones([1, 1024]),
-                                         training=True).numpy()
+                                       training=True).numpy()
     assert(np.array_equal(o_training_false, o_training_true) is False)
 
 
 def test_dropout_1(dnn):
-    '''case 1: tests that dropout is not applied in inference, when training is False.'''
+    '''case 1: tests that dropout is not applied in inference, when training
+    is False.'''
     o_training_false_1 = dnn.forward_pass(np.ones([1, 1024]),
                                           training=False).numpy()
     o_training_false_2 = dnn.forward_pass(np.ones([1, 1024]),
-                                         training=False).numpy()
+                                          training=False).numpy()
     assert(np.array_equal(o_training_false_1, o_training_false_2))
