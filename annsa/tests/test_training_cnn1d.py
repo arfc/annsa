@@ -124,5 +124,5 @@ def test_dropout_2(cnn1d):
     o_training_false_1 = cnn1d.forward_pass(np.ones([1, 1024]),
                                             training=False).numpy()
     o_training_false_2 = cnn1d.forward_pass(np.ones([1, 1024]),
-                                         training=False).numpy()
+                                            training=False).numpy()
     assert(np.array_equal(o_training_false_1, o_training_false_2))
