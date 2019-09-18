@@ -5,8 +5,7 @@ import pytest
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import make_pipeline
 
-from annsa.model_classes import (BaseClass,
-                                 generate_random_cnn1d_architecture,
+from annsa.model_classes import (generate_random_cnn1d_architecture,
                                  CNN1D)
 
 tf.enable_eager_execution()
@@ -20,7 +19,7 @@ def cnn1d(request):
     dense layer.
     '''
     dense_nodes = request.param
-    
+
     scaler = make_pipeline(FunctionTransformer(np.abs, validate=False))
     model_features = generate_random_cnn1d_architecture(
         cnn_filters_choices=((4, 1),),
@@ -73,19 +72,20 @@ def test_loss_fn_0(cnn1d):
     '''case 0: tests if l2 regularization does not add to the loss_fn
     with hidden dense layers.'''
     loss = cnn1d.loss_fn(
-        input_data=np.ones([1,1024]),
+        input_data=np.ones([1, 1024]),
         targets=np.array([[16384, 16384]]),
         cost=cnn1d.mse,
         training=False)
     loss = loss.numpy()
     assert(loss == 0.)
 
+
 @pytest.mark.parametrize('cnn1d', [[10]], indirect=True,)
 def test_loss_fn_1(cnn1d):
     '''case 1: tests if l2 regularization adds to loss_fn when there are
     dense nodes'''
     loss = cnn1d.loss_fn(
-        input_data=np.ones([1,1024]),
+        input_data=np.ones([1, 1024]),
         targets=np.array([[16384, 16384]]),
         cost=cnn1d.mse,
         training=False)
@@ -95,20 +95,21 @@ def test_loss_fn_1(cnn1d):
 # dropout test
 @pytest.mark.parametrize('cnn1d', [[]], indirect=True,)
 def test_dropout_1(cnn1d):
-    '''case 0: tests that dropout is not applied when there are no dense 
+    '''case 0: tests that dropout is not applied when there are no dense
     hidden layers.'''
-    o_training_false = cnn1d.forward_pass(np.ones([1,1024]),
-                                               training=False).numpy()
-    o_training_true = cnn1d.forward_pass(np.ones([1,1024]),
-                                             training=True).numpy()
+    o_training_false = cnn1d.forward_pass(np.ones([1, 1024]),
+                                          training=False).numpy()
+    o_training_true = cnn1d.forward_pass(np.ones([1, 1024]),
+                                         training=True).numpy()
     assert(np.array_equal(o_training_false, o_training_true))
+
 
 @pytest.mark.parametrize('cnn1d', [[10]], indirect=True,)
 def test_dropout_2(cnn1d):
-    '''case 0: tests that dropout is applied when there are dense hidden layers'''
-    o_training_false = cnn1d.forward_pass(np.ones([1,1024]),
-                                               training=False).numpy()
-    o_training_true = cnn1d.forward_pass(np.ones([1,1024]),
-                                             training=True).numpy()
+    '''case 0: tests that dropout is applied when there are
+    dense hidden layers'''
+    o_training_false = cnn1d.forward_pass(np.ones([1, 1024]),
+                                          training=False).numpy()
+    o_training_true = cnn1d.forward_pass(np.ones([1, 1024]),
+                                         training=True).numpy()
     assert(np.array_equal(o_training_false, o_training_true) is False)
-    
