@@ -42,7 +42,7 @@ def dnn(request):
 
 # forward pass tests
 def test_forward_pass_0(dnn):
-    '''case 0: test if output size is correct'''
+    '''case 0: Tests if output size is correct'''
     output = dnn.forward_pass(np.ones([1, 1024]), training=False)
     assert(output.shape[1] == 2)
 
