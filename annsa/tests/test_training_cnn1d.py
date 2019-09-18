@@ -11,7 +11,7 @@ from annsa.model_classes import (generate_random_cnn1d_architecture,
 tf.enable_eager_execution()
 
 
-@pytest.fixture(params=[([],  0.5, 64),
+@pytest.fixture(params=[([10],  0.5, 64),
                         ([],  0.5, 1024),
                         ([],  0.999, 1024),
                         ([10], 0.999, 1024), ])
@@ -163,7 +163,7 @@ def test_dropout_2(cnn1d):
 # training tests
 @pytest.mark.parametrize('cost', ['mse', 'cross_entropy'])
 @pytest.mark.parametrize('cnn1d',
-                         (([],  0.5, 64),),
+                         (([10],  0.5, 64),),
                          indirect=True,)
 def test_training_0(cnn1d, toy_dataset, cost):
     '''case 0: test if training on toy dataset reduces errors using
@@ -174,9 +174,9 @@ def test_training_0(cnn1d, toy_dataset, cost):
         (data, targets_binarized),
         (data, targets_binarized),
         optimizer=tf.train.AdamOptimizer(1e-3),
-        num_epochs=2,
+        num_epochs=5,
         obj_cost=cost_function,
         data_augmentation=cnn1d.default_data_augmentation,)
     epoch0_error = objective_cost['test'][0].numpy()
-    epoch1_error = objective_cost['test'][1].numpy()
+    epoch1_error = objective_cost['test'][-1].numpy()
     assert(epoch1_error < epoch0_error)
