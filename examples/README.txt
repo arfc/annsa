@@ -1,4 +1,3 @@
-annsa Gallery
-================
+## Dissertation Notebooks
 
-Examples showing the capabilities of the annsa package.
+These examples outline the two projects performed for the dissertation. The first project is an isotope classification problem for source interdiction using neural networks. The second project demonstrates performing uranium enrichment regression.
