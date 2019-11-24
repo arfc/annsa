@@ -142,7 +142,7 @@ def generate_uenriched_spectrum(uranium_templates,
 
     source_spectrum = np.zeros([1024])
     for isotope in uranium_component_magnitudes:
-        source_spectrum += uranium_component_magnitudes[isotope] \ 
+        source_spectrum += uranium_component_magnitudes[isotope] \
             * rebin_spectrum(
             uranium_templates[isotope], a, b, c)
     source_spectrum = apply_LLD(source_spectrum, 10)
