@@ -1,8 +1,6 @@
 from annsa.generate_uranium_templates import (
     choose_uranium_template,
-    choose_random_uranium_template,
     generate_uenriched_spectrum,)
-from numpy.testing import assert_almost_equal
 import os
 import numpy as np
 import pandas as pd

@@ -1,10 +1,7 @@
 from __future__ import print_function
 import numpy as np
 from numpy.random import choice
-from scipy.interpolate import griddata
-from annsa.annsa import read_spectrum
 from annsa.template_sampling import (apply_LLD,
-                                     poisson_sample_template,
                                      rebin_spectrum,)
 
 
@@ -24,14 +21,14 @@ def choose_uranium_template(uranium_dataset,
             The source distance
         sourceheight : int
             The source height
-        shieldingdensity : 
+        shieldingdensity : float
             The source density in g/cm2
         fwhm : float
-            The full-width-at-half-max at 662 
+            The full-width-at-half-max at 662
 
     Outputs
         uranium_templates : dict
-            Dictionary of a single template for each isotope.
+            Dictionary of a single template for each isotope
             Also contains an entry for FWHM.
     '''
 
@@ -83,7 +80,7 @@ def choose_random_uranium_template(uranium_dataset):
 
     all_shieldingdensity = list(set(uranium_dataset['shieldingdensity']))
     shieldingdensity_choice = choice(all_shieldingdensity)
-    
+
     all_fwhm = list(set(uranium_dataset['fwhm']))
     fwhm_choice = choice(all_fwhm)
 
@@ -133,25 +130,26 @@ def generate_uenriched_spectrum(uranium_templates,
     c = calibration[2]
 
     template_measurment_time = 3600
-    time_scaler = integration_time/template_measurment_time
+    time_scaler = integration_time / template_measurment_time
     mass_fraction_u232 = choice([0,
                                  np.random.uniform(0.4, 2.0)])
 
     uranium_component_magnitudes = {
-        'u235' : time_scaler*enrichment_level,
-        'u232' : time_scaler*mass_fraction_u232,
-        'u238' : time_scaler*(1-enrichment_level),
+        'u235': time_scaler * enrichment_level,
+        'u232': time_scaler * mass_fraction_u232,
+        'u238': time_scaler * (1 - enrichment_level),
     }
 
     source_spectrum = np.zeros([1024])
     for isotope in uranium_component_magnitudes:
-        source_spectrum += uranium_component_magnitudes[isotope]*rebin_spectrum(
+        source_spectrum += uranium_component_magnitudes[isotope] \ 
+            * rebin_spectrum(
             uranium_templates[isotope], a, b, c)
     source_spectrum = apply_LLD(source_spectrum, 10)
     source_spectrum_sampled = np.random.poisson(source_spectrum)
     source_counts = np.sum(source_spectrum_sampled)
 
-    background_counts = source_counts/source_background_ratio
+    background_counts = source_counts / source_background_ratio
     fwhm = uranium_templates['fwhm'].values[0]
     background_dataset = background_dataset[background_dataset['fwhm'] == fwhm]
     background_spectrum = background_dataset.sample().values[0][3:]
@@ -163,8 +161,9 @@ def generate_uenriched_spectrum(uranium_templates,
     background_spectrum_sampled = np.random.poisson(background_spectrum *
                                                     background_counts)
 
-    full_spectrum = np.sum([source_spectrum_sampled[0:1024],
-                            background_spectrum_sampled[0:1024]],
-                            axis=0,)
+    full_spectrum = np.sum(
+        [source_spectrum_sampled[0:1024],
+         background_spectrum_sampled[0:1024]],
+        axis=0,)
 
     return full_spectrum
