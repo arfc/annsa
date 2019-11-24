@@ -28,28 +28,32 @@ def random_background_template_with_FWHM(background_dataset, FWHM, cosmic=0):
     return random_background_spectrum
 
 
-def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
+def rebin_spectrum(spectrum_template, a=0, b=1, c=0, output_len=1024):
     """
-    Rebins spectrum based on second order polynomial rebinning. Returns a 1024
-    channel spectrum.
+    Rebins spectrum based on second order polynomial rebinning.
 
     Parameters:
     -----------
         spectrum_template : vector (1x1194)
             The spectral template
-        a : float
-            Constant rebinning term
-        b : float
-            Linear rebinning term, also known as gain
-        c : float
-            Quadratic rebinning term
+        a : float, optional
+            Constant rebinning term. Also known as offset.
+        b : float, optional
+            Linear rebinning term. Also known as gain.
+        c : float, optional
+            Quadratic rebinning term. Also known as the non-linear term.
+        output_len : int, optional
+            Length of output spectrum
     Returns:
     --------
         rebinned_spectrum_template : vector (1x1024)
             The rebinned spectrum template
     """
+    spectrum_template = spectrum_template.flatten()
     spec_len = len(spectrum_template)
-    new_bin_positions = a + b * np.arange(spec_len) + c * np.arange(spec_len)**2
+    new_bin_positions = a
+    new_bin_positions += b * np.arange(spec_len)
+    new_bin_positions += c * np.arange(spec_len) ** 2
 
     spectrum_template = griddata(np.arange(spec_len),
                                  spectrum_template,
@@ -57,7 +61,7 @@ def rebin_spectrum(spectrum_template, a=0, b=1, c=0):
                                  method='cubic',
                                  fill_value=0.0)
     spectrum_template[spectrum_template < 0] = 0
-    return spectrum_template[:1024]
+    return spectrum_template[:output_len]
 
 
 def poisson_sample_template(template, total_counts):
@@ -98,6 +102,57 @@ def apply_LLD(spectrum, LLD=10):
     """
     spectrum[0:LLD] = 0
     return spectrum
+
+
+def construct_spectrum(spectral_template,
+                       calibration=[0, 1, 0],
+                       LLD=10,
+                       spectrum_counts=60,
+                       output_len=1024,
+                       ):
+    """
+    This function manipulates a spectral template to change its calibration,
+    low level discriminator, and total counts. The output can be combined with
+    other constructed spectra to create a new noisless spectrum. This can then
+    be Poisson sampled to create a spectrum with realistic counting  statistics.
+
+    Parameters:
+    -----------
+        spectral_template : vector
+            Vector containing the spectral template.
+        calibration : list, optional
+            A list of parameters used for rebinning the data according
+            to a quadratic.
+            [a,b,c]; a = constant, b = linear, c = quadratic
+            Default is [0, 1.0, 0].
+        LLD : int, optional
+            Specifies the channel number for a low level discriminator (LLD).
+            Default is 10.
+        spectrum_counts : int, optional
+            Total expected counts for a spectrum.
+        output_len : int, optional
+            length of output spectrum.
+
+    Returns:
+    --------
+        spectral_template : vector
+            The manipulated noiseless template.
+    """
+    spectral_template = spectral_template.flatten()
+
+    a = calibration[0]
+    b = calibration[1]
+    c = calibration[2]
+
+    if np.count_nonzero(spectral_template) > 0:
+        spectral_template = rebin_spectrum(spectral_template, a, b, c)
+        spectral_template = apply_LLD(spectral_template, LLD)
+        spectral_template /= np.sum(spectral_template)  # normalizes
+        spectral_template *= spectrum_counts  # rescales
+    else:
+        spectral_template = spectral_template[:output_len]
+
+    return spectral_template
 
 
 def make_random_spectrum(source_data,
@@ -144,9 +199,6 @@ def make_random_spectrum(source_data,
         background_spectrum : vector
             The 1024 length background spectrum
     """
-    a = calibration[0]
-    b = calibration[1]
-    c = calibration[2]
 
     # Make source spectrum
     source_counts = background_cps * integration_time * signal_to_background
@@ -157,42 +209,43 @@ def make_random_spectrum(source_data,
     if tf.contrib.framework.is_tensor(source_data):
         source_spectrum = source_data
         fwhm = source_spectrum.numpy()[0]
-        source_spectrum = source_spectrum.numpy()[1:]
-        if np.count_nonzero(source_spectrum) > 0:
-            source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
-            source_spectrum = apply_LLD(source_spectrum, LLD)
-            source_spectrum /= np.sum(source_spectrum)  # normalizes
-            source_spectrum *= source_counts  # rescales
-        else:
-            source_spectrum = source_spectrum[:1024]
+        spectral_template = source_spectrum.numpy()[1:]
+        source_spectrum = construct_spectrum(
+            spectral_template=spectral_template,
+            calibration=calibration,
+            LLD=LLD,
+            spectrum_counts=source_counts,
+        )
 
     # if the source data is a pandas dataframe.
     else:
         for key, value in kwargs.items():
             source_data = source_data[source_data[key] == value]
 
-        # if (source_data['isotope'] != 'background' and
-        #    np.count_nonzero(source_spectrum) == 1024):
-        #    # resample if template is non-background and empty
-        # turns the selected spectrum into a ndarray
-        source_spectrum = source_data.sample().values[0][6:]
-        source_spectrum = rebin_spectrum(source_spectrum, a, b, c)
-        source_spectrum = apply_LLD(source_spectrum, LLD)
-        source_spectrum /= np.sum(source_spectrum)  # normalizes
-        source_spectrum *= source_counts  # rescales
+        spectral_template = source_data.sample().values[0][6:]
+        source_spectrum = construct_spectrum(
+            spectral_template=spectral_template,
+            calibration=calibration,
+            LLD=LLD,
+            spectrum_counts=source_counts,
+        )
+
         if 'fwhm' in kwargs:
             fwhm = kwargs['fwhm']
 
     # Make background spectrum
-    background_spectrum = random_background_template_with_FWHM(
+    background_template = random_background_template_with_FWHM(
         background_dataset,
         fwhm,
         cosmic=0)
     background_counts = background_cps * integration_time
-    background_spectrum = rebin_spectrum(background_spectrum, a, b, c)
-    background_spectrum = apply_LLD(background_spectrum, LLD)
-    background_spectrum /= np.sum(background_spectrum)
-    background_spectrum *= background_counts
+    background_spectrum = construct_spectrum(
+        spectral_template=background_template,
+        calibration=calibration,
+        LLD=LLD,
+        spectrum_counts=background_counts,
+    )
+
     return source_spectrum, background_spectrum
 
 
