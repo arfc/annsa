@@ -12,7 +12,7 @@ def both_datasets():
     print(os.path.dirname(__file__))
     background_dataset = pd.read_csv(os.path.join(
         os.path.dirname(__file__),
-        'data_folder',
+    'data_folder',
         'background_template_dataset.csv',))
     uranium_dataset = pd.read_csv(os.path.join(
         os.path.dirname(__file__),
