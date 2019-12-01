@@ -55,7 +55,9 @@ def f_recall(y_true, y_pred):
 def f1(y_true, y_pred):
     precision = f_precision(y_true, y_pred)
     recall = f_recall(y_true, y_pred)
-    return 2*((precision*recall)/(precision+recall+K.epsilon()))
+    f1 = 2 * ((precision * recall))
+    f1 /= (precision + recall + K.epsilon()))
+    return f1 
 
 
 def compile_model(build_model, model_features):
