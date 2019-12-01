@@ -1,20 +1,19 @@
 from __future__ import print_function
 import tensorflow as tf
 import numpy as np
-# import tensorflow.contrib.eager as tfe
-from sklearn.metrics import f1_score
-from tensorflow.image import resize_images
 from keras import backend as K
 from tensorflow.keras.initializers import he_normal, glorot_normal
-from tensorflow.keras.layers import (Dense, Conv1D, Dropout, MaxPool1D, Flatten, Reshape, MaxPool1D, UpSampling1D)
+from tensorflow.keras.layers import (Dense, Conv1D, Dropout,
+                                     Flatten, Reshape,
+                                     MaxPool1D, UpSampling1D)
 from tensorflow.keras import Sequential
 from keras.regularizers import l2
-from keras import backend as K
 from random import choice
+
 
 def mean_normalized_kl_divergence(y_true, y_pred):
     '''
-    Normalizes vector to a probability distribution before 
+    Normalizes vector to a probability distribution before
     calculating the mean KL divergence.
     '''
 
@@ -61,8 +60,8 @@ def f1(y_true, y_pred):
 
 def compile_model(build_model, model_features):
     '''
-    Builds and compiles a machine learning model using model_features. This function
-    creates a model ready to train with model.fit(x,y).
+    Builds and compiles a machine learning model using model_features.
+    This function creates a model ready to train with model.fit(x,y).
 
     Parameters
     ----------
@@ -76,13 +75,15 @@ def compile_model(build_model, model_features):
     Returns
     -------
     model : TensorFlow Model class
-        A comiled machine learning model that contains training and inference features.
+        A comiled machine learning model that contains training
+        and inference features.
         https://www.tensorflow.org/api_docs/python/tf/keras/Model
 
     '''
     model = build_model(model_features)
     model.compile(loss=model_features.loss,
-                  optimizer=model_features.optimizer(model_features.learning_rate),
+                  optimizer=model_features.optimizer(
+                      model_features.learning_rate),
                   metrics=model_features.metrics,)
 
     return model
@@ -91,7 +92,7 @@ def compile_model(build_model, model_features):
 def build_dnn_model(model_features):
     """
     Builds a DNN archetecture basd on model_features
-    without compilation. Uses the Keras Sequential class and 
+    without compilation. Uses the Keras Sequential class and
     model.add method to add layers.
 
     Parameters
@@ -104,8 +105,8 @@ def build_dnn_model(model_features):
     -------
     model : TensorFlow Model class
         A machine learning model that contains training and inference features.
-        Note, this model is uncompiled. model.compile needs to be run for this model
-        to be trained.
+        Note, this model is uncompiled. model.compile needs to be run
+        for this model to be trained.
         https://www.tensorflow.org/api_docs/python/tf/keras/Model
     """
 
@@ -123,7 +124,8 @@ def build_dnn_model(model_features):
                 units=nodes,
                 activation=model_features.activation_function,
                 kernel_initializer=model_features.kernel_initializer,
-                kernel_regularizer=l2(model_features.l2_regularization_scale),))
+                kernel_regularizer=l2(
+                    model_features.l2_regularization_scale),))
         model.add(Dropout(model_features.dropout_rate))
     model.add(Dense(model_features.output_size,
                     activation=model_features.output_function,))
@@ -177,23 +179,25 @@ class dnn_model_features(object):
         dense_nodes : int
             The desired number of nodes in a dense layer.
         activation_function : Tensorflow activation function.
-            Activation function used after each dense layer. Example: tf.nn.relu
+            Activation function used after each dense layer.
+            Example: tf.nn.relu
         scaler : Sklearn pipeline class
-            Sklearn pipeline for preprocessing. 
+            Sklearn pipeline for preprocessing.
         input_size : int
             Length of the input to the network.
         loss : tf.keras.losses class
-            The primary loss used by the model. Examples are CategoricalCrossentropy,
-            MeanSquaredError, and KLDivergence.
+            The primary loss used by the model. Examples are
+            CategoricalCrossentropy, MeanSquaredError, and KLDivergence.
             https://www.tensorflow.org/api_docs/python/tf/keras/losses
         optimizer : tf.keras.optimizers class
-            The optimizer used by the model. Examples are Adam, SGD, and RMSprop.
+            The optimizer used by the model. Examples are Adam,
+            SGD, and RMSprop.
             https://www.tensorflow.org/api_docs/python/tf/keras/optimizers
         metrics : tf.keras.metrics class, list
-            A list of metrics to monitor and save during training. Examples include 
-            Accuracy, Precision, and Recall.
+            A list of metrics to monitor and save during training.
+            Examples include Accuracy, Precision, and Recall.
             https://www.tensorflow.org/api_docs/python/tf/keras/metrics
- 
+
         """
         self.learning_rate = learning_rate
         self.l2_regularization_scale = l2_regularization_scale
@@ -208,7 +212,7 @@ class dnn_model_features(object):
         self.loss = loss
         self.optimizer = optimizer
         self.metrics = metrics
-        
+
     def to_dae_model_features(self):
         '''
         Creates a DAE feature class based on the DNN model features.
@@ -220,10 +224,10 @@ class dnn_model_features(object):
             DNN archetecture.
 
         '''
-        
+
         dense_nodes_decoder = self.dense_nodes[1:]
         dense_nodes_decoder = dense_nodes_decoder[::-1]
-        
+
         model_features = dae_model_features(
             learning_rate=self.learning_rate,
             dropout_rate=0.,
@@ -238,10 +242,10 @@ class dnn_model_features(object):
             loss=tf.keras.losses.MSE,
             optimizer=self.optimizer,
             metrics=[tf.keras.losses.MSE],)
-        
+
         return model_features
 
-    
+
 def add_conv_pool_layer(model,
                         cnn_filter,
                         cnn_kernel,
@@ -266,13 +270,15 @@ def add_conv_pool_layer(model,
             padding='same',))
     return model
 
+
 def add_conv_upsample_layer(
     model,
     cnn_filter,
     cnn_kernel,
     trainable,
     activation_function,
-    kernel_initializer):
+    kernel_initializer,
+):
     model.add(
         UpSampling1D(
             size=2))
@@ -291,7 +297,7 @@ def add_conv_upsample_layer(
 def build_cnn_model(model_features):
     """
     Builds a 1D-CNN archetecture basd on model_features
-    without compilation. Uses the Keras Sequential class and 
+    without compilation. Uses the Keras Sequential class and
     model.add method to add layers.
 
     Parameters
@@ -304,8 +310,8 @@ def build_cnn_model(model_features):
     -------
     model : TensorFlow Model class
         A machine learning model that contains training and inference features.
-        Note, this model is uncompiled. model.compile needs to be run for this model
-        to be trained.
+        Note, this model is uncompiled. model.compile needs to be run for
+        this model to be trained.
         https://www.tensorflow.org/api_docs/python/tf/keras/Model
     """
 
@@ -317,12 +323,13 @@ def build_cnn_model(model_features):
     model = Sequential()
     model.add(Reshape((model_features.input_dim, 1),
                       input_shape=(model_features.input_dim,)))
-    
+
     for cnn_filter, cnn_kernel, pool_size, pool_stride in zip(
         model_features.cnn_filters,
         model_features.cnn_kernels,
         model_features.pool_sizes,
-        model_features.pool_strides,):
+        model_features.pool_strides,
+    ):
         model = add_conv_pool_layer(
             model,
             cnn_filter,
@@ -334,13 +341,14 @@ def build_cnn_model(model_features):
             kernel_initializer=kernel_initializer)
     model.add(Flatten())
 
-    for nodes in model_features.dense_nodes:            
+    for nodes in model_features.dense_nodes:
         model.add(
             Dense(
-                units=nodes, 
+                units=nodes,
                 activation=model_features.activation_function,
                 kernel_initializer=kernel_initializer,
-                kernel_regularizer=l2(model_features.l2_regularization_scale),))
+                kernel_regularizer=l2(
+                    model_features.l2_regularization_scale),))
         model.add(Dropout(model_features.dropout_rate))
     model.add(Dense(model_features.output_size,
                     activation=model_features.output_function,))
@@ -426,15 +434,16 @@ class cnn1d_model_features(object):
         activation_function : Tensorflow activation function
             Example: tf.nn.relu
         loss : tf.keras.losses class
-            The primary loss used by the model. Examples are CategoricalCrossentropy,
-            MeanSquaredError, and KLDivergence.
+            The primary loss used by the model. Examples
+            are CategoricalCrossentropy, MeanSquaredError, and KLDivergence.
             https://www.tensorflow.org/api_docs/python/tf/keras/losses
         optimizer : tf.keras.optimizers class
-            The optimizer used by the model. Examples are Adam, SGD, and RMSprop.
+            The optimizer used by the model. Examples are Adam, SGD,
+            and RMSprop.
             https://www.tensorflow.org/api_docs/python/tf/keras/optimizers
         metrics : tf.keras.metrics class, list
-            A list of metrics to monitor and save during training. Examples include
-            Accuracy, Precision, and Recall.
+            A list of metrics to monitor and save during training.
+            Examples include Accuracy, Precision, and Recall.
             https://www.tensorflow.org/api_docs/python/tf/keras/metrics
 
         """
@@ -457,7 +466,7 @@ class cnn1d_model_features(object):
         self.loss
         self.optimizer
         self.metrics
-        
+
     def to_cae_model_features(self):
         '''
         Creates a CAE feature class based on the CNN model features.
@@ -469,29 +478,35 @@ class cnn1d_model_features(object):
             CNN archetecture.
 
         '''
-        
+
         model_features = cae_model_features(
             learning_rate=self.learning_rate,
             encoder_trainable=True,
             batch_size=self.batch_size,
-            Pooling = MaxPool1D,
+            Pooling=MaxPool1D,
             scaler=self.scaler,
             activation_function=self.activation_function,
             output_function=None,
             input_dim=self.input_dim,
             output_size=self.input_dim,
-            cnn_filters_encoder = list(self.cnn_filters) + [1],
-            cnn_kernels_encoder = list(self.cnn_kernel) + list(self.cnn_kernel)[-2:-1],
-            cnn_strides_encoder =  list(self.cnn_strides) + list(self.cnn_strides)[-2:-1],
-            pool_sizes_encoder = list(self.pool_sizes) + list(self.pool_sizes)[-2:-1],
-            pool_strides_encoder = list(self.pool_strides) + list(self.pool_strides)[-2:-1],
-            cnn_filters_decoder = list(self.cnn_filters) + [1],
-            cnn_kernels_decoder = list(self.cnn_kernel) + list(self.cnn_kernel)[-2:-1],
-            cnn_strides_decoder = list(self.cnn_strides) + list(self.cnn_strides)[-2:-1],
+            cnn_filters_encoder=list(self.cnn_filters) + [1],
+            cnn_kernels_encoder=list(self.cnn_kernel) +
+            list(self.cnn_kernel)[-2:-1],
+            cnn_strides_encoder=list(self.cnn_strides) +
+            list(self.cnn_strides)[-2:-1],
+            pool_sizes_encoder=list(self.pool_sizes) +
+            list(self.pool_sizes)[-2:-1],
+            pool_strides_encoder=list(self.pool_strides) +
+            list(self.pool_strides)[-2:-1],
+            cnn_filters_decoder=list(self.cnn_filters) + [1],
+            cnn_kernels_decoder=list(self.cnn_kernel) +
+            list(self.cnn_kernel)[-2:-1],
+            cnn_strides_decoder=list(self.cnn_strides) +
+            list(self.cnn_strides)[-2:-1],
             loss=tf.keras.losses.MSE,
             optimizer=self.optimizer,
             metrics=[tf.keras.losses.MSE],)
-        
+
         return model_features
 
 
@@ -521,7 +536,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
     """
 
     cnn_filters = choice(cnn_filters_choices)
-    cnn_kernel_choice = choice(cnn_kernel_choices)
+    cnn_kernel_choice = choice(cnn_kernels_choices)
     pool_sizes_choice = choice(pool_sizes_choices)
 
     cnn_kernel = cnn_kernel_choice * (len(cnn_filters))
@@ -562,7 +577,7 @@ def generate_random_cnn1d_architecture(cnn_filters_choices,
 def build_dae_model(model_features):
     """
     Builds a DAE archetecture basd on model_features
-    without compilation. Uses the Keras Sequential class and 
+    without compilation. Uses the Keras Sequential class and
     model.add method to add layers.
 
     Parameters
@@ -575,8 +590,8 @@ def build_dae_model(model_features):
     -------
     model : TensorFlow Model class
         A machine learning model that contains training and inference features.
-        Note, this model is uncompiled. model.compile needs to be run for this model
-        to be trained.
+        Note, this model is uncompiled. model.compile needs to
+        be run for this model to be trained.
         https://www.tensorflow.org/api_docs/python/tf/keras/Model
     """
 
@@ -657,15 +672,16 @@ class dae_model_features(object):
         input_dim : int
             Size of the input
         loss : tf.keras.losses class
-            The primary loss used by the model. Examples are CategoricalCrossentropy,
-            MeanSquaredError, and KLDivergence.
+            The primary loss used by the model. Examples are
+            CategoricalCrossentropy, MeanSquaredError, and KLDivergence.
             https://www.tensorflow.org/api_docs/python/tf/keras/losses
         optimizer : tf.keras.optimizers class
-            The optimizer used by the model. Examples are Adam, SGD, and RMSprop.
+            The optimizer used by the model. Examples are Adam, SGD,
+            and RMSprop.
             https://www.tensorflow.org/api_docs/python/tf/keras/optimizers
         metrics : tf.keras.metrics class, list
-            A list of metrics to monitor and save during training. Examples include
-            Accuracy, Precision, and Recall.
+            A list of metrics to monitor and save during training. Examples
+            include Accuracy, Precision, and Recall.
             https://www.tensorflow.org/api_docs/python/tf/keras/metrics
         """
         self.learning_rate = learning_rate
@@ -686,7 +702,7 @@ class dae_model_features(object):
 def build_cae_model(model_features):
     """
     Builds a DAE archetecture basd on model_features
-    without compilation. Uses the Keras Sequential class and 
+    without compilation. Uses the Keras Sequential class and
     model.add method to add layers.
 
     Parameters
@@ -699,8 +715,8 @@ def build_cae_model(model_features):
     -------
     model : TensorFlow Model class
         A machine learning model that contains training and inference features.
-        Note, this model is uncompiled. model.compile needs to be run for this model
-        to be trained.
+        Note, this model is uncompiled. model.compile needs to be run for
+        this model to be trained.
         https://www.tensorflow.org/api_docs/python/tf/keras/Model
     """
 
@@ -714,10 +730,10 @@ def build_cae_model(model_features):
                       input_shape=(model_features.input_dim,)))
     # encoder
     for cnn_filter, cnn_kernel, pool_size, pool_stride in zip(
-        model_features.cnn_filters_encoder,
-        model_features.cnn_kernels_encoder,
-        model_features.pool_sizes_encoder,
-        model_features.pool_strides_encoder,):
+            model_features.cnn_filters_encoder,
+            model_features.cnn_kernels_encoder,
+            model_features.pool_sizes_encoder,
+            model_features.pool_strides_encoder,):
         model = add_conv_pool_layer(
             model,
             cnn_filter,
@@ -732,7 +748,8 @@ def build_cae_model(model_features):
         model_features.cnn_filters_decoder,
         model_features.cnn_kernels_decoder,
         model_features.pool_sizes_decoder,
-        model_features.pool_strides_decoder,):
+        model_features.pool_strides_decoder,
+    ):
         model = add_conv_upsample_layer(
             model,
             cnn_filter,
@@ -740,16 +757,8 @@ def build_cae_model(model_features):
             trainable=True,
             activation_function=model_features.activation_function,
             kernel_initializer=model_features.kernel_initializer)
-#     model.add(Conv1D(filters=model_features.cnn_filters_decoder[-1],
-#                      kernel_size=model_features.cnn_kernels_decoder[-1],
-#                      strides=1,
-#                      padding='same',
-#                      kernel_initializer=model_features.kernel_initializer,
-#                      activation=model_features.activation_function,
-#                      trainable=True,))
-#     # final layer
     model.add(Reshape((model_features.input_dim,)))
-        
+
     return model
 
 
@@ -833,15 +842,16 @@ class cae_model_features(object):
         input_dim : int
             Size of the input
         loss : tf.keras.losses class
-            The primary loss used by the model. Examples are CategoricalCrossentropy,
-            MeanSquaredError, and KLDivergence.
+            The primary loss used by the model. Examples are
+            CategoricalCrossentropy, MeanSquaredError, and KLDivergence.
             https://www.tensorflow.org/api_docs/python/tf/keras/losses
         optimizer : tf.keras.optimizers class
-            The optimizer used by the model. Examples are Adam, SGD, and RMSprop.
+            The optimizer used by the model. Examples are Adam, SGD, and
+            RMSprop.
             https://www.tensorflow.org/api_docs/python/tf/keras/optimizers
         metrics : tf.keras.metrics class, list
-            A list of metrics to monitor and save during training. Examples include
-            Accuracy, Precision, and Recall.
+            A list of metrics to monitor and save during training. Examples
+            include Accuracy, Precision, and Recall.
             https://www.tensorflow.org/api_docs/python/tf/keras/metrics
         """
         self.learning_rate = learning_rate
@@ -905,8 +915,8 @@ def generate_random_cae_architecture(cnn_filters_encoder_choices,
     cnn_kernels_encoder = cnn_kernels_encoder_choices[
         cnn_kernels_encoder_choice] * (len(cnn_filters_encoder_choices))
     cnn_strides_encoder = (1,) * (len(cnn_filters_encoder_choices))
-    pool_sizes_encoder = pool_sizes_encoder_choices[pool_sizes_encoder_choice] * (
-        len(cnn_filters_encoder_choices))
+    psec = pool_sizes_encoder_choices[pool_sizes_encoder_choice]
+    pool_sizes_encoder = psec * (len(cnn_filters_encoder_choices))
     pool_strides_encoder = (2,) * (len(cnn_filters_encoder_choices))
 
     # #############
@@ -1021,8 +1031,7 @@ def train_earlystop(training_data,
         augment_testing_data=augment_testing_data,
         print_errors=True,
         record_train_errors=False,)
-    
-    
+
     # if length less than earlystop_patience, not_learning_patience was caught
     if len(objective_cost['test']) < earlystop_patience:
         costfunctionerr_test.append(objective_cost['test'][-1])
