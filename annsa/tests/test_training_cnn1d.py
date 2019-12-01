@@ -1,92 +1,178 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import tensorflow as tf
-
-from sklearn.preprocessing import FunctionTransformer
+import pytest
+from sklearn.preprocessing import FunctionTransformer, LabelBinarizer
 from sklearn.pipeline import make_pipeline
-
+from sklearn.datasets import load_digits
 from annsa.model_classes import (generate_random_cnn1d_architecture,
                                  CNN1D)
-from annsa.load_dataset import load_dataset
 
 tf.enable_eager_execution()
 
 
-def construct_cnn1d():
-    """
-    Constructs a convolutional neural network and tests construction
-    functions.
+@pytest.fixture(params=[([10], 0.5, 64),
+                        ([], 0.5, 1024),
+                        ([], 0.999, 1024),
+                        ([10], 0.999, 1024), ])
+def cnn1d(request):
+    '''
+    Constructs a convolutional neural network with filters
+    initialized to ones. Fixture params are either zero or one hidden
+    dense layer.
+    '''
+    (dense_nodes, dropout_probability, input_size) = request.param
 
-    Returns:
-    --------
-    model_features : class cnn1d_model_features
-        Contains all features of the CNN1D model
-
-    optimizer :
-    An Operation that updates the variables in var_list.
-    If global_step was not None, that operation also increments
-    global_step. See documentation for tf.train.Optimizer
-
-    model : Class CNN1D
-        A convolution neural network for finding one dimensional
-        features.
-    """
-    scaler = make_pipeline(FunctionTransformer(np.log1p, validate=False))
-
-    cnn_filters_choices = ((4, 1), (8, 1))  # choose either 4x1 or 8x1 filter.
-    cnn_kernel_choices = ((8, ), (4, ))  # choose either 8xn or 4xn kernel size.
-    pool_size_choices = ((8, ), (4, ))
-    model_features = generate_random_cnn1d_architecture(cnn_filters_choices,
-                                                        cnn_kernel_choices,
-                                                        pool_size_choices,)
+    scaler = make_pipeline(FunctionTransformer(np.abs, validate=False))
+    model_features = generate_random_cnn1d_architecture(
+        cnn_filters_choices=((4, 1),),
+        cnn_kernel_choices=((4, ), ),
+        pool_size_choices=((4, ), ))
     model_features.learning_rate = 1e-1
     model_features.trainable = True
-    model_features.batch_size = 2**5
-    model_features.output_size = 2
+    model_features.batch_size = 5
+    model_features.output_size = 3
     model_features.output_function = None
-    model_features.l2_regularization_scale = 1e-1
-    model_features.dropout_probability = 0.5
+    model_features.l2_regularization_scale = 1e1
+    model_features.dropout_probability = dropout_probability
     model_features.scaler = scaler
     model_features.Pooling = tf.layers.MaxPooling1D
-    model_features.activation_function = tf.nn.relu
-
-    optimizer = tf.train.AdamOptimizer(model_features.learning_rate)
+    model_features.activation_function = None
+    model_features.dense_nodes = dense_nodes
     model = CNN1D(model_features)
-    return model_features, optimizer, model
+    # forward pass to initialize cnn1d weights
+    model.forward_pass(np.ones([1, input_size]), training=False)
+    # set weights to ones
+    weight_ones = [np.ones(weight.shape) if (index % 2 == 0) else weight for
+                   index, weight in enumerate(model.get_weights())]
+    model.set_weights(weight_ones)
+    return model
 
 
-def test_cnn1d_construction():
-    """
-    Tests the construction of a convolution neural network.
+@pytest.fixture()
+def toy_dataset():
+    '''
+    Constructs toy dataset of digits.
+    '''
+    data, target = load_digits(n_class=3, return_X_y=True)
+    mlb = LabelBinarizer()
+    targets_binarized = mlb.fit_transform(target)
+    return (data, targets_binarized)
 
-    Returns: Nothing
 
-    """
-    _, _, _ = construct_cnn1d()
-    pass
+# forward pass tests
+@pytest.mark.parametrize('cnn1d',
+                         (([], 0.5, 1024),
+                          ([], 0.999, 1024),
+                          ([10], 0.999, 1024)),
+                         indirect=True,)
+def test_forward_pass_0(cnn1d):
+    '''case 0: test if output size is correct'''
+    output = cnn1d.forward_pass(np.ones([1, 1024]), training=False)
+    assert(output.shape[1] == 3)
 
 
-def test_cnn1d_training():
-    """
-    Testing the convolutional neural network class and training function.
+@pytest.mark.parametrize('cnn1d',
+                         (([], 0.5, 1024),),
+                         indirect=True,)
+def test_forward_pass_1(cnn1d):
+    '''case 1: Tests response to a spectrum of all ones
+    when weight filters are all one. Note, layer before output has an
+    activation of 64 in each node and a length of 256. Densely connected
+    output connection yields 64*256=16384 for each output node.'''
+    output = cnn1d.forward_pass(np.ones([1, 1024]), training=False)
+    output_value = output.numpy()[0][0]
+    assert(output_value == 16384)
 
-    Returns : Nothing
-    """
 
-    tf.reset_default_graph()
-    model_features, optimizer, model = construct_cnn1d()
-    train_dataset, test_dataset = load_dataset()
-    model_features.scaler.fit(train_dataset[0])
+# loss function tests
+@pytest.mark.parametrize('cnn1d',
+                         (([], 0.5, 1024),),
+                         indirect=True,)
+def test_loss_fn_0(cnn1d):
+    '''case 0: tests if l2 regularization does not add to the loss_fn
+    with hidden dense layers.'''
+    loss = cnn1d.loss_fn(
+        input_data=np.ones([1, 1024]),
+        targets=np.array([[16384, 16384, 16384]]),
+        cost=cnn1d.mse,
+        training=False)
+    loss = loss.numpy()
+    assert(loss == 0.)
 
-    all_loss_train, all_loss_test = model.fit_batch(
-        train_dataset,
-        test_dataset,
-        optimizer,
-        num_epochs=1,
-        earlystop_patience=0,
-        verbose=1,
-        print_errors=0,
-        obj_cost=model.cross_entropy,
-        earlystop_cost_fn=model.f1_error,
-        data_augmentation=model.default_data_augmentation,)
-    pass
+
+@pytest.mark.parametrize('cnn1d',
+                         (([10], 0.999, 1024),),
+                         indirect=True,)
+def test_loss_fn_1(cnn1d):
+    '''case 1: tests if l2 regularization adds to loss_fn when there are
+    dense hidden layers.'''
+    loss = cnn1d.loss_fn(
+        input_data=np.ones([1, 1024]),
+        targets=np.array([[16384, 16384, 16384]]),
+        cost=cnn1d.mse,
+        training=False)
+    loss = loss
+    assert(loss > 0.)
+
+
+# dropout test
+@pytest.mark.parametrize('cnn1d',
+                         (([], 0.999, 1024),),
+                         indirect=True,)
+def test_dropout_0(cnn1d):
+    '''case 0: tests that dropout is not applied when there are no dense
+    hidden layers.'''
+    o_training_false = cnn1d.forward_pass(np.ones([1, 1024]),
+                                          training=False).numpy()
+    o_training_true = cnn1d.forward_pass(np.ones([1, 1024]),
+                                         training=True).numpy()
+    assert(np.array_equal(o_training_false, o_training_true))
+
+
+@pytest.mark.parametrize('cnn1d',
+                         (([10], 0.999, 1024),),
+                         indirect=True,)
+def test_dropout_1(cnn1d):
+    '''case 1: tests that dropout is applied when there are
+    dense hidden layers'''
+    o_training_false = cnn1d.forward_pass(np.ones([1, 1024]),
+                                          training=False).numpy()
+    o_training_true = cnn1d.forward_pass(np.ones([1, 1024]),
+                                         training=True).numpy()
+    assert(np.array_equal(o_training_false, o_training_true) is False)
+
+
+@pytest.mark.parametrize('cnn1d',
+                         (([10], 0.999, 1024),),
+                         indirect=True,)
+def test_dropout_2(cnn1d):
+    '''case 2: tests that dropout is not applied during inference, when
+    training is False.'''
+    o_training_false_1 = cnn1d.forward_pass(np.ones([1, 1024]),
+                                            training=False).numpy()
+    o_training_false_2 = cnn1d.forward_pass(np.ones([1, 1024]),
+                                            training=False).numpy()
+    assert(np.array_equal(o_training_false_1, o_training_false_2))
+
+
+# training tests
+@pytest.mark.parametrize('cost', ['mse', 'cross_entropy'])
+@pytest.mark.parametrize('cnn1d',
+                         (([10], 0.5, 64),),
+                         indirect=True,)
+def test_training_0(cnn1d, toy_dataset, cost):
+    '''case 0: test if training on toy dataset reduces errors using
+    both error functions'''
+    (data, targets_binarized) = toy_dataset
+    cost_function = getattr(cnn1d, cost)
+    objective_cost, earlystop_cost = cnn1d.fit_batch(
+        (data, targets_binarized),
+        (data, targets_binarized),
+        optimizer=tf.train.AdamOptimizer(1e-3),
+        num_epochs=2,
+        obj_cost=cost_function,
+        data_augmentation=cnn1d.default_data_augmentation,)
+    epoch0_error = objective_cost['test'][0].numpy()
+    epoch1_error = objective_cost['test'][-1].numpy()
+    assert(epoch1_error < epoch0_error)
