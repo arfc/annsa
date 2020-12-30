@@ -1,0 +1,2 @@
+## Hyperparameter Search
+These notebooks were used to perform the hyperparameter search. For the dissertation, multiple hyperparameter search notebooks were run in parallel for each model and dataset combination.

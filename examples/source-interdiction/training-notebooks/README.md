@@ -1,0 +1,2 @@
+### Training
+These notebooks were used when training the source interdiction ANNs. Notebooks include those to pretrain the autoencoders and those to train each model with an increasing number of examples to create the learning curves.
